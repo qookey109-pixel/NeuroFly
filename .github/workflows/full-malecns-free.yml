@@ -1,33 +1,33 @@
-name: Free Full MaleCNS Smoke
+name: NeuroFly Self Training
 
 on:
   push:
-    branches: ["feature/v0.4-full-malecns-smoke"]
+    branches: ["feature/v0.5-self-training-goal"]
     paths:
       - ".github/workflows/full-malecns-free.yml"
   workflow_dispatch:
     inputs:
       steps:
-        description: "Number of verified MaleCNS Maze decisions to publish"
+        description: "Number of real MaleCNS training decisions"
         required: false
-        default: "6"
+        default: "1200"
 
 permissions:
   contents: write
 
 concurrency:
-  group: neurofly-full-malecns-free
-  cancel-in-progress: true
+  group: neurofly-self-training
+  cancel-in-progress: false
 
 jobs:
-  full-malecns-free:
+  self-train-malecns:
     runs-on: ubuntu-latest
     timeout-minutes: 330
     env:
       STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
       NEUROFLY_STATE: runs/free-malecns
       CHECKPOINT: runs/free-malecns/brain.npz
-      RECEIPT: runs/free-malecns/real-smoke-receipt.json
+      RECEIPT: runs/free-malecns/self-training-receipt.json
 
     steps:
       - uses: actions/checkout@v4
@@ -51,11 +51,11 @@ jobs:
           path: /home/runner/.cache/neurofly/stonkfly
           key: malecns-v1-${{ hashFiles('pyproject.toml') }}
 
-      - name: Restore latest NeuroFly state
+      - name: Restore latest NeuroFly brain and maze state
         uses: actions/cache/restore@v4
         with:
           path: runs/free-malecns
-          key: neurofly-state-${{ github.run_id }}
+          key: neurofly-state-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             neurofly-state-
 
@@ -69,16 +69,17 @@ jobs:
           python -m neurofly brain-status
           python -m neurofly host-preflight | tee "$NEUROFLY_STATE/preflight.json"
 
-      - name: Run real MaleCNS Maze decisions
+      - name: Let MaleCNS train itself toward maze clear
         env:
-          INPUT_STEPS: ${{ inputs.steps || '6' }}
+          INPUT_STEPS: ${{ inputs.steps || '1200' }}
         run: |
-          python -m neurofly real-smoke \
+          python -m neurofly.training \
             --steps "$INPUT_STEPS" \
+            --playback-steps 240 \
             --checkpoint "$CHECKPOINT" \
             --receipt "$RECEIPT"
 
-      - name: Build verified website state
+      - name: Build verified game state
         run: |
           python -m neurofly publish-site-state \
             --receipt "$RECEIPT" \
@@ -88,21 +89,33 @@ jobs:
           state = json.load(open('site/malecns-state.json'))
           assert state['verified'] is True
           assert state['backend'] == 'malecns'
+          assert state['source_receipt_schema'] == 'neurofly-self-training-v1'
+          assert state['goal'] == 'maze_cleared'
           assert state['trajectory']
           assert all(s['brain']['backend'] == 'malecns' for s in state['trajectory'])
           assert all(int(s['brain']['telemetry']['total_spikes']) > 0 for s in state['trajectory'])
-          print('FULL_MALECNS_WEBSITE_GATE_PASS', state['source_receipt_sha256'])
+          final = state['final_state']
+          print(
+              'SELF_TRAINING_GATE_PASS',
+              state['source_receipt_sha256'],
+              'clears=', final.get('total_clears', 0),
+              'deaths=', final.get('total_deaths', 0),
+          )
           PY
 
-      - name: Publish verified trajectory to the visualizer branch
+      - name: Publish latest verified trajectory to visualizer branch
         run: |
+          cp site/malecns-state.json /tmp/neurofly-malecns-state.json
           git config user.name "neurofly-bot"
           git config user.email "neurofly-bot@users.noreply.github.com"
+          git fetch origin "$GITHUB_REF_NAME"
+          git checkout -B "$GITHUB_REF_NAME" "origin/$GITHUB_REF_NAME"
+          cp /tmp/neurofly-malecns-state.json site/malecns-state.json
           git add site/malecns-state.json
           if git diff --cached --quiet; then
-            echo "Verified site state is unchanged."
+            echo "Verified game state is unchanged."
           else
-            git commit -m "state: publish verified MaleCNS trajectory [skip ci]"
+            git commit -m "state: publish self-trained MaleCNS trajectory [skip ci]"
             git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
 
@@ -126,18 +139,18 @@ jobs:
           path: /home/runner/.cache/neurofly/stonkfly
           key: malecns-v1-${{ hashFiles('pyproject.toml') }}
 
-      - name: Save resumable NeuroFly state
+      - name: Save resumable NeuroFly brain and maze state
         uses: actions/cache/save@v4
         with:
           path: runs/free-malecns
-          key: neurofly-state-${{ github.run_id }}
+          key: neurofly-state-${{ github.run_id }}-${{ github.run_attempt }}
 
-      - name: Publish small evidence files
+      - name: Publish compact evidence
         uses: actions/upload-artifact@v4
         with:
-          name: neurofly-full-malecns-evidence-${{ github.run_id }}
+          name: neurofly-self-training-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             runs/free-malecns/preflight.json
-            runs/free-malecns/real-smoke-receipt.json
+            runs/free-malecns/self-training-receipt.json
             site/malecns-state.json
           retention-days: 1
