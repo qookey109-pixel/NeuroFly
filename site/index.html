@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>NeuroFly — Maze Chase Lab</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="page-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">NEUROFLY / CONNECTOME PLAYGROUND</p>
+        <h1>Maze Chase Lab <span>🧠🪰</span></h1>
+        <p class="subtitle">原創迷宮追逐實驗：讓虛擬果蠅在食物、敵人與 reward 中持續探索。</p>
+      </div>
+      <div class="status-pill" id="runtimeStatus">Demo Agent · RUNNING</div>
+    </header>
+
+    <section class="layout">
+      <div class="arena-panel card">
+        <div class="panel-head">
+          <div>
+            <span class="kicker">LIVE ENVIRONMENT</span>
+            <h2>Fly Habitat</h2>
+          </div>
+          <div class="controls">
+            <button id="toggleButton" type="button">暫停</button>
+            <button id="resetButton" type="button" class="secondary">重新開始</button>
+            <label class="speed-control">速度
+              <select id="speedSelect">
+                <option value="0.5">0.5×</option>
+                <option value="1" selected>1×</option>
+                <option value="2">2×</option>
+                <option value="4">4×</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="canvas-wrap">
+          <canvas id="mazeCanvas" width="760" height="560" aria-label="NeuroFly maze chase simulation"></canvas>
+          <div class="legend" aria-label="legend">
+            <span><i class="dot fly-dot"></i> 果蠅</span>
+            <span><i class="dot food-dot"></i> 食物</span>
+            <span><i class="dot power-dot"></i> 能量食物</span>
+            <span><i class="dot enemy-dot"></i> 敵人</span>
+          </div>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <section class="card telemetry-card">
+          <span class="kicker">EXPERIMENT TELEMETRY</span>
+          <div class="metric-grid">
+            <div><strong id="scoreValue">0</strong><span>Reward</span></div>
+            <div><strong id="episodeValue">1</strong><span>Episode</span></div>
+            <div><strong id="foodValue">0</strong><span>Food</span></div>
+            <div><strong id="survivalValue">0s</strong><span>Survival</span></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-title-row">
+            <div>
+              <span class="kicker">BRAIN I/O</span>
+              <h3>Neural Interface</h3>
+            </div>
+            <span class="mode-tag">DEMO</span>
+          </div>
+          <div class="brain-strip">
+            <div><span>Visual</span><b id="visualBar" style="--level: 64%"></b></div>
+            <div><span>Reward</span><b id="rewardBar" style="--level: 12%"></b></div>
+            <div><span>Threat</span><b id="threatBar" style="--level: 28%"></b></div>
+            <div><span>Action</span><b id="actionBar" style="--level: 42%"></b></div>
+          </div>
+          <p class="small-note">目前這些是 Demo Agent 的可視化訊號，不冒充 MaleCNS 神經活動。之後可替換成真正 NeuroFly backend telemetry。</p>
+        </section>
+
+        <section class="card">
+          <span class="kicker">CURRENT STATE</span>
+          <dl class="state-list">
+            <div><dt>Action</dt><dd id="actionValue">FORWARD</dd></div>
+            <div><dt>Last reward</dt><dd id="lastRewardValue">0.00</dd></div>
+            <div><dt>Food left</dt><dd id="foodLeftValue">0</dd></div>
+            <div><dt>Controller</dt><dd id="controllerValue">Demo heuristic</dd></div>
+          </dl>
+        </section>
+
+        <section class="card event-card">
+          <span class="kicker">EVENT STREAM</span>
+          <ul id="eventLog" class="event-log" aria-live="polite"></ul>
+        </section>
+      </aside>
+    </section>
+
+    <section class="card architecture-card">
+      <span class="kicker">NEUROFLY LOOP</span>
+      <div class="flow">
+        <span>RGB Maze</span><em>→</em><span>Sensory Adapter</span><em>→</em><span>Brain Runtime</span><em>→</em><span>Action</span><em>→</em><span>Reward</span><em>→</em><span>Plasticity</span>
+      </div>
+      <p>這個網站先驗證環境與視覺化。MaleCNS 接入後，畫面與遊戲規則不需要重做，只替換 Brain Runtime。</p>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
