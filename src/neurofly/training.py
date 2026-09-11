@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from .brain_runtime import MaleCNSBrain
+from .curriculum import CURRICULUM_VERSION, CurriculumMazeEnvironment
 from .goal_training import GoalMazeSession
 from .live_relay import GitHubOIDCLivePublisher
 from .preflight import collect_preflight
@@ -34,6 +35,15 @@ GOAL_FIELDS = (
     "first_clear_ticks",
     "latest_clear_ticks",
     "best_clear_ticks",
+    "curriculum_version",
+    "curriculum_stage",
+    "curriculum_stage_name",
+    "curriculum_stage_clears",
+    "curriculum_clears_to_advance",
+    "curriculum_enemy_count",
+    "curriculum_world_tick_seconds",
+    "curriculum_stage_history",
+    "curriculum_complete",
 )
 
 
@@ -122,6 +132,7 @@ def run_self_training(
     allow_low_memory: bool = False,
     playback_steps: int = 240,
     world_tick_seconds: float = 0.5,
+    curriculum: bool = False,
 ) -> dict[str, Any]:
     if steps < 1:
         raise ValueError("steps must be >= 1")
@@ -144,11 +155,13 @@ def run_self_training(
     receipt = Path(receipt)
     started = time.time()
     brain = MaleCNSBrain(checkpoint=checkpoint)
+    environment = CurriculumMazeEnvironment(seed=seed) if curriculum else None
     session = GoalMazeSession(
         brain,
         checkpoint=checkpoint,
         seed=seed,
         world_tick_seconds=world_tick_seconds,
+        environment=environment,
     )
     live = GitHubOIDCLivePublisher.from_environment()
     pump = LiveStatePump(live)
@@ -186,6 +199,8 @@ def run_self_training(
                     "total_deaths": state.get("total_deaths", 0),
                     "world_ticks": state.get("world_ticks", 0),
                     "total_world_ticks": state.get("total_world_ticks", 0),
+                    "curriculum_stage": state.get("curriculum_stage"),
+                    "curriculum_stage_name": state.get("curriculum_stage_name"),
                     "brain_ms": telemetry.get("brain_ms"),
                     "compute_seconds": telemetry.get("compute_seconds"),
                     "total_spikes": telemetry.get("total_spikes"),
@@ -197,6 +212,7 @@ def run_self_training(
             print(
                 "MALECNS_DECISION",
                 index,
+                "stage=", state.get("curriculum_stage"),
                 "kind=", state.get("state_kind"),
                 "action=", state.get("decision_action") or state["last_action"],
                 "applied=", state.get("decision_applied", True),
@@ -211,7 +227,7 @@ def run_self_training(
     clears_after = int(final_state.get("total_clears") or 0)
     finished = time.time()
     body: dict[str, Any] = {
-        "schema": "neurofly-self-training-v2",
+        "schema": "neurofly-self-training-v3" if curriculum else "neurofly-self-training-v2",
         "passed": True,
         "backend": "malecns",
         "neural_activity_verified": True,
@@ -220,9 +236,12 @@ def run_self_training(
         "seed": seed,
         "steps": steps,
         "playback_steps": len(playback),
-        "world_tick_seconds": world_tick_seconds,
+        "world_tick_seconds": final_state.get("world_tick_seconds", world_tick_seconds),
+        "base_world_tick_seconds": world_tick_seconds,
         "world_states_seen": world_states_seen,
         "live_published": pump.published,
+        "curriculum": curriculum,
+        "curriculum_version": final_state.get("curriculum_version") if curriculum else None,
         "started_unix": started,
         "finished_unix": finished,
         "wall_seconds": round(finished - started, 6),
@@ -262,6 +281,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=109)
     parser.add_argument("--playback-steps", type=int, default=240)
     parser.add_argument("--world-tick-seconds", type=float, default=0.5)
+    parser.add_argument("--curriculum", action="store_true")
     parser.add_argument("--allow-low-memory", action="store_true")
     return parser
 
@@ -275,14 +295,18 @@ def main(argv: list[str] | None = None) -> int:
         seed=args.seed,
         playback_steps=args.playback_steps,
         world_tick_seconds=args.world_tick_seconds,
+        curriculum=args.curriculum,
         allow_low_memory=args.allow_low_memory,
     )
+    final_state = result["final_state"]
     summary = {
         "passed": result["passed"],
         "goal": result["goal"],
         "steps": result["steps"],
         "batch_clears": result["batch_clears"],
         "total_clears": result["clears_after"],
+        "curriculum_stage": final_state.get("curriculum_stage"),
+        "curriculum_stage_name": final_state.get("curriculum_stage_name"),
         "world_states_seen": result["world_states_seen"],
         "live_published": result["live_published"],
         "receipt_sha256": result["receipt_sha256"],
