@@ -52,3 +52,26 @@ jobs:
           curl --fail --silent --show-error http://127.0.0.1:8765/ | grep -q "Maze Chase Lab"
           curl --fail --silent --show-error http://127.0.0.1:8765/api/status | grep -q '"backend":"demo"'
           curl --fail --silent --show-error http://127.0.0.1:8765/api/state | grep -q '"grid"'
+
+  stonkfly-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[stonkfly]'
+      - name: Verify import contract without downloading MaleCNS data
+        run: |
+          python - <<'PY'
+          from stonkfly.neural.visual import VisualMemoryBrain
+          from neurofly.brain_runtime import MaleCNSBrain, brain_status
+          status = brain_status()
+          assert status["installed"] is True
+          assert status["prepared"] is False
+          assert VisualMemoryBrain is not None
+          assert MaleCNSBrain is not None
+          print(status)
+          PY
