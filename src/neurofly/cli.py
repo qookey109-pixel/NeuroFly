@@ -7,7 +7,9 @@ import time
 from .brain_runtime import DemoBrain, MaleCNSBrain, brain_status
 from .experiments import list_experiments
 from .maze_runtime import MazeSession
+from .preflight import collect_preflight
 from .server import run_server
+from .smoke import run_real_smoke
 from .upstream import stonkfly_status
 
 
@@ -35,6 +37,24 @@ def _upstream_status() -> int:
 
 def _brain_status() -> int:
     print(json.dumps(brain_status(), indent=2, sort_keys=True))
+    return 0
+
+
+def _host_preflight(args: argparse.Namespace) -> int:
+    report = collect_preflight(data_dir=args.data_dir)
+    print(json.dumps(report, indent=2, sort_keys=True))
+    return 0 if report["ready"] else 2
+
+
+def _real_smoke(args: argparse.Namespace) -> int:
+    result = run_real_smoke(
+        steps=args.steps,
+        checkpoint=args.checkpoint,
+        receipt=args.receipt,
+        seed=args.seed,
+        allow_low_memory=args.allow_low_memory,
+    )
+    print(json.dumps(result, indent=2, sort_keys=True))
     return 0
 
 
@@ -100,6 +120,22 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("upstream-status", help="show the pinned Stonkfly integration status")
     subparsers.add_parser("brain-status", help="verify the optional MaleCNS runtime and prepared graph")
 
+    preflight = subparsers.add_parser(
+        "host-preflight",
+        help="check host resources and prepared-data readiness for the full MaleCNS runtime",
+    )
+    preflight.add_argument("--data-dir", default=None, help="override STONKFLY_DATA for disk probing")
+
+    smoke = subparsers.add_parser(
+        "real-smoke",
+        help="run a bounded full-MaleCNS Maze smoke test and write a receipt",
+    )
+    smoke.add_argument("--steps", type=int, default=1)
+    smoke.add_argument("--checkpoint", default="runs/maze-fly-001/brain.npz")
+    smoke.add_argument("--receipt", default="runs/maze-fly-001/real-smoke-receipt.json")
+    smoke.add_argument("--seed", type=int, default=109)
+    smoke.add_argument("--allow-low-memory", action="store_true")
+
     run = subparsers.add_parser("maze-run", help="run the persistent Maze Chase loop without a browser")
     run.add_argument("--brain", choices=("demo", "malecns"), default="demo")
     run.add_argument("--steps", type=int, default=0, help="0 means run until interrupted")
@@ -126,6 +162,10 @@ def main(argv: list[str] | None = None) -> int:
         return _upstream_status()
     if args.command == "brain-status":
         return _brain_status()
+    if args.command == "host-preflight":
+        return _host_preflight(args)
+    if args.command == "real-smoke":
+        return _real_smoke(args)
     if args.command == "maze-run":
         return _maze_run(args)
     if args.command == "maze-server":
