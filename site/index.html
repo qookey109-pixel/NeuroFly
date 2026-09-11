@@ -15,7 +15,7 @@
         <h1>Maze Chase Lab <span>🧠🪰</span></h1>
         <p class="subtitle">原創迷宮追逐實驗：讓虛擬果蠅在食物、敵人與 reward 中持續探索。</p>
       </div>
-      <div class="status-pill" id="runtimeStatus">Demo Agent · RUNNING</div>
+      <div class="status-pill" id="runtimeStatus">Detecting runtime…</div>
     </header>
 
     <section class="layout">
@@ -67,24 +67,24 @@
               <span class="kicker">BRAIN I/O</span>
               <h3>Neural Interface</h3>
             </div>
-            <span class="mode-tag">DEMO</span>
+            <span class="mode-tag" id="modeTag">DETECT</span>
           </div>
           <div class="brain-strip">
-            <div><span>Visual</span><b id="visualBar" style="--level: 64%"></b></div>
-            <div><span>Reward</span><b id="rewardBar" style="--level: 12%"></b></div>
-            <div><span>Threat</span><b id="threatBar" style="--level: 28%"></b></div>
-            <div><span>Action</span><b id="actionBar" style="--level: 42%"></b></div>
+            <div><span>Visual</span><b id="visualBar" style="--level: 0%"></b></div>
+            <div><span>Reward</span><b id="rewardBar" style="--level: 0%"></b></div>
+            <div><span>Threat</span><b id="threatBar" style="--level: 0%"></b></div>
+            <div><span>Action</span><b id="actionBar" style="--level: 0%"></b></div>
           </div>
-          <p class="small-note">目前這些是 Demo Agent 的可視化訊號，不冒充 MaleCNS 神經活動。之後可替換成真正 NeuroFly backend telemetry。</p>
+          <p class="small-note" id="brainNote">正在偵測 NeuroFly persistent backend；若無法連線會自動切回 Demo Agent。</p>
         </section>
 
         <section class="card">
           <span class="kicker">CURRENT STATE</span>
           <dl class="state-list">
-            <div><dt>Action</dt><dd id="actionValue">FORWARD</dd></div>
+            <div><dt>Action</dt><dd id="actionValue">HOLD</dd></div>
             <div><dt>Last reward</dt><dd id="lastRewardValue">0.00</dd></div>
             <div><dt>Food left</dt><dd id="foodLeftValue">0</dd></div>
-            <div><dt>Controller</dt><dd id="controllerValue">Demo heuristic</dd></div>
+            <div><dt>Controller</dt><dd id="controllerValue">Detecting…</dd></div>
           </dl>
         </section>
 
@@ -100,7 +100,7 @@
       <div class="flow">
         <span>RGB Maze</span><em>→</em><span>Sensory Adapter</span><em>→</em><span>Brain Runtime</span><em>→</em><span>Action</span><em>→</em><span>Reward</span><em>→</em><span>Plasticity</span>
       </div>
-      <p>這個網站先驗證環境與視覺化。MaleCNS 接入後，畫面與遊戲規則不需要重做，只替換 Brain Runtime。</p>
+      <p>V0.3 支援 persistent backend。使用同源 NeuroFly server 時會自動連線；GitHub Pages 也可用 <code>?api=https://你的後端</code> 指定 24/7 Brain Runtime。</p>
     </section>
   </main>
   <script src="app.js"></script>
