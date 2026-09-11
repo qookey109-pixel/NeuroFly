@@ -1,12 +1,10 @@
 name: Free Full MaleCNS Smoke
 
 on:
-  pull_request:
-    branches: ["feature/v0.3-real-brain-runtime"]
+  push:
+    branches: ["feature/v0.4-full-malecns-smoke"]
     paths:
       - ".github/workflows/full-malecns-free.yml"
-      - "src/**"
-      - "pyproject.toml"
   workflow_dispatch:
     inputs:
       steps:
@@ -19,11 +17,10 @@ permissions:
 
 concurrency:
   group: neurofly-full-malecns-free
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   full-malecns-free:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.ref == 'feature/v0.4-full-malecns-smoke'
     runs-on: ubuntu-latest
     timeout-minutes: 330
     env:
