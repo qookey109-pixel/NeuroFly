@@ -17,10 +17,14 @@
   const CELL_Y = canvas.height / ROWS;
   const VALID_ACTIONS = new Set(['TURN_LEFT', 'TURN_RIGHT', 'FORWARD', 'HOLD']);
   const PLAYBACK_MS = 650;
-  const REFRESH_MS = 30000;
+  const REFRESH_MS = 8000;
+  const IDLE_ENEMY_MS = 520;
 
   let activeReceipt = '';
   let playbackTimer = null;
+  let idleEnemyTimer = null;
+  let currentView = null;
+  let currentPayload = null;
   let flashUntil = 0;
   let flashText = '';
 
@@ -192,8 +196,52 @@
     }
   }
 
+  function openNeighbors(view, enemy) {
+    const grid = view.grid || [];
+    const candidates = [
+      { x: enemy.x + 1, y: enemy.y },
+      { x: enemy.x - 1, y: enemy.y },
+      { x: enemy.x, y: enemy.y + 1 },
+      { x: enemy.x, y: enemy.y - 1 },
+    ];
+    return candidates.filter(({ x, y }) => {
+      if (x < 0 || y < 0 || x >= COLS || y >= ROWS) return false;
+      if ((grid[y] || '')[x] === '#') return false;
+      if (view.fly && view.fly.x === x && view.fly.y === y) return false;
+      return true;
+    });
+  }
+
+  function stopIdleEnemies() {
+    clearInterval(idleEnemyTimer);
+    idleEnemyTimer = null;
+  }
+
+  function startIdleEnemies() {
+    stopIdleEnemies();
+    if (!currentView || !neuralStateIsVerified(currentView)) return;
+
+    let idleTick = 0;
+    idleEnemyTimer = setInterval(() => {
+      if (playbackTimer || !currentView) return;
+      const enemies = (currentView.enemies || []).map((enemy, index) => {
+        const options = openNeighbors(currentView, enemy);
+        if (!options.length) return { ...enemy };
+        const pick = options[(idleTick + index * 2) % options.length];
+        return { ...pick };
+      });
+      idleTick += 1;
+      currentView = { ...currentView, enemies };
+      draw(currentView);
+      if (currentPayload) updateGoalHud(currentPayload, currentView);
+      ui.status.textContent = `MALECNS RESTING · environment active · episode ${currentView.episode}`;
+    }, IDLE_ENEMY_MS);
+  }
+
   function playPayload(payload) {
     clearInterval(playbackTimer);
+    stopIdleEnemies();
+    currentPayload = payload;
     const trajectory = payload.trajectory;
     let index = 0;
     ui.badge.textContent = 'MALECNS · VERIFIED';
@@ -201,6 +249,7 @@
 
     const show = () => {
       const view = trajectory[index];
+      currentView = view;
       draw(view);
       updateGoalHud(payload, view);
       ui.status.textContent = `SELF-TRAINING · decision ${index + 1}/${trajectory.length} · episode ${view.episode}`;
@@ -217,7 +266,8 @@
       if (index >= trajectory.length) {
         clearInterval(playbackTimer);
         playbackTimer = null;
-        ui.status.textContent = `WAITING NEXT MALECNS BATCH · episode ${view.episode} · ${view.total_clears || 0} clear(s)`;
+        ui.status.textContent = `MALECNS RESTING · environment active · episode ${view.episode}`;
+        startIdleEnemies();
       }
     };
 
