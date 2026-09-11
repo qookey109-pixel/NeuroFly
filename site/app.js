@@ -17,12 +17,10 @@
   const CELL_Y = canvas.height / ROWS;
   const VALID_ACTIONS = new Set(['TURN_LEFT', 'TURN_RIGHT', 'FORWARD', 'HOLD']);
   const LIVE_RELAY = 'https://neurofly-live-relay.onrender.com/events';
-  const IDLE_ENEMY_MS = 520;
-  const LIVE_SILENCE_MS = 5500;
+  const LIVE_SILENCE_MS = 3000;
   const FALLBACK_REFRESH_MS = 60000;
 
   let currentView = null;
-  let idleEnemyTimer = null;
   let liveSilenceTimer = null;
   let liveSequence = -1;
   let liveSeen = false;
@@ -186,47 +184,28 @@
       : 'No clear yet';
   }
 
-  function openNeighbors(view, enemy) {
-    const grid = view.grid || [];
-    return [
-      { x: enemy.x + 1, y: enemy.y },
-      { x: enemy.x - 1, y: enemy.y },
-      { x: enemy.x, y: enemy.y + 1 },
-      { x: enemy.x, y: enemy.y - 1 },
-    ].filter(({ x, y }) => x >= 0 && y >= 0 && x < COLS && y < ROWS && (grid[y] || '')[x] !== '#');
-  }
-
-  function stopIdleEnemies() {
-    clearInterval(idleEnemyTimer);
-    idleEnemyTimer = null;
-  }
-
-  function startIdleEnemies() {
-    stopIdleEnemies();
-    if (!currentView || !neuralStateIsVerified(currentView)) return;
-    let idleTick = 0;
-    idleEnemyTimer = setInterval(() => {
-      if (!currentView) return;
-      const enemies = (currentView.enemies || []).map((enemy, index) => {
-        const options = openNeighbors(currentView, enemy);
-        if (!options.length) return { ...enemy };
-        return { ...options[(idleTick + index * 2) % options.length] };
-      });
-      idleTick += 1;
-      currentView = { ...currentView, enemies };
-      draw(currentView);
-      ui.status.textContent = `WAITING NEURAL DECISION · environment active · episode ${currentView.episode}`;
-    }, IDLE_ENEMY_MS);
-  }
-
   function flashForState(view) {
     if (view.last_event === 'captured') {
-      flashText = 'CAPTURED · RESTART';
+      flashText = 'CAPTURED · AUTHORITATIVE RESTART';
       flashUntil = Date.now() + 900;
     } else if (view.last_event === 'maze_cleared') {
       flashText = `CLEAR · ${formatSeconds(view.latest_clear_seconds)}`;
       flashUntil = Date.now() + 1400;
     }
+  }
+
+  function stateStatus(event, view) {
+    const kind = view.state_kind || 'neural_decision';
+    if (kind === 'world_tick') {
+      return `WORLD LIVE · tick ${view.total_world_ticks ?? '—'} · MaleCNS computing · episode ${view.episode}`;
+    }
+    if (kind === 'episode_reset') {
+      return `WORLD LIVE · episode reset · episode ${view.episode}`;
+    }
+    if (kind === 'stale_decision') {
+      return `MALECNS · stale ${view.decision_action || view.last_action} discarded · episode ${view.episode}`;
+    }
+    return `MALECNS LIVE · decision ${event.sequence} · ${view.decision_action || view.last_action} · episode ${view.episode}`;
   }
 
   function showLiveState(event) {
@@ -237,17 +216,15 @@
     if (Number.isFinite(seq) && seq <= liveSequence) return;
     liveSequence = seq;
     liveSeen = true;
-    stopIdleEnemies();
     clearTimeout(liveSilenceTimer);
     currentView = view;
     flashForState(view);
     draw(view);
     updateGoalHud(view);
     ui.badge.textContent = 'MALECNS · LIVE';
-    ui.status.textContent = `LIVE · decision ${event.sequence} · ${view.last_action} · episode ${view.episode}`;
+    ui.status.textContent = stateStatus(event, view);
     liveSilenceTimer = setTimeout(() => {
-      ui.status.textContent = `MALECNS COMPUTING NEXT DECISION · episode ${currentView?.episode || '—'}`;
-      startIdleEnemies();
+      ui.status.textContent = `WAITING AUTHORITATIVE STATE · MaleCNS may be computing · episode ${currentView?.episode || '—'}`;
     }, LIVE_SILENCE_MS);
   }
 
@@ -263,7 +240,6 @@
       updateGoalHud(view);
       ui.badge.textContent = 'MALECNS · LAST VERIFIED';
       ui.status.textContent = `WAITING LIVE MALECNS · episode ${view.episode}`;
-      startIdleEnemies();
     } catch (_) {
       // Static fallback is optional; SSE is the primary live path.
     }
@@ -277,7 +253,7 @@
     source.onopen = () => {
       if (!liveSeen) {
         ui.badge.textContent = 'MALECNS · LIVE LINK';
-        ui.status.textContent = 'LIVE LINK READY · waiting neural decision';
+        ui.status.textContent = 'LIVE LINK READY · waiting authoritative state';
       }
     };
     source.onerror = () => {
@@ -286,7 +262,7 @@
     };
   }
 
-  drawWaiting('Connecting to live neural decisions…');
+  drawWaiting('Connecting to live neural + world state…');
   loadFallback();
   connectLive();
   setInterval(() => { if (!liveSeen) loadFallback(); }, FALLBACK_REFRESH_MS);
