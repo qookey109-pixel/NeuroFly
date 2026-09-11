@@ -25,3 +25,21 @@ jobs:
           python -m neurofly upstream-status
       - name: Tests
         run: pytest -q
+
+  site-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate static files
+        run: |
+          test -f site/index.html
+          test -f site/styles.css
+          test -f site/app.js
+          node --check site/app.js
+      - name: Serve visualizer
+        run: |
+          python3 -m http.server 4173 --directory site >/tmp/neurofly-site.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          sleep 1
+          curl --fail --silent --show-error http://127.0.0.1:4173/ | grep -q "Maze Chase Lab"
