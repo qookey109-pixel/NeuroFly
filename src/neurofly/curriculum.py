@@ -49,6 +49,11 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
     def effective_world_tick_seconds(self, default: float) -> float:
         return self.stage.world_tick_seconds
 
+    def threat_distance(self, x: int | None = None, y: int | None = None) -> int:
+        if not self.enemies:
+            return 1_000_000
+        return super().threat_distance(x=x, y=y)
+
     def _blank_grid(self) -> list[list[str]]:
         return [["#" for _ in range(self.cols)] for _ in range(self.rows)]
 
