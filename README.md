@@ -26,7 +26,31 @@ RGB maze frame
    -> plasticity
 ```
 
-The initial environment will contain one deterministic maze, pellets and one enemy. It will first be validated with baseline agents before connectome learning is enabled. See [`docs/experiments/MAZE_CHASE.md`](docs/experiments/MAZE_CHASE.md).
+The initial environment contains a deterministic maze, food, energy-food and autonomous enemies. It is validated with a visible baseline agent before connectome learning is enabled. See [`docs/experiments/MAZE_CHASE.md`](docs/experiments/MAZE_CHASE.md).
+
+### Visualizer
+
+A browser-based live visualizer is available in [`site/`](site/). It includes:
+
+- an original fly character rendered directly on the maze canvas;
+- food and energy-food;
+- autonomous enemies;
+- episode/reset behavior;
+- live reward, survival and action telemetry;
+- a visible Brain I/O panel;
+- pause/reset/speed controls.
+
+The current visualizer intentionally labels its controller as **Demo Agent**. It validates the game/environment interface and does not pretend that demo telemetry is MaleCNS activity.
+
+GitHub Pages deployment is defined in [`.github/workflows/pages.yml`](.github/workflows/pages.yml). After Pages is enabled for the repository and the deployment reaches `main`, the expected project URL is:
+
+`https://qookey109-pixel.github.io/NeuroFly/`
+
+### 24/7 operation
+
+The public website can stay hosted 24/7, but browser-side simulation stops when the page is closed or suspended. A fly that keeps learning while nobody is watching requires an always-on NeuroFly brain worker running separately from the website.
+
+See [`docs/24_7_RUNTIME.md`](docs/24_7_RUNTIME.md) for the persistent runtime architecture.
 
 ## Stonkfly upstream
 
@@ -79,11 +103,11 @@ Connectome Core
 - **Maze Chase** — first formal game experiment: pellets, maze navigation, enemies and reinforcement.
 - **Light Chase** — let the connectome control a tiny agent that tries to orient toward a moving light.
 - **Neuro Maze** — map selected descending-neuron activity to left/right/forward movement.
-- **Brain Scope** — visualize which neural populations become active while stimuli change.
+- **Brain Scope** — visualize which neural populations become active while changing controlled stimuli.
 - **Connectome Arcade** — plug the same neural core into small browser/game environments.
-- **Dopamine Lab** — compare different engineered reinforcement signals without claiming biological equivalence.
+- **Dopamine Lab** — compare engineered reinforcement schedules and plasticity controls.
 - **Stonkfly Replay** — reproduce the paper-trading experiment in an isolated adapter and compare against controls.
-- **Sensory Swap** — show the same brain price charts, geometric shapes, motion fields, or game frames and compare neural responses.
+- **Sensory Swap** — show the same brain price charts, geometry, motion and game frames and compare neural responses.
 
 ## Safety and interpretation
 
@@ -93,16 +117,17 @@ Any learning, intelligence, market skill, pain, pleasure, consciousness, or biol
 
 ## Status
 
-**v0.1 — platform bootstrap / Stonkfly upstream integration / Maze Chase selection**
+**v0.2 — Maze Chase visualizer / browser environment / 24/7 runtime design**
 
 Current work:
 
-- establish provenance and licensing
-- pin the first Stonkfly upstream revision
-- create a clean experiment/adaptor architecture
-- keep large MaleCNS datasets outside Git history
-- define Maze Chase as the first game environment
-- add a minimal runnable NeuroFly CLI before integrating the full connectome runtime
+- establish provenance and licensing;
+- pin the first Stonkfly upstream revision;
+- create a clean experiment/adaptor architecture;
+- keep large MaleCNS datasets outside Git history;
+- run the Maze Chase visual environment with an autonomous baseline controller;
+- deploy the visualizer through GitHub Pages;
+- prepare the persistent backend interface for real MaleCNS telemetry.
 
 ## Development
 
@@ -115,6 +140,14 @@ pip install -e '.[test]'
 python -m neurofly ideas
 pytest -q
 ```
+
+Run the visualizer locally:
+
+```bash
+python3 -m http.server 4173 --directory site
+```
+
+Then open `http://127.0.0.1:4173/`.
 
 Optional Stonkfly reference installation:
 
