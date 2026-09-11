@@ -13,23 +13,23 @@
       <div>
         <p class="eyebrow">NEUROFLY / CONNECTOME PLAYGROUND</p>
         <h1>Maze Chase Lab <span>🧠🪰</span></h1>
-        <p class="subtitle">原創迷宮追逐實驗：讓虛擬果蠅在食物、敵人與 reward 中持續探索。</p>
+        <p class="subtitle">MaleCNS-only 模式：只有通過驗證的果蠅 connectome 神經活動才能驅動畫面中的果蠅。</p>
       </div>
-      <div class="status-pill" id="runtimeStatus">Detecting runtime…</div>
+      <div class="status-pill" id="runtimeStatus">Waiting for MaleCNS…</div>
     </header>
 
     <section class="layout">
       <div class="arena-panel card">
         <div class="panel-head">
           <div>
-            <span class="kicker">LIVE ENVIRONMENT</span>
+            <span class="kicker">VERIFIED ENVIRONMENT</span>
             <h2>Fly Habitat</h2>
           </div>
           <div class="controls">
-            <button id="toggleButton" type="button">暫停</button>
-            <button id="resetButton" type="button" class="secondary">重新開始</button>
+            <button id="toggleButton" type="button" disabled>等待真腦</button>
+            <button id="resetButton" type="button" class="secondary" disabled>重新播放</button>
             <label class="speed-control">速度
-              <select id="speedSelect">
+              <select id="speedSelect" disabled>
                 <option value="0.5">0.5×</option>
                 <option value="1" selected>1×</option>
                 <option value="2">2×</option>
@@ -40,7 +40,7 @@
         </div>
 
         <div class="canvas-wrap">
-          <canvas id="mazeCanvas" width="760" height="560" aria-label="NeuroFly maze chase simulation"></canvas>
+          <canvas id="mazeCanvas" width="760" height="560" aria-label="NeuroFly verified MaleCNS maze chase"></canvas>
           <div class="legend" aria-label="legend">
             <span><i class="dot fly-dot"></i> 果蠅</span>
             <span><i class="dot food-dot"></i> 食物</span>
@@ -54,10 +54,10 @@
         <section class="card telemetry-card">
           <span class="kicker">EXPERIMENT TELEMETRY</span>
           <div class="metric-grid">
-            <div><strong id="scoreValue">0</strong><span>Reward</span></div>
-            <div><strong id="episodeValue">1</strong><span>Episode</span></div>
-            <div><strong id="foodValue">0</strong><span>Food</span></div>
-            <div><strong id="survivalValue">0s</strong><span>Survival</span></div>
+            <div><strong id="scoreValue">—</strong><span>Reward</span></div>
+            <div><strong id="episodeValue">—</strong><span>Episode</span></div>
+            <div><strong id="foodValue">—</strong><span>Food</span></div>
+            <div><strong id="survivalValue">—</strong><span>Survival</span></div>
           </div>
         </section>
 
@@ -67,7 +67,7 @@
               <span class="kicker">BRAIN I/O</span>
               <h3>Neural Interface</h3>
             </div>
-            <span class="mode-tag" id="modeTag">DETECT</span>
+            <span class="mode-tag" id="modeTag">WAITING MALECNS</span>
           </div>
           <div class="brain-strip">
             <div><span>Visual</span><b id="visualBar" style="--level: 0%"></b></div>
@@ -75,16 +75,16 @@
             <div><span>Threat</span><b id="threatBar" style="--level: 0%"></b></div>
             <div><span>Action</span><b id="actionBar" style="--level: 0%"></b></div>
           </div>
-          <p class="small-note" id="brainNote">正在偵測 NeuroFly persistent backend；若無法連線會自動切回 Demo Agent。</p>
+          <p class="small-note" id="brainNote">等待第一份通過 SHA-256、MaleCNS backend 與 neural-spike 驗證的決策資料；未通過前不啟動遊戲。</p>
         </section>
 
         <section class="card">
           <span class="kicker">CURRENT STATE</span>
           <dl class="state-list">
-            <div><dt>Action</dt><dd id="actionValue">HOLD</dd></div>
-            <div><dt>Last reward</dt><dd id="lastRewardValue">0.00</dd></div>
-            <div><dt>Food left</dt><dd id="foodLeftValue">0</dd></div>
-            <div><dt>Controller</dt><dd id="controllerValue">Detecting…</dd></div>
+            <div><dt>Action</dt><dd id="actionValue">LOCKED</dd></div>
+            <div><dt>Last reward</dt><dd id="lastRewardValue">—</dd></div>
+            <div><dt>Food left</dt><dd id="foodLeftValue">—</dd></div>
+            <div><dt>Controller</dt><dd id="controllerValue">Locked — no demo agent</dd></div>
           </dl>
         </section>
 
@@ -96,11 +96,11 @@
     </section>
 
     <section class="card architecture-card">
-      <span class="kicker">NEUROFLY LOOP</span>
+      <span class="kicker">VERIFIED NEUROFLY LOOP</span>
       <div class="flow">
-        <span>RGB Maze</span><em>→</em><span>Sensory Adapter</span><em>→</em><span>Brain Runtime</span><em>→</em><span>Action</span><em>→</em><span>Reward</span><em>→</em><span>Plasticity</span>
+        <span>RGB Maze</span><em>→</em><span>MaleCNS Visual Input</span><em>→</em><span>166.7k Neural Runtime</span><em>→</em><span>Verified Action</span><em>→</em><span>Reward</span><em>→</em><span>Plasticity</span>
       </div>
-      <p>V0.3 支援 persistent backend。使用同源 NeuroFly server 時會自動連線；GitHub Pages 也可用 <code>?api=https://你的後端</code> 指定 24/7 Brain Runtime。</p>
+      <p>網站不允許 Demo Agent 控制果蠅。只有 real-smoke receipt 通過後產生的 verified trajectory，或明確連到 <code>backend=malecns</code> 的 NeuroFly API，才能解鎖遊戲畫面。</p>
     </section>
   </main>
   <script src="app.js"></script>
