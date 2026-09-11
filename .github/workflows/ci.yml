@@ -59,20 +59,20 @@ jobs:
           curl --fail --silent --show-error http://127.0.0.1:8765/api/status | grep -q '"backend":"demo"'
           curl --fail --silent --show-error http://127.0.0.1:8765/api/state | grep -q '"grid"'
 
-  render-blueprint-safety:
+  free-runner-safety:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate guarded production profile
+      - name: Validate zero-cost full-brain profile
         run: |
-          test -f render.yaml
-          grep -q 'plan: 2c-16g' render.yaml
-          grep -q 'region: singapore' render.yaml
-          grep -q 'autoDeployTrigger: off' render.yaml
-          grep -q 'mountPath: /var/data' render.yaml
-          grep -q 'sizeGB: 20' render.yaml
-          grep -q 'STONKFLY_DATA' render.yaml
-          grep -q 'cloud-server' render.yaml
+          test ! -f render.yaml
+          test -f .github/workflows/full-malecns-free.yml
+          grep -q 'runs-on: ubuntu-latest' .github/workflows/full-malecns-free.yml
+          grep -q 'timeout-minutes: 330' .github/workflows/full-malecns-free.yml
+          grep -q 'actions/cache/restore@v4' .github/workflows/full-malecns-free.yml
+          grep -q 'actions/cache/save@v4' .github/workflows/full-malecns-free.yml
+          grep -q '9000000000' .github/workflows/full-malecns-free.yml
+          ! grep -q '2c-16g' .github/workflows/full-malecns-free.yml
 
   stonkfly-integration:
     runs-on: ubuntu-latest
