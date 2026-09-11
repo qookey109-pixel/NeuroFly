@@ -10,6 +10,24 @@ NeuroFly is **not** a claim that a connectome reconstruction is a complete livin
 
 > What interesting behavior emerges when a real anatomical wiring diagram is placed behind different sensory and action adapters?
 
+## First game experiment: Maze Chase
+
+The first formal game environment is **Maze Chase**, an original maze-chase experiment built for connectome learning research. It uses the general arcade pattern of collecting pellets, navigating corridors, avoiding enemies and receiving temporary power-state opportunities, without copying protected Pac-Man maps, characters, art, audio or branding.
+
+The first runnable milestone is deliberately small:
+
+```text
+RGB maze frame
+   -> visual adapter
+   -> NeuroFly brain
+   -> LEFT / RIGHT / FORWARD / HOLD
+   -> maze environment
+   -> reward / aversive feedback
+   -> plasticity
+```
+
+The initial environment will contain one deterministic maze, pellets and one enemy. It will first be validated with baseline agents before connectome learning is enabled. See [`docs/experiments/MAZE_CHASE.md`](docs/experiments/MAZE_CHASE.md).
+
 ## Stonkfly upstream
 
 NeuroFly uses [`nftechie/stonkfly`](https://github.com/nftechie/stonkfly) as its first upstream/reference implementation.
@@ -56,8 +74,9 @@ Connectome Core
           └── paper trading
 ```
 
-## First playground ideas
+## Playground ideas
 
+- **Maze Chase** — first formal game experiment: pellets, maze navigation, enemies and reinforcement.
 - **Light Chase** — let the connectome control a tiny agent that tries to orient toward a moving light.
 - **Neuro Maze** — map selected descending-neuron activity to left/right/forward movement.
 - **Brain Scope** — visualize which neural populations become active while stimuli change.
@@ -74,7 +93,7 @@ Any learning, intelligence, market skill, pain, pleasure, consciousness, or biol
 
 ## Status
 
-**v0.1 — platform bootstrap / Stonkfly upstream integration**
+**v0.1 — platform bootstrap / Stonkfly upstream integration / Maze Chase selection**
 
 Current work:
 
@@ -82,6 +101,7 @@ Current work:
 - pin the first Stonkfly upstream revision
 - create a clean experiment/adaptor architecture
 - keep large MaleCNS datasets outside Git history
+- define Maze Chase as the first game environment
 - add a minimal runnable NeuroFly CLI before integrating the full connectome runtime
 
 ## Development
