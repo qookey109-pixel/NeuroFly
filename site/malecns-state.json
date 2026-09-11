@@ -1,0 +1,7 @@
+{
+  "schema": "neurofly-malecns-site-state-v1",
+  "verified": false,
+  "backend": "locked",
+  "mode": "waiting-malecns",
+  "message": "Waiting for a verified MaleCNS real-smoke receipt. The website must not run Demo gameplay."
+}
