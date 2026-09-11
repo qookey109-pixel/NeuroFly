@@ -3,7 +3,9 @@ from pathlib import Path
 
 import neurofly.preflight as preflight
 import neurofly.smoke as smoke
-from neurofly.brain_runtime import BrainDecision
+from neurofly.brain_runtime import BrainDecision, DemoBrain
+from neurofly.maze_runtime import MazeSession
+from neurofly.server import MazeService
 
 
 def test_preflight_report_has_stable_shape(tmp_path, monkeypatch) -> None:
@@ -70,3 +72,24 @@ def test_real_smoke_writes_hashed_receipt(tmp_path, monkeypatch) -> None:
     assert saved["steps"] == 1
     assert saved["observations"][0]["total_spikes"] == 42
     assert len(saved["receipt_sha256"]) == 64
+
+
+def test_cloud_bootstrap_state_is_paused_and_explicit() -> None:
+    session = MazeSession(DemoBrain(), checkpoint=None, seed=9)
+    service = MazeService(
+        session,
+        running=False,
+        phase="preparing-malecns",
+        tick_seconds=0.6,
+    )
+    state = service.state()
+    assert state["runtime"]["running"] is False
+    assert state["runtime"]["phase"] == "preparing-malecns"
+    assert state["brain"]["backend"] == "demo"
+
+    replacement = MazeSession(_FakeBrain(), checkpoint=None, seed=9)
+    service.replace_session(replacement, phase="malecns-ready")
+    service.running = True
+    promoted = service.state()
+    assert promoted["runtime"]["phase"] == "malecns-ready"
+    assert promoted["brain"]["backend"] == "malecns"
