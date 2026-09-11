@@ -9,20 +9,29 @@
 </head>
 <body>
   <main class="stage">
-    <section class="game-shell" aria-label="NeuroFly MaleCNS self-training maze">
-      <canvas id="mazeCanvas" width="950" height="700"></canvas>
-
-      <div class="brain-badge" id="brainBadge">MALECNS · VERIFYING</div>
-
-      <div class="goal-hud" aria-live="polite">
-        <div><span>FIRST CLEAR</span><strong id="firstClear">—</strong></div>
-        <div><span>LATEST</span><strong id="latestClear">—</strong></div>
-        <div><span>BEST</span><strong id="bestClear">—</strong></div>
-        <div><span>CLEARS</span><strong id="clearCount">0</strong></div>
+    <section class="lab-layout" aria-label="NeuroFly MaleCNS self-training maze">
+      <div class="game-shell">
+        <canvas id="mazeCanvas" width="950" height="700"></canvas>
       </div>
 
-      <div class="run-status" id="runStatus">Waiting for verified MaleCNS trajectory…</div>
-      <div class="clear-history" id="clearHistory"></div>
+      <aside class="clear-panel" aria-label="破關紀錄">
+        <div class="brain-badge" id="brainBadge">MALECNS · VERIFYING</div>
+        <h1>破關紀錄</h1>
+
+        <div class="goal-hud" aria-live="polite">
+          <div><span>FIRST CLEAR</span><strong id="firstClear">—</strong></div>
+          <div><span>LATEST</span><strong id="latestClear">—</strong></div>
+          <div><span>BEST</span><strong id="bestClear">—</strong></div>
+          <div><span>CLEARS</span><strong id="clearCount">0</strong></div>
+        </div>
+
+        <div class="history-block">
+          <span class="history-label">RECENT CLEARS</span>
+          <div class="clear-history" id="clearHistory">尚未破關</div>
+        </div>
+
+        <div class="run-status" id="runStatus">Waiting for verified MaleCNS trajectory…</div>
+      </aside>
     </section>
   </main>
   <script src="app.js"></script>
