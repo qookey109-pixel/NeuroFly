@@ -121,9 +121,33 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
         if target is not None and self.stage_clear_counts[key] >= target:
             self._advance_on_reset = True
 
+    @staticmethod
+    def _compat_enemy_for_empty_checkpoint(payload: dict[str, Any]) -> dict[str, int]:
+        grid = payload.get("grid") or []
+        fly = payload.get("fly") or {}
+        fly_xy = (int(fly.get("x", -1)), int(fly.get("y", -1)))
+        for y, row in enumerate(grid):
+            if not isinstance(row, str):
+                continue
+            for x, cell in enumerate(row):
+                if cell != "#" and (x, y) != fly_xy:
+                    return {"x": x, "y": y}
+        raise ValueError("Enemy-free curriculum checkpoint has no spare open cell")
+
     def restore(self, payload: dict[str, Any]) -> None:
-        super().restore(payload)
         same_curriculum = payload.get("curriculum_version") == CURRICULUM_VERSION
+        empty_enemies = same_curriculum and payload.get("enemies") == []
+        if empty_enemies:
+            # V0.5's generic persistence validator historically required at least
+            # one enemy. Feed it a temporary valid enemy, then restore the exact
+            # enemy-free curriculum state immediately afterwards.
+            compatible = dict(payload)
+            compatible["enemies"] = [self._compat_enemy_for_empty_checkpoint(payload)]
+            super().restore(compatible)
+            self.enemies = []
+        else:
+            super().restore(payload)
+
         if same_curriculum:
             stage = int(payload.get("curriculum_stage", 1))
             self.curriculum_stage = min(len(STAGES), max(1, stage))
@@ -137,8 +161,7 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
             if isinstance(history, list):
                 self.stage_history = [dict(item) for item in history if isinstance(item, dict)]
             self._advance_on_reset = bool(payload.get("advance_on_reset", False))
-            # The superclass already restored exact grid/fly/enemy/RNG state.
-            # Do not regenerate the stage here or eaten food would reappear.
+            # The superclass already restored exact grid/fly/RNG state.
             return
 
         # V0.5 migration: retain the trained brain and global counters, but start
