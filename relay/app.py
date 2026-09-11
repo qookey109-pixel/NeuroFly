@@ -13,8 +13,11 @@ import jwt
 ISSUER = "https://token.actions.githubusercontent.com"
 AUDIENCE = "neurofly-live-relay"
 JWKS_URL = f"{ISSUER}/.well-known/jwks"
-EXPECTED_REPOSITORY = "qookey109-pixel/NeuroFly"
-EXPECTED_REF = "refs/heads/feature/v0.5-self-training-goal"
+EXPECTED_REPOSITORY = os.environ.get("NEUROFLY_EXPECTED_REPOSITORY", "qookey109-pixel/NeuroFly")
+EXPECTED_REF = os.environ.get(
+    "NEUROFLY_EXPECTED_REF",
+    "refs/heads/feature/v0.5-self-training-goal",
+)
 EXPECTED_WORKFLOW_PATH = ".github/workflows/full-malecns-free.yml"
 VALID_ACTIONS = {"TURN_LEFT", "TURN_RIGHT", "FORWARD", "HOLD"}
 
@@ -96,7 +99,11 @@ class Handler(BaseHTTPRequestHandler):
             with _state_lock:
                 seq = _sequence
                 has_state = _latest is not None
-            _json_response(self, HTTPStatus.OK, {"ok": True, "sequence": seq, "has_state": has_state})
+            _json_response(
+                self,
+                HTTPStatus.OK,
+                {"ok": True, "sequence": seq, "has_state": has_state, "expected_ref": EXPECTED_REF},
+            )
             return
 
         if self.path != "/events":
@@ -181,7 +188,10 @@ class Handler(BaseHTTPRequestHandler):
 def main() -> None:
     port = int(os.environ.get("PORT", "10000"))
     server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
-    print(f"NeuroFly live relay listening on :{port}", flush=True)
+    print(
+        f"NeuroFly live relay listening on :{port} for {EXPECTED_REPOSITORY} {EXPECTED_REF}",
+        flush=True,
+    )
     server.serve_forever()
 
 
