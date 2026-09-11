@@ -10,6 +10,7 @@ from typing import Any
 
 from .brain_runtime import MaleCNSBrain
 from .goal_training import GoalMazeSession
+from .live_relay import GitHubOIDCLivePublisher
 from .preflight import collect_preflight
 from .smoke import _digest_json, _neural_decision_verified, _public_maze_state
 from .upstream import STONKFLY_COMMIT
@@ -64,9 +65,11 @@ def run_self_training(
     started = time.time()
     brain = MaleCNSBrain(checkpoint=checkpoint)
     session = GoalMazeSession(brain, checkpoint=checkpoint, seed=seed)
+    live = GitHubOIDCLivePublisher.from_environment()
     clears_before = session.environment.total_clears
     observations: list[dict[str, Any]] = []
     playback: deque[dict[str, Any]] = deque(maxlen=playback_steps)
+    live_published = 0
 
     for index in range(1, steps + 1):
         state = session.tick()
@@ -75,6 +78,7 @@ def run_self_training(
                 "MaleCNS returned a decision without verifiable neural activity; refusing to continue training"
             )
         telemetry = state["brain"]["telemetry"]
+        public_state = _public_goal_state(state)
         observations.append(
             {
                 "step": index,
@@ -91,7 +95,17 @@ def run_self_training(
                 "memory_sha256": (telemetry.get("memory") or {}).get("sha256"),
             }
         )
-        playback.append(_public_goal_state(state))
+        playback.append(public_state)
+
+        if live is not None and live.publish(public_state, sequence=session.environment.total_ticks):
+            live_published += 1
+            print(
+                "LIVE_MALECNS_DECISION",
+                session.environment.total_ticks,
+                public_state["last_action"],
+                public_state.get("last_event"),
+                flush=True,
+            )
 
     session.save()
     final_state = _public_goal_state(session.snapshot())
@@ -107,6 +121,7 @@ def run_self_training(
         "seed": seed,
         "steps": steps,
         "playback_steps": len(playback),
+        "live_published": live_published,
         "started_unix": started,
         "finished_unix": finished,
         "wall_seconds": round(finished - started, 6),
@@ -165,6 +180,7 @@ def main(argv: list[str] | None = None) -> int:
         "steps": result["steps"],
         "batch_clears": result["batch_clears"],
         "total_clears": result["clears_after"],
+        "live_published": result["live_published"],
         "receipt_sha256": result["receipt_sha256"],
     }
     print(json.dumps(summary, indent=2, sort_keys=True))
