@@ -43,13 +43,18 @@ jobs:
           python-version: "3.11"
       - name: Install runtime
         run: python -m pip install -e .
-      - name: Validate static files
+      - name: Validate MaleCNS-only static site
         run: |
           test -f site/index.html
           test -f site/styles.css
           test -f site/app.js
+          test -f site/malecns-state.json
           node --check site/app.js
-      - name: Serve persistent demo runtime
+          grep -q '"verified": false' site/malecns-state.json
+          grep -q 'No demo agent is allowed' site/app.js
+          grep -q 'WAITING MALECNS' site/index.html
+          ! grep -q 'startDemo' site/app.js
+      - name: Serve demo backend only as API contract fixture
         run: |
           python -m neurofly maze-server --brain demo --host 127.0.0.1 --port 8765 --tick-seconds 0.1 --checkpoint "" >/tmp/neurofly-server.log 2>&1 &
           server_pid=$!
@@ -58,6 +63,7 @@ jobs:
           curl --fail --silent --show-error http://127.0.0.1:8765/ | grep -q "Maze Chase Lab"
           curl --fail --silent --show-error http://127.0.0.1:8765/api/status | grep -q '"backend":"demo"'
           curl --fail --silent --show-error http://127.0.0.1:8765/api/state | grep -q '"grid"'
+          echo 'The website must reject this demo backend; this step only checks the server API contract.'
 
   free-runner-safety:
     runs-on: ubuntu-latest
@@ -72,6 +78,8 @@ jobs:
           grep -q 'actions/cache/restore@v4' .github/workflows/full-malecns-free.yml
           grep -q 'actions/cache/save@v4' .github/workflows/full-malecns-free.yml
           grep -q '9000000000' .github/workflows/full-malecns-free.yml
+          grep -q 'publish-site-state' .github/workflows/full-malecns-free.yml
+          grep -q 'contents: write' .github/workflows/full-malecns-free.yml
           ! grep -q '2c-16g' .github/workflows/full-malecns-free.yml
 
   stonkfly-integration:
