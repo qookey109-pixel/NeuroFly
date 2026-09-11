@@ -11,6 +11,7 @@ from .upstream import STONKFLY_COMMIT
 
 
 VALID_ACTIONS = {"TURN_LEFT", "TURN_RIGHT", "FORWARD", "HOLD"}
+VALID_RECEIPT_SCHEMAS = {"neurofly-real-smoke-v2", "neurofly-self-training-v1"}
 
 
 def _digest_json(value: Any) -> str:
@@ -28,10 +29,10 @@ def verify_receipt(receipt: dict[str, Any]) -> None:
     if _digest_json(unsigned) != supplied_digest:
         raise ValueError("Receipt SHA-256 does not match receipt contents")
 
-    if receipt.get("schema") != "neurofly-real-smoke-v2":
-        raise ValueError("Unsupported real-smoke receipt schema")
+    if receipt.get("schema") not in VALID_RECEIPT_SCHEMAS:
+        raise ValueError("Unsupported MaleCNS receipt schema")
     if receipt.get("passed") is not True:
-        raise ValueError("Real MaleCNS smoke did not pass")
+        raise ValueError("Real MaleCNS run did not pass")
     if receipt.get("backend") != "malecns":
         raise ValueError("Receipt backend is not MaleCNS")
     if receipt.get("neural_activity_verified") is not True:
@@ -60,6 +61,13 @@ def verify_receipt(receipt: dict[str, Any]) -> None:
         if not math.isfinite(brain_ms) or brain_ms <= 0 or total_spikes <= 0:
             raise ValueError(f"Trajectory state {index} lacks verifiable neural activity")
 
+    if receipt.get("schema") == "neurofly-self-training-v1":
+        if receipt.get("goal") != "maze_cleared":
+            raise ValueError("Self-training receipt has the wrong goal")
+        final_state = receipt.get("final_state") or {}
+        if final_state.get("goal") != "maze_cleared":
+            raise ValueError("Self-training final state does not certify the clear goal")
+
 
 def build_site_state(receipt: dict[str, Any]) -> dict[str, Any]:
     verify_receipt(receipt)
@@ -69,8 +77,11 @@ def build_site_state(receipt: dict[str, Any]) -> dict[str, Any]:
         "backend": "malecns",
         "mode": "recorded-malecns",
         "generated_unix": time.time(),
+        "source_receipt_schema": receipt["schema"],
         "source_receipt_sha256": receipt["receipt_sha256"],
         "stonkfly_commit": receipt["stonkfly_commit"],
+        "goal": receipt.get("goal"),
+        "reward_policy": receipt.get("reward_policy"),
         "steps": receipt["steps"],
         "trajectory": receipt["trajectory"],
         "final_state": receipt["final_state"],
