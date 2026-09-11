@@ -1,0 +1,115 @@
+name: Free Full MaleCNS Smoke
+
+on:
+  pull_request:
+    branches: ["feature/v0.3-real-brain-runtime"]
+    paths:
+      - ".github/workflows/full-malecns-free.yml"
+      - "src/**"
+      - "pyproject.toml"
+  workflow_dispatch:
+    inputs:
+      steps:
+        description: "Number of real MaleCNS Maze decisions"
+        required: false
+        default: "1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: neurofly-full-malecns-free
+  cancel-in-progress: false
+
+jobs:
+  full-malecns-free:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.ref == 'feature/v0.4-full-malecns-smoke'
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      NEUROFLY_STATE: runs/free-malecns
+      CHECKPOINT: runs/free-malecns/brain.npz
+      RECEIPT: runs/free-malecns/real-smoke-receipt.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Show free-runner resources
+        run: |
+          free -h || true
+          df -h /
+
+      - name: Restore prepared MaleCNS cache
+        id: malecns-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+
+      - name: Restore latest NeuroFly state
+        uses: actions/cache/restore@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-state-${{ github.run_id }}
+          restore-keys: |
+            neurofly-state-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare and verify MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$NEUROFLY_STATE"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+          python -m neurofly host-preflight | tee "$NEUROFLY_STATE/preflight.json"
+
+      - name: Run real MaleCNS Maze smoke
+        env:
+          INPUT_STEPS: ${{ inputs.steps || '1' }}
+        run: |
+          python -m neurofly real-smoke \
+            --steps "$INPUT_STEPS" \
+            --checkpoint "$CHECKPOINT" \
+            --receipt "$RECEIPT"
+
+      - name: Check dataset cache size
+        id: dataset-size
+        shell: bash
+        run: |
+          bytes=$(du -sb "$STONKFLY_DATA" | cut -f1)
+          echo "bytes=$bytes" >> "$GITHUB_OUTPUT"
+          if [ "$bytes" -lt 9000000000 ]; then
+            echo "cacheable=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "cacheable=false" >> "$GITHUB_OUTPUT"
+            echo "MaleCNS cache is above the 9 GB safety ceiling; skip cache save."
+          fi
+
+      - name: Save prepared MaleCNS cache
+        if: steps.malecns-cache.outputs.cache-hit != 'true' && steps.dataset-size.outputs.cacheable == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+
+      - name: Save resumable NeuroFly state
+        uses: actions/cache/save@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-state-${{ github.run_id }}
+
+      - name: Publish small evidence files
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-full-malecns-evidence-${{ github.run_id }}
+          path: |
+            runs/free-malecns/preflight.json
+            runs/free-malecns/real-smoke-receipt.json
+          retention-days: 1
