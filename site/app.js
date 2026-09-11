@@ -16,15 +16,16 @@
   const CELL_X = canvas.width / COLS;
   const CELL_Y = canvas.height / ROWS;
   const VALID_ACTIONS = new Set(['TURN_LEFT', 'TURN_RIGHT', 'FORWARD', 'HOLD']);
-  const PLAYBACK_MS = 650;
-  const REFRESH_MS = 8000;
+  const LIVE_RELAY = 'https://neurofly-live-relay.onrender.com/events';
   const IDLE_ENEMY_MS = 520;
+  const LIVE_SILENCE_MS = 5500;
+  const FALLBACK_REFRESH_MS = 60000;
 
-  let activeReceipt = '';
-  let playbackTimer = null;
-  let idleEnemyTimer = null;
   let currentView = null;
-  let currentPayload = null;
+  let idleEnemyTimer = null;
+  let liveSilenceTimer = null;
+  let liveSequence = -1;
+  let liveSeen = false;
   let flashUntil = 0;
   let flashText = '';
 
@@ -49,8 +50,7 @@
     if (!payload || payload.schema !== 'neurofly-malecns-site-state-v1') return false;
     if (payload.verified !== true || payload.backend !== 'malecns') return false;
     if (!/^[a-f0-9]{64}$/i.test(payload.source_receipt_sha256 || '')) return false;
-    if (!Array.isArray(payload.trajectory) || payload.trajectory.length < 1) return false;
-    return payload.trajectory.every(neuralStateIsVerified);
+    return neuralStateIsVerified(payload.final_state || payload.trajectory?.at?.(-1));
   }
 
   function roundedRect(x, y, w, h, r) {
@@ -124,18 +124,14 @@
     ctx.textAlign = 'center';
     ctx.fillStyle = '#d8ff73';
     ctx.font = '800 34px system-ui, sans-serif';
-    ctx.fillText('MALECNS LOCKED', canvas.width / 2, canvas.height / 2 - 12);
+    ctx.fillText('MALECNS', canvas.width / 2, canvas.height / 2 - 12);
     ctx.fillStyle = '#a8bbb3';
     ctx.font = '16px system-ui, sans-serif';
     ctx.fillText(message, canvas.width / 2, canvas.height / 2 + 26);
   }
 
   function draw(view) {
-    if (!neuralStateIsVerified(view)) {
-      drawWaiting('No verified neural decision available.');
-      return;
-    }
-
+    if (!neuralStateIsVerified(view)) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
     gradient.addColorStop(0, '#06100d');
@@ -179,37 +175,25 @@
     }
   }
 
-  function updateGoalHud(payload, view) {
-    const finalState = payload.final_state || view || {};
-    const history = Array.isArray(finalState.clear_history) ? finalState.clear_history : [];
-    ui.first.textContent = formatSeconds(finalState.first_clear_seconds);
-    ui.latest.textContent = formatSeconds(finalState.latest_clear_seconds);
-    ui.best.textContent = formatSeconds(finalState.best_clear_seconds);
-    ui.clears.textContent = String(finalState.total_clears || history.length || 0);
-
-    if (history.length) {
-      ui.history.textContent = history.slice(-5).map(item =>
-        `#${item.clear_index} ${formatSeconds(item.seconds)} · ${item.ticks} decisions`
-      ).join('   ');
-    } else {
-      ui.history.textContent = 'No clear yet';
-    }
+  function updateGoalHud(view) {
+    const history = Array.isArray(view?.clear_history) ? view.clear_history : [];
+    ui.first.textContent = formatSeconds(view?.first_clear_seconds);
+    ui.latest.textContent = formatSeconds(view?.latest_clear_seconds);
+    ui.best.textContent = formatSeconds(view?.best_clear_seconds);
+    ui.clears.textContent = String(view?.total_clears || history.length || 0);
+    ui.history.textContent = history.length
+      ? history.slice(-5).map(item => `#${item.clear_index} ${formatSeconds(item.seconds)} · ${item.ticks} decisions`).join('   ')
+      : 'No clear yet';
   }
 
   function openNeighbors(view, enemy) {
     const grid = view.grid || [];
-    const candidates = [
+    return [
       { x: enemy.x + 1, y: enemy.y },
       { x: enemy.x - 1, y: enemy.y },
       { x: enemy.x, y: enemy.y + 1 },
       { x: enemy.x, y: enemy.y - 1 },
-    ];
-    return candidates.filter(({ x, y }) => {
-      if (x < 0 || y < 0 || x >= COLS || y >= ROWS) return false;
-      if ((grid[y] || '')[x] === '#') return false;
-      if (view.fly && view.fly.x === x && view.fly.y === y) return false;
-      return true;
-    });
+    ].filter(({ x, y }) => x >= 0 && y >= 0 && x < COLS && y < ROWS && (grid[y] || '')[x] !== '#');
   }
 
   function stopIdleEnemies() {
@@ -220,80 +204,90 @@
   function startIdleEnemies() {
     stopIdleEnemies();
     if (!currentView || !neuralStateIsVerified(currentView)) return;
-
     let idleTick = 0;
     idleEnemyTimer = setInterval(() => {
-      if (playbackTimer || !currentView) return;
+      if (!currentView) return;
       const enemies = (currentView.enemies || []).map((enemy, index) => {
         const options = openNeighbors(currentView, enemy);
         if (!options.length) return { ...enemy };
-        const pick = options[(idleTick + index * 2) % options.length];
-        return { ...pick };
+        return { ...options[(idleTick + index * 2) % options.length] };
       });
       idleTick += 1;
       currentView = { ...currentView, enemies };
       draw(currentView);
-      if (currentPayload) updateGoalHud(currentPayload, currentView);
-      ui.status.textContent = `MALECNS RESTING · environment active · episode ${currentView.episode}`;
+      ui.status.textContent = `WAITING NEURAL DECISION · environment active · episode ${currentView.episode}`;
     }, IDLE_ENEMY_MS);
   }
 
-  function playPayload(payload) {
-    clearInterval(playbackTimer);
-    stopIdleEnemies();
-    currentPayload = payload;
-    const trajectory = payload.trajectory;
-    let index = 0;
-    ui.badge.textContent = 'MALECNS · VERIFIED';
-    updateGoalHud(payload, trajectory[0]);
-
-    const show = () => {
-      const view = trajectory[index];
-      currentView = view;
-      draw(view);
-      updateGoalHud(payload, view);
-      ui.status.textContent = `SELF-TRAINING · decision ${index + 1}/${trajectory.length} · episode ${view.episode}`;
-
-      if (view.last_event === 'captured') {
-        flashText = 'CAPTURED · RESTART';
-        flashUntil = Date.now() + 900;
-      } else if (view.last_event === 'maze_cleared') {
-        flashText = `CLEAR · ${formatSeconds(view.latest_clear_seconds)}`;
-        flashUntil = Date.now() + 1400;
-      }
-
-      index += 1;
-      if (index >= trajectory.length) {
-        clearInterval(playbackTimer);
-        playbackTimer = null;
-        ui.status.textContent = `MALECNS RESTING · environment active · episode ${view.episode}`;
-        startIdleEnemies();
-      }
-    };
-
-    show();
-    if (trajectory.length > 1) playbackTimer = setInterval(show, PLAYBACK_MS);
-  }
-
-  async function refresh() {
-    try {
-      const response = await fetch(`./malecns-state.json?t=${Date.now()}`, { cache: 'no-store' });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const payload = await response.json();
-      if (!payloadIsVerified(payload)) throw new Error('unverified MaleCNS state');
-      if (payload.source_receipt_sha256 === activeReceipt) return;
-      activeReceipt = payload.source_receipt_sha256;
-      playPayload(payload);
-    } catch (error) {
-      if (!activeReceipt) {
-        ui.badge.textContent = 'MALECNS · LOCKED';
-        ui.status.textContent = 'Waiting for verified MaleCNS training data';
-        drawWaiting('Waiting for verified MaleCNS training data.');
-      }
+  function flashForState(view) {
+    if (view.last_event === 'captured') {
+      flashText = 'CAPTURED · RESTART';
+      flashUntil = Date.now() + 900;
+    } else if (view.last_event === 'maze_cleared') {
+      flashText = `CLEAR · ${formatSeconds(view.latest_clear_seconds)}`;
+      flashUntil = Date.now() + 1400;
     }
   }
 
-  drawWaiting('Checking verified MaleCNS training data…');
-  refresh();
-  setInterval(refresh, REFRESH_MS);
+  function showLiveState(event) {
+    const view = event?.state;
+    if (event?.schema !== 'neurofly-live-state-v1' || event?.verified !== true || event?.backend !== 'malecns') return;
+    if (!neuralStateIsVerified(view)) return;
+    const seq = Number(event.relay_sequence ?? event.sequence ?? -1);
+    if (Number.isFinite(seq) && seq <= liveSequence) return;
+    liveSequence = seq;
+    liveSeen = true;
+    stopIdleEnemies();
+    clearTimeout(liveSilenceTimer);
+    currentView = view;
+    flashForState(view);
+    draw(view);
+    updateGoalHud(view);
+    ui.badge.textContent = 'MALECNS · LIVE';
+    ui.status.textContent = `LIVE · decision ${event.sequence} · ${view.last_action} · episode ${view.episode}`;
+    liveSilenceTimer = setTimeout(() => {
+      ui.status.textContent = `MALECNS COMPUTING NEXT DECISION · episode ${currentView?.episode || '—'}`;
+      startIdleEnemies();
+    }, LIVE_SILENCE_MS);
+  }
+
+  async function loadFallback() {
+    try {
+      const response = await fetch(`./malecns-state.json?t=${Date.now()}`, { cache: 'no-store' });
+      if (!response.ok) return;
+      const payload = await response.json();
+      if (!payloadIsVerified(payload) || liveSeen) return;
+      const view = payload.final_state || payload.trajectory[payload.trajectory.length - 1];
+      currentView = view;
+      draw(view);
+      updateGoalHud(view);
+      ui.badge.textContent = 'MALECNS · LAST VERIFIED';
+      ui.status.textContent = `WAITING LIVE MALECNS · episode ${view.episode}`;
+      startIdleEnemies();
+    } catch (_) {
+      // Static fallback is optional; SSE is the primary live path.
+    }
+  }
+
+  function connectLive() {
+    const source = new EventSource(LIVE_RELAY);
+    source.addEventListener('malecns', event => {
+      try { showLiveState(JSON.parse(event.data)); } catch (_) {}
+    });
+    source.onopen = () => {
+      if (!liveSeen) {
+        ui.badge.textContent = 'MALECNS · LIVE LINK';
+        ui.status.textContent = 'LIVE LINK READY · waiting neural decision';
+      }
+    };
+    source.onerror = () => {
+      if (liveSeen) ui.status.textContent = 'LIVE LINK RECONNECTING…';
+      else ui.badge.textContent = 'MALECNS · CONNECTING';
+    };
+  }
+
+  drawWaiting('Connecting to live neural decisions…');
+  loadFallback();
+  connectLive();
+  setInterval(() => { if (!liveSeen) loadFallback(); }, FALLBACK_REFRESH_MS);
 })();
