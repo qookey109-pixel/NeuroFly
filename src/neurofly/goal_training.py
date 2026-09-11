@@ -35,6 +35,9 @@ class GoalMazeEnvironment(MazeEnvironment):
         super().reset(reason)
         self.world_ticks = 0
 
+    def effective_world_tick_seconds(self, default: float) -> float:
+        return float(default)
+
     def restore(self, payload: dict[str, Any]) -> None:
         super().restore(payload)
         self.total_ticks = max(self.ticks, int(payload.get("total_ticks", self.ticks)))
@@ -200,11 +203,12 @@ class GoalMazeSession:
         checkpoint_every: float = 300.0,
         seed: int = 109,
         world_tick_seconds: float = 0.5,
+        environment: GoalMazeEnvironment | None = None,
     ) -> None:
         if world_tick_seconds <= 0:
             raise ValueError("world_tick_seconds must be > 0")
         self.brain = brain
-        self.environment = GoalMazeEnvironment(seed=seed)
+        self.environment = environment or GoalMazeEnvironment(seed=seed)
         self.checkpoint = Path(checkpoint) if checkpoint else None
         self.checkpoint_every = float(checkpoint_every)
         self.world_tick_seconds = float(world_tick_seconds)
@@ -224,6 +228,12 @@ class GoalMazeSession:
                 if pending in {"none", "reward", "aversive"}:
                     self.pending_reinforcement = pending
 
+    def _effective_world_tick_seconds(self) -> float:
+        interval = float(self.environment.effective_world_tick_seconds(self.world_tick_seconds))
+        if interval <= 0:
+            raise ValueError("effective world tick interval must be > 0")
+        return interval
+
     def _snapshot_locked(
         self,
         *,
@@ -239,7 +249,7 @@ class GoalMazeSession:
             "telemetry": {} if active_decision is None else active_decision.telemetry,
         }
         data["state_kind"] = state_kind
-        data["world_tick_seconds"] = self.world_tick_seconds
+        data["world_tick_seconds"] = self._effective_world_tick_seconds()
         if step_event is not None:
             data["step_event"] = step_event
         if decision is not None:
@@ -267,7 +277,10 @@ class GoalMazeSession:
         stop_event: threading.Event,
         on_world_tick: Callable[[dict[str, Any]], None] | None,
     ) -> None:
-        while not stop_event.wait(self.world_tick_seconds):
+        while True:
+            interval = self._effective_world_tick_seconds()
+            if stop_event.wait(interval):
+                return
             emitted: list[dict[str, Any]] = []
             terminal = False
             with self._lock:
@@ -325,7 +338,7 @@ class GoalMazeSession:
             decision = self.brain.decide(frame, reinforcement, context=context)
         finally:
             stop_event.set()
-            world_thread.join(timeout=max(1.0, self.world_tick_seconds * 3))
+            world_thread.join(timeout=max(1.0, self._effective_world_tick_seconds() * 3))
 
         with self._lock:
             self.last_decision = decision
