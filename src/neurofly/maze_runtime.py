@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import json
 import random
 import time
@@ -101,6 +102,53 @@ class MazeEnvironment:
         self.last_reward = 0.0
         self.last_event = reason
         self.started_monotonic = time.monotonic()
+
+    def restore(self, payload: dict[str, Any]) -> None:
+        grid_rows = payload.get("grid")
+        if (
+            not isinstance(grid_rows, list)
+            or len(grid_rows) != self.rows
+            or any(not isinstance(row, str) or len(row) != self.cols for row in grid_rows)
+        ):
+            raise ValueError("Invalid persisted maze grid")
+        if any(cell not in "#.o " for row in grid_rows for cell in row):
+            raise ValueError("Invalid persisted maze cell")
+
+        fly = payload.get("fly")
+        enemies = payload.get("enemies")
+        if not isinstance(fly, dict) or fly.get("dir") not in DIRS:
+            raise ValueError("Invalid persisted fly state")
+        if not isinstance(enemies, list) or not enemies:
+            raise ValueError("Invalid persisted enemy state")
+
+        self.grid = [list(row) for row in grid_rows]
+        self.fly = {"x": int(fly["x"]), "y": int(fly["y"]), "dir": str(fly["dir"])}
+        self.enemies = [{"x": int(e["x"]), "y": int(e["y"])} for e in enemies]
+        if not self.is_open(self.fly["x"], self.fly["y"]):
+            raise ValueError("Persisted fly is outside the maze")
+        if any(not self.is_open(e["x"], e["y"]) for e in self.enemies):
+            raise ValueError("Persisted enemy is outside the maze")
+
+        self.episode = max(1, int(payload.get("episode", 1)))
+        self.ticks = max(0, int(payload.get("ticks", 0)))
+        self.power_ticks = max(0, int(payload.get("power_ticks", 0)))
+        self.last_action = str(payload.get("last_action", "HOLD"))
+        if self.last_action not in {"TURN_LEFT", "TURN_RIGHT", "FORWARD", "HOLD"}:
+            raise ValueError("Invalid persisted action")
+        self.last_reward = float(payload.get("last_reward", 0.0))
+        self.episode_reward = float(payload.get("episode_reward", 0.0))
+        self.cumulative_reward = float(payload.get("cumulative_reward", 0.0))
+        self.episode_food = max(0, int(payload.get("episode_food", 0)))
+        self.total_food = max(self.episode_food, int(payload.get("total_food", self.episode_food)))
+        self.total_deaths = max(0, int(payload.get("total_deaths", 0)))
+        self.total_clears = max(0, int(payload.get("total_clears", 0)))
+        self.last_event = payload.get("last_event")
+        survival = max(0.0, float(payload.get("survival_seconds", 0.0)))
+        self.started_monotonic = time.monotonic() - survival
+
+        rng_state = payload.get("_rng_state")
+        if isinstance(rng_state, str):
+            self.rng.setstate(ast.literal_eval(rng_state))
 
     def is_open(self, x: int, y: int) -> bool:
         return 0 <= x < self.cols and 0 <= y < self.rows and self.grid[y][x] != "#"
@@ -287,6 +335,11 @@ class MazeEnvironment:
             snapshot["grid"] = ["".join(row) for row in self.grid]
         return snapshot
 
+    def persistence_snapshot(self) -> dict[str, Any]:
+        data = self.snapshot(include_grid=True)
+        data["_rng_state"] = repr(self.rng.getstate())
+        return data
+
     def render_rgb(self, *, width: int = 320, height: int = 180) -> Any:
         """Render the same environment into RGB pixels for the fly visual adapter."""
         try:
@@ -338,6 +391,14 @@ class MazeSession:
         self.last_checkpoint = time.monotonic()
         self.last_decision: BrainDecision | None = None
 
+        if self.checkpoint:
+            state_path = self.checkpoint.with_suffix(".maze.json")
+            if state_path.exists():
+                payload = json.loads(state_path.read_text())
+                if not isinstance(payload, dict):
+                    raise ValueError("Persisted maze state must be a JSON object")
+                self.environment.restore(payload)
+
     def tick(self) -> dict[str, Any]:
         context = self.environment.snapshot(include_grid=False)
         try:
@@ -378,7 +439,9 @@ class MazeSession:
         self.checkpoint.parent.mkdir(parents=True, exist_ok=True)
         self.brain.save(self.checkpoint)
         state_path = self.checkpoint.with_suffix(".maze.json")
-        state_path.write_text(json.dumps(self.environment.snapshot(), indent=2) + "\n")
+        temporary = state_path.with_suffix(state_path.suffix + ".partial")
+        temporary.write_text(json.dumps(self.environment.persistence_snapshot(), indent=2) + "\n")
+        temporary.replace(state_path)
 
     def snapshot(self) -> dict[str, Any]:
         data = self.environment.snapshot()
