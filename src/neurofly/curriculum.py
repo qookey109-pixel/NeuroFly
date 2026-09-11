@@ -118,7 +118,8 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
 
     def restore(self, payload: dict[str, Any]) -> None:
         super().restore(payload)
-        if payload.get("curriculum_version") == CURRICULUM_VERSION:
+        same_curriculum = payload.get("curriculum_version") == CURRICULUM_VERSION
+        if same_curriculum:
             stage = int(payload.get("curriculum_stage", 1))
             self.curriculum_stage = min(len(STAGES), max(1, stage))
             counts = payload.get("stage_clear_counts") or {}
@@ -131,13 +132,16 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
             if isinstance(history, list):
                 self.stage_history = [dict(item) for item in history if isinstance(item, dict)]
             self._advance_on_reset = bool(payload.get("advance_on_reset", False))
-        else:
-            # V0.5 migration: retain the trained brain and global counters, but
-            # start the new curriculum at Stage 1 instead of inheriting a hard maze.
-            self.curriculum_stage = 1
-            self.stage_clear_counts = {str(stage.number): 0 for stage in STAGES}
-            self.stage_history = []
-            self._advance_on_reset = False
+            # The superclass already restored exact grid/fly/enemy/RNG state.
+            # Do not regenerate the stage here or eaten food would reappear.
+            return
+
+        # V0.5 migration: retain the trained brain and global counters, but start
+        # the new curriculum at Stage 1 instead of inheriting the hard live maze.
+        self.curriculum_stage = 1
+        self.stage_clear_counts = {str(stage.number): 0 for stage in STAGES}
+        self.stage_history = []
+        self._advance_on_reset = False
         self._apply_stage_layout()
 
     def snapshot(self, *, include_grid: bool = True) -> dict[str, Any]:
