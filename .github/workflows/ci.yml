@@ -25,6 +25,12 @@ jobs:
           python -m neurofly upstream-status
           python -m neurofly brain-status
           python -m neurofly maze-run --brain demo --steps 3 --interval 0 --checkpoint ""
+          set +e
+          python -m neurofly host-preflight >/tmp/neurofly-preflight.json
+          rc=$?
+          set -e
+          test "$rc" -eq 2
+          grep -q '"ready": false' /tmp/neurofly-preflight.json
       - name: Tests
         run: pytest -q
 
@@ -53,6 +59,21 @@ jobs:
           curl --fail --silent --show-error http://127.0.0.1:8765/api/status | grep -q '"backend":"demo"'
           curl --fail --silent --show-error http://127.0.0.1:8765/api/state | grep -q '"grid"'
 
+  render-blueprint-safety:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate guarded production profile
+        run: |
+          test -f render.yaml
+          grep -q 'plan: 2c-16g' render.yaml
+          grep -q 'region: singapore' render.yaml
+          grep -q 'autoDeployTrigger: off' render.yaml
+          grep -q 'mountPath: /var/data' render.yaml
+          grep -q 'sizeGB: 20' render.yaml
+          grep -q 'STONKFLY_DATA' render.yaml
+          grep -q 'cloud-server' render.yaml
+
   stonkfly-integration:
     runs-on: ubuntu-latest
     steps:
@@ -68,9 +89,12 @@ jobs:
           python - <<'PY'
           from stonkfly.neural.visual import VisualMemoryBrain
           from neurofly.brain_runtime import MaleCNSBrain, brain_status
+          from neurofly.preflight import collect_preflight
           status = brain_status()
+          preflight = collect_preflight()
           assert status["installed"] is True
           assert status["prepared"] is False
+          assert preflight["ready"] is False
           assert VisualMemoryBrain is not None
           assert MaleCNSBrain is not None
           print(status)
