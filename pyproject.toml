@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neurofly"
+version = "0.1.0.dev0"
+description = "A connectome-driven agent playground for Drosophila neural experiments"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "NeuroFly contributors"}]
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=9,<10"]
+stonkfly = [
+  "stonkfly @ git+https://github.com/nftechie/stonkfly.git@78ef3e05ab0fa086032098558d893667068944a0"
+]
+
+[project.scripts]
+neurofly = "neurofly.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
