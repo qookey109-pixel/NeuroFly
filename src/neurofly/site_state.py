@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from .curriculum import CURRICULUM_VERSION, STAGES
 from .upstream import STONKFLY_COMMIT
 
 
@@ -15,8 +16,13 @@ VALID_RECEIPT_SCHEMAS = {
     "neurofly-real-smoke-v2",
     "neurofly-self-training-v1",
     "neurofly-self-training-v2",
+    "neurofly-self-training-v3",
 }
-SELF_TRAINING_SCHEMAS = {"neurofly-self-training-v1", "neurofly-self-training-v2"}
+SELF_TRAINING_SCHEMAS = {
+    "neurofly-self-training-v1",
+    "neurofly-self-training-v2",
+    "neurofly-self-training-v3",
+}
 
 
 def _digest_json(value: Any) -> str:
@@ -74,16 +80,31 @@ def verify_receipt(receipt: dict[str, Any]) -> None:
         if final_state.get("goal") != "maze_cleared":
             raise ValueError("Self-training final state does not certify the clear goal")
 
-    if schema == "neurofly-self-training-v2":
+    if schema in {"neurofly-self-training-v2", "neurofly-self-training-v3"}:
         try:
             world_tick_seconds = float(receipt.get("world_tick_seconds"))
             world_states_seen = int(receipt.get("world_states_seen", 0))
         except (TypeError, ValueError, OverflowError) as exc:
-            raise ValueError("Self-training v2 lacks world-clock evidence") from exc
+            raise ValueError("Self-training receipt lacks world-clock evidence") from exc
         if not math.isfinite(world_tick_seconds) or world_tick_seconds <= 0:
-            raise ValueError("Self-training v2 has an invalid world tick interval")
+            raise ValueError("Self-training receipt has an invalid world tick interval")
         if world_states_seen < 0:
-            raise ValueError("Self-training v2 has an invalid world-state count")
+            raise ValueError("Self-training receipt has an invalid world-state count")
+
+    if schema == "neurofly-self-training-v3":
+        if receipt.get("curriculum") is not True:
+            raise ValueError("Self-training v3 must explicitly enable curriculum")
+        if receipt.get("curriculum_version") != CURRICULUM_VERSION:
+            raise ValueError("Self-training v3 curriculum version is not recognized")
+        final_state = receipt.get("final_state") or {}
+        if final_state.get("curriculum_version") != CURRICULUM_VERSION:
+            raise ValueError("Final state does not certify the curriculum version")
+        try:
+            stage = int(final_state.get("curriculum_stage"))
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError("Final state lacks a valid curriculum stage") from exc
+        if not 1 <= stage <= len(STAGES):
+            raise ValueError("Final state curriculum stage is out of range")
 
 
 def build_site_state(receipt: dict[str, Any]) -> dict[str, Any]:
@@ -101,6 +122,8 @@ def build_site_state(receipt: dict[str, Any]) -> dict[str, Any]:
         "reward_policy": receipt.get("reward_policy"),
         "world_tick_seconds": receipt.get("world_tick_seconds"),
         "world_states_seen": receipt.get("world_states_seen"),
+        "curriculum": receipt.get("curriculum"),
+        "curriculum_version": receipt.get("curriculum_version"),
         "steps": receipt["steps"],
         "trajectory": receipt["trajectory"],
         "final_state": receipt["final_state"],
