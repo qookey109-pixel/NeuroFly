@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import platform
 import time
 from pathlib import Path
@@ -13,9 +14,61 @@ from .preflight import collect_preflight
 from .upstream import STONKFLY_COMMIT
 
 
+VALID_ACTIONS = {"TURN_LEFT", "TURN_RIGHT", "FORWARD", "HOLD"}
+
+
 def _digest_json(value: Any) -> str:
     encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), default=str).encode()
     return hashlib.sha256(encoded).hexdigest()
+
+
+def _public_maze_state(state: dict[str, Any]) -> dict[str, Any]:
+    brain = state.get("brain") or {}
+    telemetry = brain.get("telemetry") or {}
+    return {
+        "grid": list(state.get("grid") or []),
+        "fly": dict(state.get("fly") or {}),
+        "enemies": [dict(enemy) for enemy in state.get("enemies") or []],
+        "power_ticks": int(state.get("power_ticks") or 0),
+        "episode": int(state.get("episode") or 1),
+        "ticks": int(state.get("ticks") or 0),
+        "episode_reward": float(state.get("episode_reward") or 0.0),
+        "cumulative_reward": float(state.get("cumulative_reward") or 0.0),
+        "episode_food": int(state.get("episode_food") or 0),
+        "food_left": int(state.get("food_left") or 0),
+        "total_deaths": int(state.get("total_deaths") or 0),
+        "total_clears": int(state.get("total_clears") or 0),
+        "survival_seconds": float(state.get("survival_seconds") or 0.0),
+        "last_action": str(state.get("last_action") or "HOLD"),
+        "last_reward": float(state.get("last_reward") or 0.0),
+        "last_event": state.get("step_event") or state.get("last_event"),
+        "brain": {
+            "backend": str(brain.get("backend") or "unknown"),
+            "telemetry": {
+                "brain_ms": telemetry.get("brain_ms"),
+                "compute_seconds": telemetry.get("compute_seconds"),
+                "total_spikes": telemetry.get("total_spikes"),
+                "reward_spikes": telemetry.get("reward_spikes"),
+                "aversive_spikes": telemetry.get("aversive_spikes"),
+                "kc_spikes": telemetry.get("kc_spikes"),
+                "memory": telemetry.get("memory"),
+            },
+        },
+    }
+
+
+def _neural_decision_verified(state: dict[str, Any]) -> bool:
+    brain = state.get("brain") or {}
+    telemetry = brain.get("telemetry") or {}
+    action = state.get("last_action")
+    brain_ms = telemetry.get("brain_ms")
+    total_spikes = telemetry.get("total_spikes")
+    try:
+        brain_ms_ok = math.isfinite(float(brain_ms)) and float(brain_ms) > 0
+        spikes_ok = int(total_spikes) > 0
+    except (TypeError, ValueError, OverflowError):
+        return False
+    return brain.get("backend") == "malecns" and action in VALID_ACTIONS and brain_ms_ok and spikes_ok
 
 
 def run_real_smoke(
@@ -45,10 +98,18 @@ def run_real_smoke(
     brain = MaleCNSBrain(checkpoint=checkpoint)
     session = MazeSession(brain, checkpoint=checkpoint, seed=seed)
     observations: list[dict[str, Any]] = []
+    public_states: list[dict[str, Any]] = []
 
     for index in range(1, steps + 1):
         state = session.tick()
         telemetry = state["brain"]["telemetry"]
+        verified = _neural_decision_verified(state)
+        if not verified:
+            raise RuntimeError(
+                "MaleCNS returned a decision without verifiable neural activity; refusing to publish gameplay"
+            )
+        public_state = _public_maze_state(state)
+        public_states.append(public_state)
         observations.append(
             {
                 "step": index,
@@ -63,15 +124,17 @@ def run_real_smoke(
                 "aversive_spikes": telemetry.get("aversive_spikes"),
                 "kc_spikes": telemetry.get("kc_spikes"),
                 "memory_sha256": (telemetry.get("memory") or {}).get("sha256"),
+                "neural_activity_verified": True,
             }
         )
 
     session.save()
     finished = time.time()
     body: dict[str, Any] = {
-        "schema": "neurofly-real-smoke-v1",
+        "schema": "neurofly-real-smoke-v2",
         "passed": True,
         "backend": "malecns",
+        "neural_activity_verified": True,
         "stonkfly_commit": STONKFLY_COMMIT,
         "seed": seed,
         "steps": steps,
@@ -85,6 +148,8 @@ def run_real_smoke(
         "preflight": preflight,
         "checkpoint": str(checkpoint),
         "observations": observations,
+        "trajectory": public_states,
+        "final_state": public_states[-1],
     }
     body["receipt_sha256"] = _digest_json(body)
     receipt.parent.mkdir(parents=True, exist_ok=True)
