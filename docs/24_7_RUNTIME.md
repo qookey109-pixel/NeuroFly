@@ -43,9 +43,41 @@ GitHub Pages / visualizer
 
 The worker owns simulation time, episodes, rewards, world state and neural state. The website is an observer/controller and may disconnect without stopping the experiment.
 
+## Mode C — zero-cost segmented MaleCNS runtime
+
+V0.4 adds a free alternative for users who do not want paid always-on hosting.
+
+A public GitHub repository can use standard GitHub-hosted `ubuntu-latest` runners. NeuroFly uses those finite sessions as resumable experiment chunks:
+
+```text
+checkpoint N
+    |
+    v
+GitHub Actions runner
+    |
+    v
+MaleCNS decisions
+    |
+    v
+checkpoint N+1
+    |
+    v
+runner stops
+```
+
+This is **continuity across runs**, not a literal uninterrupted 24/7 operating-system process. The brain state and Maze state are restored on the next bounded run.
+
+The free workflow is:
+
+```text
+.github/workflows/full-malecns-free.yml
+```
+
+It keeps prepared MaleCNS data in a separate cache from changing NeuroFly experiment state. Dataset cache saving is skipped above a 9 GB safety ceiling.
+
 ## Commands
 
-Run headless:
+Run headless on an adequate local machine:
 
 ```bash
 python -m neurofly maze-run \
@@ -53,7 +85,7 @@ python -m neurofly maze-run \
   --checkpoint runs/maze-fly-001/brain.npz
 ```
 
-Run the website and API from the same always-on process:
+Run the website and API from the same process:
 
 ```bash
 python -m neurofly maze-server \
@@ -71,12 +103,12 @@ https://qookey109-pixel.github.io/NeuroFly/?api=https://YOUR-BACKEND
 
 ## Persistence
 
-V0.3 checkpoints two coordinated pieces of state:
+NeuroFly checkpoints two coordinated pieces of state:
 
 1. the brain checkpoint (`brain.npz` for MaleCNS);
 2. the Maze world state (`brain.maze.json`).
 
-The Maze checkpoint includes the current episode, fly position/direction, enemies, remaining food, reward totals, power state and Python RNG state. On process restart the world resumes from the saved state rather than silently starting a fresh experiment.
+The Maze checkpoint includes the current episode, fly position/direction, enemies, remaining food, reward totals, power state and Python RNG state. On process restart or the next segmented free run, the world resumes from the saved state rather than silently starting a fresh experiment.
 
 Checkpoint writes for the Maze JSON use a temporary file followed by an atomic replace.
 
@@ -90,11 +122,11 @@ python -m stonkfly prepare
 python -m neurofly brain-status
 ```
 
-The pinned Stonkfly preparation verifies source checksums and the retained graph. The full runtime requires several GB of storage and a C++17 compiler. Upstream currently recommends about 16 GB RAM for the retained MaleCNS workload.
+The pinned Stonkfly preparation verifies source checksums and the retained graph. Upstream recommends 16 GB RAM and several GB of storage for the full retained MaleCNS workload.
 
 ## API
 
-V0.3 exposes:
+The persistent server exposes:
 
 ```text
 GET  /api/status
@@ -104,28 +136,27 @@ POST /api/control
 
 `POST /api/control` supports pause/resume, reset and decision cadence changes. CORS headers are emitted so a GitHub Pages viewer can observe a separately hosted backend.
 
-## Hosting
+## Zero-cost policy
 
-A real 24/7 MaleCNS experiment requires an always-on machine or service with enough RAM, storage and persistent disk for checkpoints/data.
+NeuroFly V0.4 does not include a paid Render deployment template. The default operational path is:
 
-Recommended separation:
+- **GitHub Pages** — free static viewer;
+- **standard GitHub Actions runner** — free bounded full-MaleCNS execution for this public repo;
+- **GitHub Actions cache** — prepared data and resumable experiment state within cache limits;
+- **small evidence artifacts** — receipts only, short retention.
 
-- **GitHub Pages** — static public viewer;
-- **always-on Linux host / VPS / suitable container host** — `maze-server` or `maze-run`;
-- **persistent disk** — MaleCNS prepared data and checkpoint pair;
-- **process supervisor** — restart NeuroFly if the process exits.
-
-GitHub Actions is used for CI/deployment automation and is intentionally **not** used as the permanent simulation host.
+An always-on machine remains optional if one is already available without additional cost.
 
 ## Validation boundary
 
 Normal CI validates:
 
-- Python 3.11 and 3.12 package/runtime contract;
+- Python package/runtime contract;
 - the headless Maze loop using `DemoBrain`;
 - persistent server startup;
 - `/api/status` and `/api/state` responses;
 - JavaScript syntax and static-site serving;
-- checkpoint/restore of Maze world state.
+- checkpoint/restore of Maze world state;
+- free-runner workflow safety.
 
-CI deliberately does not download the multi-GB MaleCNS dataset. Therefore a green ordinary CI run does not claim that a full 166,700-neuron execution happened in GitHub Actions. A true MaleCNS run requires a prepared host and is tracked separately.
+The separate free full-MaleCNS workflow is the only GitHub Actions path intended to download/prepare the real connectome and produce a `FULL_MALECNS_SMOKE_PASS` receipt.
