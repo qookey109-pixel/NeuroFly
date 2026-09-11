@@ -13,6 +13,11 @@ class Experiment:
 
 EXPERIMENTS: tuple[Experiment, ...] = (
     Experiment(
+        "maze-chase",
+        "Maze Chase",
+        "Primary game experiment: eat pellets, navigate a maze, avoid roaming enemies, and learn from engineered reward/aversive feedback.",
+    ),
+    Experiment(
         "light-chase",
         "Light Chase",
         "Drive a tiny agent from visual/light input and decode orientation-like output.",
