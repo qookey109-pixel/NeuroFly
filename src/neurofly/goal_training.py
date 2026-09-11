@@ -1,23 +1,24 @@
 from __future__ import annotations
 
 import json
+import threading
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from .brain_runtime import BrainBackend, BrainDecision
-from .maze_runtime import MazeEnvironment
+from .maze_runtime import MazeEnvironment, StepResult
+
+
+def _reinforcement_for_reward(reward: float) -> str:
+    if reward >= 0.5:
+        return "reward"
+    if reward <= -0.5:
+        return "aversive"
+    return "none"
 
 
 class GoalMazeEnvironment(MazeEnvironment):
-    """Maze variant whose dominant objective is clearing the level.
-
-    The agent still receives sparse shaping for food so reinforcement can begin
-    before the first full clear, but maze completion is intentionally much more
-    valuable than any intermediate event. Enemy contact always terminates the
-    episode, even while the power timer is active.
-    """
-
     step_cost = -0.01
     food_reward = 1.0
     energy_food_reward = 2.0
@@ -26,12 +27,22 @@ class GoalMazeEnvironment(MazeEnvironment):
 
     def __init__(self, *, seed: int = 109) -> None:
         self.total_ticks = 0
+        self.total_world_ticks = 0
         self.clear_history: list[dict[str, Any]] = []
         super().__init__(seed=seed)
+
+    def reset(self, reason: str = "reset") -> None:
+        super().reset(reason)
+        self.world_ticks = 0
 
     def restore(self, payload: dict[str, Any]) -> None:
         super().restore(payload)
         self.total_ticks = max(self.ticks, int(payload.get("total_ticks", self.ticks)))
+        self.world_ticks = max(0, int(payload.get("world_ticks", 0)))
+        self.total_world_ticks = max(
+            self.world_ticks,
+            int(payload.get("total_world_ticks", self.world_ticks)),
+        )
         history = payload.get("clear_history") or []
         if not isinstance(history, list):
             raise ValueError("Invalid clear history")
@@ -46,6 +57,8 @@ class GoalMazeEnvironment(MazeEnvironment):
                     "seconds": max(0.0, float(item.get("seconds", 0.0))),
                     "ticks": max(1, int(item.get("ticks", 1))),
                     "total_ticks": max(1, int(item.get("total_ticks", 1))),
+                    "world_ticks": max(0, int(item.get("world_ticks", 0))),
+                    "total_world_ticks": max(0, int(item.get("total_world_ticks", 0))),
                 }
             )
         self.clear_history = cleaned
@@ -59,10 +72,33 @@ class GoalMazeEnvironment(MazeEnvironment):
                 "seconds": round(time.monotonic() - self.started_monotonic, 3),
                 "ticks": self.ticks,
                 "total_ticks": self.total_ticks,
+                "world_ticks": self.world_ticks,
+                "total_world_ticks": self.total_world_ticks,
             }
         )
 
-    def step(self, action: str):
+    def _finish_reward(self, reward: float, event: str | None) -> None:
+        self.last_reward = reward
+        self.episode_reward += reward
+        self.cumulative_reward += reward
+        self.last_event = event
+
+    def world_step(self) -> StepResult:
+        self.world_ticks += 1
+        self.total_world_ticks += 1
+        self._move_enemies()
+        if self._collision() is not None:
+            self.total_deaths += 1
+            reward = self.captured_penalty
+            self._finish_reward(reward, "captured")
+            return StepResult(reward=reward, event="captured", terminal=True)
+        if self.power_ticks > 0:
+            self.power_ticks -= 1
+        self.last_reward = 0.0
+        self.last_event = None
+        return StepResult(reward=0.0, event=None, terminal=False)
+
+    def agent_step(self, action: str, *, move_enemies: bool) -> StepResult:
         if action not in {"TURN_LEFT", "TURN_RIGHT", "FORWARD", "HOLD"}:
             raise ValueError(f"Unknown maze action: {action}")
 
@@ -74,30 +110,37 @@ class GoalMazeEnvironment(MazeEnvironment):
         terminal = False
         self._move_fly(action)
 
-        cell = self.grid[self.fly["y"]][self.fly["x"]]
-        if cell == ".":
-            self.grid[self.fly["y"]][self.fly["x"]] = " "
-            reward += self.food_reward
-            self.episode_food += 1
-            self.total_food += 1
-            event = "food"
-        elif cell == "o":
-            self.grid[self.fly["y"]][self.fly["x"]] = " "
-            reward += self.energy_food_reward
-            self.episode_food += 1
-            self.total_food += 1
-            self.power_ticks = 34
-            event = "energy_food"
-
-        self._move_enemies()
         if self._collision() is not None:
             reward += self.captured_penalty
             self.total_deaths += 1
             event = "captured"
             terminal = True
 
-        if self.power_ticks > 0:
-            self.power_ticks -= 1
+        if not terminal:
+            cell = self.grid[self.fly["y"]][self.fly["x"]]
+            if cell == ".":
+                self.grid[self.fly["y"]][self.fly["x"]] = " "
+                reward += self.food_reward
+                self.episode_food += 1
+                self.total_food += 1
+                event = "food"
+            elif cell == "o":
+                self.grid[self.fly["y"]][self.fly["x"]] = " "
+                reward += self.energy_food_reward
+                self.episode_food += 1
+                self.total_food += 1
+                self.power_ticks = 34
+                event = "energy_food"
+
+        if not terminal and move_enemies:
+            self._move_enemies()
+            if self._collision() is not None:
+                reward += self.captured_penalty
+                self.total_deaths += 1
+                event = "captured"
+                terminal = True
+            if self.power_ticks > 0:
+                self.power_ticks -= 1
 
         if not terminal and self.food_left() == 0:
             reward += self.clear_reward
@@ -106,15 +149,11 @@ class GoalMazeEnvironment(MazeEnvironment):
             event = "maze_cleared"
             terminal = True
 
-        self.last_reward = reward
-        self.episode_reward += reward
-        self.cumulative_reward += reward
-        self.last_event = event
-
-        # Import here to keep the base module as the authority for the result type.
-        from .maze_runtime import StepResult
-
+        self._finish_reward(reward, event)
         return StepResult(reward=reward, event=event, terminal=terminal)
+
+    def step(self, action: str) -> StepResult:
+        return self.agent_step(action, move_enemies=True)
 
     def snapshot(self, *, include_grid: bool = True) -> dict[str, Any]:
         data = super().snapshot(include_grid=include_grid)
@@ -125,6 +164,8 @@ class GoalMazeEnvironment(MazeEnvironment):
             {
                 "goal": "maze_cleared",
                 "total_ticks": self.total_ticks,
+                "world_ticks": self.world_ticks,
+                "total_world_ticks": self.total_world_ticks,
                 "clear_history": [dict(item) for item in self.clear_history],
                 "first_clear_seconds": None if first is None else first["seconds"],
                 "latest_clear_seconds": None if latest is None else latest["seconds"],
@@ -142,6 +183,8 @@ class GoalMazeEnvironment(MazeEnvironment):
             {
                 "goal": "maze_cleared",
                 "total_ticks": self.total_ticks,
+                "world_ticks": self.world_ticks,
+                "total_world_ticks": self.total_world_ticks,
                 "clear_history": [dict(item) for item in self.clear_history],
             }
         )
@@ -156,13 +199,19 @@ class GoalMazeSession:
         checkpoint: str | Path | None = None,
         checkpoint_every: float = 300.0,
         seed: int = 109,
+        world_tick_seconds: float = 0.5,
     ) -> None:
+        if world_tick_seconds <= 0:
+            raise ValueError("world_tick_seconds must be > 0")
         self.brain = brain
         self.environment = GoalMazeEnvironment(seed=seed)
         self.checkpoint = Path(checkpoint) if checkpoint else None
         self.checkpoint_every = float(checkpoint_every)
+        self.world_tick_seconds = float(world_tick_seconds)
         self.last_checkpoint = time.monotonic()
         self.last_decision: BrainDecision | None = None
+        self.pending_reinforcement = "none"
+        self._lock = threading.RLock()
 
         if self.checkpoint:
             state_path = self.checkpoint.with_suffix(".maze.json")
@@ -171,28 +220,137 @@ class GoalMazeSession:
                 if not isinstance(payload, dict):
                     raise ValueError("Persisted maze state must be a JSON object")
                 self.environment.restore(payload)
+                pending = str(payload.get("_pending_reinforcement", "none"))
+                if pending in {"none", "reward", "aversive"}:
+                    self.pending_reinforcement = pending
 
-    def tick(self) -> dict[str, Any]:
-        context = self.environment.snapshot(include_grid=False)
-        frame = self.environment.render_rgb()
-        decision = self.brain.decide(
-            frame,
-            self.environment.reinforcement(),
-            context=context,
-        )
-        self.last_decision = decision
-        result = self.environment.step(decision.action)
-        terminal_snapshot = self.environment.snapshot()
-        terminal_snapshot["brain"] = {
-            "backend": decision.backend,
-            "telemetry": decision.telemetry,
+    def _snapshot_locked(
+        self,
+        *,
+        decision: BrainDecision | None = None,
+        state_kind: str,
+        step_event: str | None = None,
+        decision_applied: bool | None = None,
+    ) -> dict[str, Any]:
+        data = self.environment.snapshot()
+        active_decision = decision if decision is not None else self.last_decision
+        data["brain"] = {
+            "backend": getattr(self.brain, "name", type(self.brain).__name__),
+            "telemetry": {} if active_decision is None else active_decision.telemetry,
         }
-        terminal_snapshot["step_event"] = result.event
+        data["state_kind"] = state_kind
+        data["world_tick_seconds"] = self.world_tick_seconds
+        if step_event is not None:
+            data["step_event"] = step_event
+        if decision is not None:
+            data["decision_action"] = decision.action
+        if decision_applied is not None:
+            data["decision_applied"] = bool(decision_applied)
+        return data
 
-        if result.terminal:
-            self.environment.reset(result.event or "terminal")
-        self._checkpoint_if_due()
-        return terminal_snapshot
+    @staticmethod
+    def _emit(
+        callback: Callable[[dict[str, Any]], None] | None,
+        state: dict[str, Any],
+    ) -> None:
+        if callback is None:
+            return
+        try:
+            callback(state)
+        except Exception:
+            return
+
+    def _run_world_clock(
+        self,
+        *,
+        observed_episode: int,
+        stop_event: threading.Event,
+        on_world_tick: Callable[[dict[str, Any]], None] | None,
+    ) -> None:
+        while not stop_event.wait(self.world_tick_seconds):
+            emitted: list[dict[str, Any]] = []
+            terminal = False
+            with self._lock:
+                if self.environment.episode != observed_episode:
+                    return
+                result = self.environment.world_step()
+                emitted.append(
+                    self._snapshot_locked(
+                        state_kind="world_tick",
+                        step_event=result.event,
+                    )
+                )
+                terminal = result.terminal
+                if terminal:
+                    self.pending_reinforcement = _reinforcement_for_reward(result.reward)
+                    self.environment.reset(result.event or "terminal")
+                    emitted.append(
+                        self._snapshot_locked(
+                            state_kind="episode_reset",
+                            step_event="episode_reset",
+                        )
+                    )
+            for state in emitted:
+                self._emit(on_world_tick, state)
+            if terminal:
+                return
+
+    def tick(
+        self,
+        *,
+        on_world_tick: Callable[[dict[str, Any]], None] | None = None,
+    ) -> dict[str, Any]:
+        with self._lock:
+            observed_episode = self.environment.episode
+            context = self.environment.snapshot(include_grid=False)
+            frame = self.environment.render_rgb()
+            reinforcement = self.pending_reinforcement
+            if reinforcement == "none":
+                reinforcement = self.environment.reinforcement()
+            self.pending_reinforcement = "none"
+
+        stop_event = threading.Event()
+        world_thread = threading.Thread(
+            target=self._run_world_clock,
+            kwargs={
+                "observed_episode": observed_episode,
+                "stop_event": stop_event,
+                "on_world_tick": on_world_tick,
+            },
+            name="neurofly-world-clock",
+            daemon=True,
+        )
+        world_thread.start()
+        try:
+            decision = self.brain.decide(frame, reinforcement, context=context)
+        finally:
+            stop_event.set()
+            world_thread.join(timeout=max(1.0, self.world_tick_seconds * 3))
+
+        with self._lock:
+            self.last_decision = decision
+            if self.environment.episode != observed_episode:
+                state = self._snapshot_locked(
+                    decision=decision,
+                    state_kind="stale_decision",
+                    step_event="decision_discarded",
+                    decision_applied=False,
+                )
+                self._checkpoint_if_due()
+                return state
+
+            result = self.environment.agent_step(decision.action, move_enemies=False)
+            self.pending_reinforcement = _reinforcement_for_reward(result.reward)
+            terminal_snapshot = self._snapshot_locked(
+                decision=decision,
+                state_kind="neural_decision",
+                step_event=result.event,
+                decision_applied=True,
+            )
+            if result.terminal:
+                self.environment.reset(result.event or "terminal")
+            self._checkpoint_if_due()
+            return terminal_snapshot
 
     def _checkpoint_if_due(self) -> None:
         if not self.checkpoint:
@@ -206,17 +364,16 @@ class GoalMazeSession:
     def save(self) -> None:
         if not self.checkpoint:
             return
-        self.checkpoint.parent.mkdir(parents=True, exist_ok=True)
-        self.brain.save(self.checkpoint)
-        state_path = self.checkpoint.with_suffix(".maze.json")
-        temporary = state_path.with_suffix(state_path.suffix + ".partial")
-        temporary.write_text(json.dumps(self.environment.persistence_snapshot(), indent=2) + "\n")
-        temporary.replace(state_path)
+        with self._lock:
+            self.checkpoint.parent.mkdir(parents=True, exist_ok=True)
+            self.brain.save(self.checkpoint)
+            state_path = self.checkpoint.with_suffix(".maze.json")
+            temporary = state_path.with_suffix(state_path.suffix + ".partial")
+            payload = self.environment.persistence_snapshot()
+            payload["_pending_reinforcement"] = self.pending_reinforcement
+            temporary.write_text(json.dumps(payload, indent=2) + "\n")
+            temporary.replace(state_path)
 
     def snapshot(self) -> dict[str, Any]:
-        data = self.environment.snapshot()
-        data["brain"] = {
-            "backend": getattr(self.brain, "name", type(self.brain).__name__),
-            "telemetry": {} if self.last_decision is None else self.last_decision.telemetry,
-        }
-        return data
+        with self._lock:
+            return self._snapshot_locked(state_kind="snapshot")
