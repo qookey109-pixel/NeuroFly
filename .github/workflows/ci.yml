@@ -51,8 +51,12 @@ jobs:
           grep -q 'MALECNS · VERIFYING' site/index.html
           grep -q 'FIRST CLEAR' site/index.html
           grep -q 'source_receipt_sha256' site/malecns-state.json
+          grep -q 'WORLD LIVE' site/app.js
           ! grep -q 'speedSelect' site/app.js
           ! grep -q 'startDemo' site/app.js
+          ! grep -q 'startIdleEnemies' site/app.js
+          ! grep -q 'openNeighbors' site/app.js
+          ! grep -q 'IDLE_ENEMY_MS' site/app.js
           ! grep -q 'toggleButton' site/index.html
           ! grep -q 'architecture-card' site/index.html
           python - <<'PY'
