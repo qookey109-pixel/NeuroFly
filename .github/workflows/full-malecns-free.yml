@@ -11,6 +11,10 @@ on:
         description: "Number of real MaleCNS training decisions"
         required: false
         default: "1200"
+      world_tick_seconds:
+        description: "Authoritative enemy/world tick interval"
+        required: false
+        default: "0.5"
 
 permissions:
   contents: write
@@ -71,13 +75,15 @@ jobs:
           python -m neurofly brain-status
           python -m neurofly host-preflight | tee "$NEUROFLY_STATE/preflight.json"
 
-      - name: Let MaleCNS train itself toward maze clear
+      - name: Let MaleCNS train against authoritative world clock
         env:
-          INPUT_STEPS: ${{ inputs.steps || '1200' }}
+          INPUT_STEPS: ${{ github.event_name == 'workflow_dispatch' && inputs.steps || '60' }}
+          WORLD_TICK_SECONDS: ${{ github.event_name == 'workflow_dispatch' && inputs.world_tick_seconds || '0.5' }}
         run: |
           python -m neurofly.training \
             --steps "$INPUT_STEPS" \
             --playback-steps 240 \
+            --world-tick-seconds "$WORLD_TICK_SECONDS" \
             --checkpoint "$CHECKPOINT" \
             --receipt "$RECEIPT"
 
@@ -91,15 +97,20 @@ jobs:
           state = json.load(open('site/malecns-state.json'))
           assert state['verified'] is True
           assert state['backend'] == 'malecns'
-          assert state['source_receipt_schema'] == 'neurofly-self-training-v1'
+          assert state['source_receipt_schema'] == 'neurofly-self-training-v2'
           assert state['goal'] == 'maze_cleared'
+          assert float(state['world_tick_seconds']) > 0
+          assert int(state['world_states_seen']) > 0
           assert state['trajectory']
           assert all(s['brain']['backend'] == 'malecns' for s in state['trajectory'])
           assert all(int(s['brain']['telemetry']['total_spikes']) > 0 for s in state['trajectory'])
           final = state['final_state']
+          assert int(final.get('total_world_ticks', 0)) > 0
           print(
-              'SELF_TRAINING_GATE_PASS',
+              'SELF_TRAINING_V2_GATE_PASS',
               state['source_receipt_sha256'],
+              'world_states=', state['world_states_seen'],
+              'world_ticks=', final.get('total_world_ticks', 0),
               'clears=', final.get('total_clears', 0),
               'deaths=', final.get('total_deaths', 0),
           )
@@ -117,7 +128,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "Verified game state is unchanged."
           else
-            git commit -m "state: publish self-trained MaleCNS trajectory [skip ci]"
+            git commit -m "state: publish authoritative MaleCNS world trajectory [skip ci]"
             git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
 
