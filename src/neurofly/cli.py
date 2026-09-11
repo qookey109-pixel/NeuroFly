@@ -8,7 +8,7 @@ from .brain_runtime import DemoBrain, MaleCNSBrain, brain_status
 from .experiments import list_experiments
 from .maze_runtime import MazeSession
 from .preflight import collect_preflight
-from .server import run_server
+from .server import run_cloud_server, run_server
 from .smoke import run_real_smoke
 from .upstream import stonkfly_status
 
@@ -110,6 +110,17 @@ def _maze_server(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cloud_server(args: argparse.Namespace) -> int:
+    run_cloud_server(
+        host=args.host,
+        port=args.port,
+        tick_seconds=args.tick_seconds,
+        checkpoint=args.checkpoint,
+        site_dir=args.site_dir,
+    )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="neurofly",
@@ -151,6 +162,16 @@ def build_parser() -> argparse.ArgumentParser:
     server.add_argument("--tick-seconds", type=float, default=0.6)
     server.add_argument("--checkpoint", default="runs/maze-fly-001/brain.npz")
     server.add_argument("--site-dir", default="site")
+
+    cloud = subparsers.add_parser(
+        "cloud-server",
+        help="start a health-safe cloud bootstrap that promotes to MaleCNS after preparation",
+    )
+    cloud.add_argument("--host", default="0.0.0.0")
+    cloud.add_argument("--port", type=int, default=8765)
+    cloud.add_argument("--tick-seconds", type=float, default=0.6)
+    cloud.add_argument("--checkpoint", default="/var/data/neurofly/maze-fly-001/brain.npz")
+    cloud.add_argument("--site-dir", default="site")
     return parser
 
 
@@ -170,4 +191,6 @@ def main(argv: list[str] | None = None) -> int:
         return _maze_run(args)
     if args.command == "maze-server":
         return _maze_server(args)
+    if args.command == "cloud-server":
+        return _cloud_server(args)
     raise RuntimeError(f"Unhandled command: {args.command}")
