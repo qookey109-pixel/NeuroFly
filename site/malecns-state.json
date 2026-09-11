@@ -1,7 +1,467 @@
 {
+  "backend": "malecns",
+  "final_state": {
+    "brain": {
+      "backend": "malecns",
+      "telemetry": {
+        "aversive_spikes": 83,
+        "brain_ms": 3500.0,
+        "compute_seconds": 3.646431494000055,
+        "kc_spikes": 4491,
+        "memory": {
+          "changed_edges": 3107,
+          "mean_efficacy": 0.9986042976379395,
+          "minimum_efficacy": 0.43391427397727966,
+          "model": "stonkfly-dual-compartment-v1",
+          "plastic_edges": 7835,
+          "sha256": "7af5f684ffd272bbac484a2a58a8647deab4c22f7ceb5260a2a800c02afd5e0f"
+        },
+        "reward_spikes": 0,
+        "total_spikes": 606683
+      }
+    },
+    "cumulative_reward": 0.07,
+    "enemies": [
+      {
+        "x": 16,
+        "y": 10
+      },
+      {
+        "x": 11,
+        "y": 1
+      }
+    ],
+    "episode": 1,
+    "episode_food": 0,
+    "episode_reward": 0.07,
+    "fly": {
+      "dir": "LEFT",
+      "x": 1,
+      "y": 1
+    },
+    "food_left": 158,
+    "grid": [
+      "###################",
+      "# .............. o#",
+      "#...#.........#...#",
+      "#.###.##.#....#...#",
+      "#...#....#.##.###.#",
+      "#........#....#...#",
+      "#...#...o.....#...#",
+      "#...#....#........#",
+      "#.####.#.#....#...#",
+      "#...#......#.####.#",
+      "#...#....#....#...#",
+      "#.....##.#.##..o..#",
+      "#o............... #",
+      "###################"
+    ],
+    "last_action": "HOLD",
+    "last_event": null,
+    "last_reward": 0.01,
+    "power_ticks": 0,
+    "survival_seconds": 18.0,
+    "ticks": 7,
+    "total_clears": 0,
+    "total_deaths": 0
+  },
+  "generated_unix": 1789146500.5561051,
+  "mode": "recorded-malecns",
   "schema": "neurofly-malecns-site-state-v1",
-  "verified": false,
-  "backend": "locked",
-  "mode": "waiting-malecns",
-  "message": "Waiting for a verified MaleCNS real-smoke receipt. The website must not run Demo gameplay."
+  "source_receipt_sha256": "f544344cfcfaffdfc62b7898d80bc9bb0a68cf9d380ef48ad3667e7ff9bd466b",
+  "steps": 6,
+  "stonkfly_commit": "78ef3e05ab0fa086032098558d893667068944a0",
+  "trajectory": [
+    {
+      "brain": {
+        "backend": "malecns",
+        "telemetry": {
+          "aversive_spikes": 7,
+          "brain_ms": 1000.0,
+          "compute_seconds": 1.5042284799999521,
+          "kc_spikes": 11,
+          "memory": {
+            "changed_edges": 5,
+            "mean_efficacy": 1.0000097751617432,
+            "minimum_efficacy": 1.0,
+            "model": "stonkfly-dual-compartment-v1",
+            "plastic_edges": 7835,
+            "sha256": "3a97065bb996a237702353857b17ac408b3e300be535b45e0269b917e509f8d5"
+          },
+          "reward_spikes": 0,
+          "total_spikes": 386396
+        }
+      },
+      "cumulative_reward": 0.02,
+      "enemies": [
+        {
+          "x": 17,
+          "y": 10
+        },
+        {
+          "x": 14,
+          "y": 1
+        }
+      ],
+      "episode": 1,
+      "episode_food": 0,
+      "episode_reward": 0.02,
+      "fly": {
+        "dir": "LEFT",
+        "x": 1,
+        "y": 1
+      },
+      "food_left": 158,
+      "grid": [
+        "###################",
+        "# .............. o#",
+        "#...#.........#...#",
+        "#.###.##.#....#...#",
+        "#...#....#.##.###.#",
+        "#........#....#...#",
+        "#...#...o.....#...#",
+        "#...#....#........#",
+        "#.####.#.#....#...#",
+        "#...#......#.####.#",
+        "#...#....#....#...#",
+        "#.....##.#.##..o..#",
+        "#o............... #",
+        "###################"
+      ],
+      "last_action": "TURN_RIGHT",
+      "last_event": null,
+      "last_reward": 0.01,
+      "power_ticks": 0,
+      "survival_seconds": 4.5,
+      "ticks": 2,
+      "total_clears": 0,
+      "total_deaths": 0
+    },
+    {
+      "brain": {
+        "backend": "malecns",
+        "telemetry": {
+          "aversive_spikes": 6,
+          "brain_ms": 1500.0,
+          "compute_seconds": 1.5204647220000425,
+          "kc_spikes": 10,
+          "memory": {
+            "changed_edges": 5,
+            "mean_efficacy": 1.0000174045562744,
+            "minimum_efficacy": 1.0,
+            "model": "stonkfly-dual-compartment-v1",
+            "plastic_edges": 7835,
+            "sha256": "ba479a83d844cb03655a694d27d7d7a821814a9b970a25d11d9bfa286e3a801a"
+          },
+          "reward_spikes": 0,
+          "total_spikes": 390482
+        }
+      },
+      "cumulative_reward": 0.03,
+      "enemies": [
+        {
+          "x": 17,
+          "y": 9
+        },
+        {
+          "x": 13,
+          "y": 1
+        }
+      ],
+      "episode": 1,
+      "episode_food": 0,
+      "episode_reward": 0.03,
+      "fly": {
+        "dir": "UP",
+        "x": 1,
+        "y": 1
+      },
+      "food_left": 158,
+      "grid": [
+        "###################",
+        "# .............. o#",
+        "#...#.........#...#",
+        "#.###.##.#....#...#",
+        "#...#....#.##.###.#",
+        "#........#....#...#",
+        "#...#...o.....#...#",
+        "#...#....#........#",
+        "#.####.#.#....#...#",
+        "#...#......#.####.#",
+        "#...#....#....#...#",
+        "#.....##.#.##..o..#",
+        "#o............... #",
+        "###################"
+      ],
+      "last_action": "TURN_RIGHT",
+      "last_event": null,
+      "last_reward": 0.01,
+      "power_ticks": 0,
+      "survival_seconds": 6.1,
+      "ticks": 3,
+      "total_clears": 0,
+      "total_deaths": 0
+    },
+    {
+      "brain": {
+        "backend": "malecns",
+        "telemetry": {
+          "aversive_spikes": 9,
+          "brain_ms": 2000.0,
+          "compute_seconds": 1.5274292959999656,
+          "kc_spikes": 13,
+          "memory": {
+            "changed_edges": 5,
+            "mean_efficacy": 1.0000181198120117,
+            "minimum_efficacy": 1.0,
+            "model": "stonkfly-dual-compartment-v1",
+            "plastic_edges": 7835,
+            "sha256": "6d4d55d33766031a39fd63474ca4cba5ea1339276e292cd935eb46df00d57710"
+          },
+          "reward_spikes": 0,
+          "total_spikes": 390883
+        }
+      },
+      "cumulative_reward": 0.04,
+      "enemies": [
+        {
+          "x": 17,
+          "y": 10
+        },
+        {
+          "x": 12,
+          "y": 1
+        }
+      ],
+      "episode": 1,
+      "episode_food": 0,
+      "episode_reward": 0.04,
+      "fly": {
+        "dir": "RIGHT",
+        "x": 1,
+        "y": 1
+      },
+      "food_left": 158,
+      "grid": [
+        "###################",
+        "# .............. o#",
+        "#...#.........#...#",
+        "#.###.##.#....#...#",
+        "#...#....#.##.###.#",
+        "#........#....#...#",
+        "#...#...o.....#...#",
+        "#...#....#........#",
+        "#.####.#.#....#...#",
+        "#...#......#.####.#",
+        "#...#....#....#...#",
+        "#.....##.#.##..o..#",
+        "#o............... #",
+        "###################"
+      ],
+      "last_action": "TURN_RIGHT",
+      "last_event": null,
+      "last_reward": 0.01,
+      "power_ticks": 0,
+      "survival_seconds": 7.7,
+      "ticks": 4,
+      "total_clears": 0,
+      "total_deaths": 0
+    },
+    {
+      "brain": {
+        "backend": "malecns",
+        "telemetry": {
+          "aversive_spikes": 60,
+          "brain_ms": 2500.0,
+          "compute_seconds": 2.7907438340000255,
+          "kc_spikes": 4173,
+          "memory": {
+            "changed_edges": 2859,
+            "mean_efficacy": 1.0018088817596436,
+            "minimum_efficacy": 0.8296995162963867,
+            "model": "stonkfly-dual-compartment-v1",
+            "plastic_edges": 7835,
+            "sha256": "dfe492570e92b633c932bfc797f10f22f24a91e3566fb01dfdfc004785a72733"
+          },
+          "reward_spikes": 1,
+          "total_spikes": 522026
+        }
+      },
+      "cumulative_reward": 0.05,
+      "enemies": [
+        {
+          "x": 17,
+          "y": 9
+        },
+        {
+          "x": 11,
+          "y": 1
+        }
+      ],
+      "episode": 1,
+      "episode_food": 0,
+      "episode_reward": 0.05,
+      "fly": {
+        "dir": "DOWN",
+        "x": 1,
+        "y": 1
+      },
+      "food_left": 158,
+      "grid": [
+        "###################",
+        "# .............. o#",
+        "#...#.........#...#",
+        "#.###.##.#....#...#",
+        "#...#....#.##.###.#",
+        "#........#....#...#",
+        "#...#...o.....#...#",
+        "#...#....#........#",
+        "#.####.#.#....#...#",
+        "#...#......#.####.#",
+        "#...#....#....#...#",
+        "#.....##.#.##..o..#",
+        "#o............... #",
+        "###################"
+      ],
+      "last_action": "TURN_RIGHT",
+      "last_event": null,
+      "last_reward": 0.01,
+      "power_ticks": 0,
+      "survival_seconds": 10.5,
+      "ticks": 5,
+      "total_clears": 0,
+      "total_deaths": 0
+    },
+    {
+      "brain": {
+        "backend": "malecns",
+        "telemetry": {
+          "aversive_spikes": 75,
+          "brain_ms": 3000.0,
+          "compute_seconds": 3.6869160779999675,
+          "kc_spikes": 4203,
+          "memory": {
+            "changed_edges": 2998,
+            "mean_efficacy": 0.9997307062149048,
+            "minimum_efficacy": 0.5902934670448303,
+            "model": "stonkfly-dual-compartment-v1",
+            "plastic_edges": 7835,
+            "sha256": "6dc74c832cad13b246d9c8a962bda2af5558a20873c1bf1dd5d687f57949e3b8"
+          },
+          "reward_spikes": 0,
+          "total_spikes": 611040
+        }
+      },
+      "cumulative_reward": 0.06,
+      "enemies": [
+        {
+          "x": 17,
+          "y": 10
+        },
+        {
+          "x": 11,
+          "y": 2
+        }
+      ],
+      "episode": 1,
+      "episode_food": 0,
+      "episode_reward": 0.06,
+      "fly": {
+        "dir": "LEFT",
+        "x": 1,
+        "y": 1
+      },
+      "food_left": 158,
+      "grid": [
+        "###################",
+        "# .............. o#",
+        "#...#.........#...#",
+        "#.###.##.#....#...#",
+        "#...#....#.##.###.#",
+        "#........#....#...#",
+        "#...#...o.....#...#",
+        "#...#....#........#",
+        "#.####.#.#....#...#",
+        "#...#......#.####.#",
+        "#...#....#....#...#",
+        "#.....##.#.##..o..#",
+        "#o............... #",
+        "###################"
+      ],
+      "last_action": "TURN_RIGHT",
+      "last_event": null,
+      "last_reward": 0.01,
+      "power_ticks": 0,
+      "survival_seconds": 14.3,
+      "ticks": 6,
+      "total_clears": 0,
+      "total_deaths": 0
+    },
+    {
+      "brain": {
+        "backend": "malecns",
+        "telemetry": {
+          "aversive_spikes": 83,
+          "brain_ms": 3500.0,
+          "compute_seconds": 3.646431494000055,
+          "kc_spikes": 4491,
+          "memory": {
+            "changed_edges": 3107,
+            "mean_efficacy": 0.9986042976379395,
+            "minimum_efficacy": 0.43391427397727966,
+            "model": "stonkfly-dual-compartment-v1",
+            "plastic_edges": 7835,
+            "sha256": "7af5f684ffd272bbac484a2a58a8647deab4c22f7ceb5260a2a800c02afd5e0f"
+          },
+          "reward_spikes": 0,
+          "total_spikes": 606683
+        }
+      },
+      "cumulative_reward": 0.07,
+      "enemies": [
+        {
+          "x": 16,
+          "y": 10
+        },
+        {
+          "x": 11,
+          "y": 1
+        }
+      ],
+      "episode": 1,
+      "episode_food": 0,
+      "episode_reward": 0.07,
+      "fly": {
+        "dir": "LEFT",
+        "x": 1,
+        "y": 1
+      },
+      "food_left": 158,
+      "grid": [
+        "###################",
+        "# .............. o#",
+        "#...#.........#...#",
+        "#.###.##.#....#...#",
+        "#...#....#.##.###.#",
+        "#........#....#...#",
+        "#...#...o.....#...#",
+        "#...#....#........#",
+        "#.####.#.#....#...#",
+        "#...#......#.####.#",
+        "#...#....#....#...#",
+        "#.....##.#.##..o..#",
+        "#o............... #",
+        "###################"
+      ],
+      "last_action": "HOLD",
+      "last_event": null,
+      "last_reward": 0.01,
+      "power_ticks": 0,
+      "survival_seconds": 18.0,
+      "ticks": 7,
+      "total_clears": 0,
+      "total_deaths": 0
+    }
+  ],
+  "verified": true
 }
