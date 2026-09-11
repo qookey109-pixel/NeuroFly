@@ -9,6 +9,7 @@ from .experiments import list_experiments
 from .maze_runtime import MazeSession
 from .preflight import collect_preflight
 from .server import run_cloud_server, run_server
+from .site_state import publish_site_state
 from .smoke import run_real_smoke
 from .upstream import stonkfly_status
 
@@ -54,6 +55,12 @@ def _real_smoke(args: argparse.Namespace) -> int:
         seed=args.seed,
         allow_low_memory=args.allow_low_memory,
     )
+    print(json.dumps(result, indent=2, sort_keys=True))
+    return 0
+
+
+def _publish_site_state(args: argparse.Namespace) -> int:
+    result = publish_site_state(receipt_path=args.receipt, output_path=args.output)
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0
 
@@ -147,6 +154,13 @@ def build_parser() -> argparse.ArgumentParser:
     smoke.add_argument("--seed", type=int, default=109)
     smoke.add_argument("--allow-low-memory", action="store_true")
 
+    publish = subparsers.add_parser(
+        "publish-site-state",
+        help="publish a website state only from a verified MaleCNS real-smoke receipt",
+    )
+    publish.add_argument("--receipt", required=True)
+    publish.add_argument("--output", default="site/malecns-state.json")
+
     run = subparsers.add_parser("maze-run", help="run the persistent Maze Chase loop without a browser")
     run.add_argument("--brain", choices=("demo", "malecns"), default="demo")
     run.add_argument("--steps", type=int, default=0, help="0 means run until interrupted")
@@ -187,6 +201,8 @@ def main(argv: list[str] | None = None) -> int:
         return _host_preflight(args)
     if args.command == "real-smoke":
         return _real_smoke(args)
+    if args.command == "publish-site-state":
+        return _publish_site_state(args)
     if args.command == "maze-run":
         return _maze_run(args)
     if args.command == "maze-server":
