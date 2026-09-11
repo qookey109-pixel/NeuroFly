@@ -1,27 +1,23 @@
-name: NeuroFly Self Training
+name: NeuroFly Curriculum Training
 
 on:
   push:
-    branches: ["feature/v0.5-self-training-goal"]
+    branches: ["feature/v0.6-curriculum-learning"]
     paths:
       - ".github/workflows/full-malecns-free.yml"
   workflow_dispatch:
     inputs:
       steps:
-        description: "Number of real MaleCNS training decisions"
+        description: "Number of real MaleCNS curriculum decisions"
         required: false
         default: "1200"
-      world_tick_seconds:
-        description: "Authoritative enemy/world tick interval"
-        required: false
-        default: "0.5"
 
 permissions:
   contents: write
   id-token: write
 
 concurrency:
-  group: neurofly-self-training
+  group: neurofly-v06-curriculum-training
   cancel-in-progress: true
 
 jobs:
@@ -33,7 +29,7 @@ jobs:
       NEUROFLY_STATE: runs/free-malecns
       CHECKPOINT: runs/free-malecns/brain.npz
       RECEIPT: runs/free-malecns/self-training-receipt.json
-      NEUROFLY_LIVE_RELAY_URL: https://neurofly-live-relay.onrender.com
+      NEUROFLY_LIVE_RELAY_URL: https://neurofly-curriculum-relay.onrender.com
 
     steps:
       - uses: actions/checkout@v4
@@ -57,12 +53,13 @@ jobs:
           path: /home/runner/.cache/neurofly/stonkfly
           key: malecns-v1-${{ hashFiles('pyproject.toml') }}
 
-      - name: Restore latest NeuroFly brain and maze state
+      - name: Restore V0.6 state or migrate latest V0.5 state
         uses: actions/cache/restore@v4
         with:
           path: runs/free-malecns
-          key: neurofly-state-${{ github.run_id }}-${{ github.run_attempt }}
+          key: neurofly-v06-state-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
+            neurofly-v06-state-
             neurofly-state-
 
       - name: Install pinned Stonkfly integration
@@ -75,19 +72,18 @@ jobs:
           python -m neurofly brain-status
           python -m neurofly host-preflight | tee "$NEUROFLY_STATE/preflight.json"
 
-      - name: Let MaleCNS train against authoritative world clock
+      - name: Let MaleCNS train through staged curriculum
         env:
-          INPUT_STEPS: ${{ github.event_name == 'workflow_dispatch' && inputs.steps || '60' }}
-          WORLD_TICK_SECONDS: ${{ github.event_name == 'workflow_dispatch' && inputs.world_tick_seconds || '0.5' }}
+          INPUT_STEPS: ${{ github.event_name == 'workflow_dispatch' && inputs.steps || '30' }}
         run: |
           python -m neurofly.training \
+            --curriculum \
             --steps "$INPUT_STEPS" \
             --playback-steps 240 \
-            --world-tick-seconds "$WORLD_TICK_SECONDS" \
             --checkpoint "$CHECKPOINT" \
             --receipt "$RECEIPT"
 
-      - name: Build verified game state
+      - name: Build verified curriculum state
         run: |
           python -m neurofly publish-site-state \
             --receipt "$RECEIPT" \
@@ -97,26 +93,32 @@ jobs:
           state = json.load(open('site/malecns-state.json'))
           assert state['verified'] is True
           assert state['backend'] == 'malecns'
-          assert state['source_receipt_schema'] == 'neurofly-self-training-v2'
+          assert state['source_receipt_schema'] == 'neurofly-self-training-v3'
           assert state['goal'] == 'maze_cleared'
-          assert float(state['world_tick_seconds']) > 0
+          assert state['curriculum'] is True
+          assert state['curriculum_version'] == 'neurofly-curriculum-v1'
           assert int(state['world_states_seen']) > 0
           assert state['trajectory']
           assert all(s['brain']['backend'] == 'malecns' for s in state['trajectory'])
           assert all(int(s['brain']['telemetry']['total_spikes']) > 0 for s in state['trajectory'])
           final = state['final_state']
+          stage = int(final['curriculum_stage'])
+          assert 1 <= stage <= 4
+          assert final['curriculum_stage_name']
           assert int(final.get('total_world_ticks', 0)) > 0
           print(
-              'SELF_TRAINING_V2_GATE_PASS',
+              'CURRICULUM_V3_GATE_PASS',
               state['source_receipt_sha256'],
-              'world_states=', state['world_states_seen'],
-              'world_ticks=', final.get('total_world_ticks', 0),
+              'stage=', stage,
+              'stage_name=', final['curriculum_stage_name'],
+              'food=', final.get('total_food', 0),
               'clears=', final.get('total_clears', 0),
               'deaths=', final.get('total_deaths', 0),
+              'world_states=', state['world_states_seen'],
           )
           PY
 
-      - name: Publish latest verified trajectory to visualizer branch
+      - name: Publish latest verified curriculum trajectory
         run: |
           cp site/malecns-state.json /tmp/neurofly-malecns-state.json
           git config user.name "neurofly-bot"
@@ -126,9 +128,9 @@ jobs:
           cp /tmp/neurofly-malecns-state.json site/malecns-state.json
           git add site/malecns-state.json
           if git diff --cached --quiet; then
-            echo "Verified game state is unchanged."
+            echo "Verified curriculum state is unchanged."
           else
-            git commit -m "state: publish authoritative MaleCNS world trajectory [skip ci]"
+            git commit -m "state: publish verified MaleCNS curriculum trajectory [skip ci]"
             git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
 
@@ -152,16 +154,16 @@ jobs:
           path: /home/runner/.cache/neurofly/stonkfly
           key: malecns-v1-${{ hashFiles('pyproject.toml') }}
 
-      - name: Save resumable NeuroFly brain and maze state
+      - name: Save isolated V0.6 brain and curriculum state
         uses: actions/cache/save@v4
         with:
           path: runs/free-malecns
-          key: neurofly-state-${{ github.run_id }}-${{ github.run_attempt }}
+          key: neurofly-v06-state-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Publish compact evidence
         uses: actions/upload-artifact@v4
         with:
-          name: neurofly-self-training-${{ github.run_id }}-${{ github.run_attempt }}
+          name: neurofly-v06-curriculum-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             runs/free-malecns/preflight.json
             runs/free-malecns/self-training-receipt.json
