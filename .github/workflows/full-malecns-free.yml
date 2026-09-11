@@ -8,12 +8,12 @@ on:
   workflow_dispatch:
     inputs:
       steps:
-        description: "Number of real MaleCNS Maze decisions"
+        description: "Number of verified MaleCNS Maze decisions to publish"
         required: false
-        default: "1"
+        default: "6"
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: neurofly-full-malecns-free
@@ -31,6 +31,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
 
       - uses: actions/setup-python@v5
         with:
@@ -67,14 +69,42 @@ jobs:
           python -m neurofly brain-status
           python -m neurofly host-preflight | tee "$NEUROFLY_STATE/preflight.json"
 
-      - name: Run real MaleCNS Maze smoke
+      - name: Run real MaleCNS Maze decisions
         env:
-          INPUT_STEPS: ${{ inputs.steps || '1' }}
+          INPUT_STEPS: ${{ inputs.steps || '6' }}
         run: |
           python -m neurofly real-smoke \
             --steps "$INPUT_STEPS" \
             --checkpoint "$CHECKPOINT" \
             --receipt "$RECEIPT"
+
+      - name: Build verified website state
+        run: |
+          python -m neurofly publish-site-state \
+            --receipt "$RECEIPT" \
+            --output site/malecns-state.json
+          python - <<'PY'
+          import json
+          state = json.load(open('site/malecns-state.json'))
+          assert state['verified'] is True
+          assert state['backend'] == 'malecns'
+          assert state['trajectory']
+          assert all(s['brain']['backend'] == 'malecns' for s in state['trajectory'])
+          assert all(int(s['brain']['telemetry']['total_spikes']) > 0 for s in state['trajectory'])
+          print('FULL_MALECNS_WEBSITE_GATE_PASS', state['source_receipt_sha256'])
+          PY
+
+      - name: Publish verified trajectory to the visualizer branch
+        run: |
+          git config user.name "neurofly-bot"
+          git config user.email "neurofly-bot@users.noreply.github.com"
+          git add site/malecns-state.json
+          if git diff --cached --quiet; then
+            echo "Verified site state is unchanged."
+          else
+            git commit -m "state: publish verified MaleCNS trajectory [skip ci]"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
 
       - name: Check dataset cache size
         id: dataset-size
@@ -109,4 +139,5 @@ jobs:
           path: |
             runs/free-malecns/preflight.json
             runs/free-malecns/real-smoke-receipt.json
+            site/malecns-state.json
           retention-days: 1
