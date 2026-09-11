@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from neurofly.brain_runtime import DemoBrain, brain_status
 from neurofly.maze_runtime import MazeEnvironment, MazeSession
 
@@ -23,6 +25,24 @@ def test_demo_brain_can_drive_headless_session_without_visual_dependencies() -> 
     assert state["brain"]["backend"] == "demo"
     assert state["last_action"] in {"TURN_LEFT", "TURN_RIGHT", "FORWARD", "HOLD"}
     assert "grid" in state
+
+
+def test_maze_state_restores_from_checkpoint(tmp_path: Path) -> None:
+    checkpoint = tmp_path / "brain.npz"
+    first = MazeSession(DemoBrain(), checkpoint=checkpoint, seed=17)
+    first.tick()
+    first.tick()
+    expected = first.environment.snapshot()
+    first.save()
+
+    restored = MazeSession(DemoBrain(), checkpoint=checkpoint, seed=999)
+    actual = restored.environment.snapshot()
+    assert actual["episode"] == expected["episode"]
+    assert actual["ticks"] == expected["ticks"]
+    assert actual["fly"] == expected["fly"]
+    assert actual["enemies"] == expected["enemies"]
+    assert actual["grid"] == expected["grid"]
+    assert actual["food_left"] == expected["food_left"]
 
 
 def test_brain_status_is_safe_without_optional_dataset() -> None:
