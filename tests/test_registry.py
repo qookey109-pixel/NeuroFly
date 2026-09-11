@@ -7,6 +7,11 @@ def test_experiment_slugs_are_unique() -> None:
     assert len(slugs) == len(set(slugs))
 
 
+def test_maze_chase_is_primary_game_experiment() -> None:
+    experiments = list_experiments()
+    assert experiments[0].slug == "maze-chase"
+
+
 def test_initial_playground_contains_stonkfly_replay() -> None:
     assert "stonkfly-replay" in {experiment.slug for experiment in list_experiments()}
 
