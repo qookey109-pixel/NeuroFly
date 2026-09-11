@@ -28,9 +28,9 @@ Maze RGB frame
 
 The action mapping is an engineered NeuroFly interface, not a biological claim about what those neurons naturally encode.
 
-## V0.4 — Full MaleCNS Smoke + Cloud-Ready Runtime
+## V0.4 — Full MaleCNS Smoke + Zero-Cost Runner
 
-V0.4 adds the operational boundary between "the code is connected" and "the full connectome actually ran".
+V0.4 adds the operational boundary between "the code is connected" and "the full connectome actually ran", while keeping the default execution path at **zero cloud cost**.
 
 ### 1. Host preflight
 
@@ -47,7 +47,7 @@ The report checks:
 - detected RAM;
 - free disk space.
 
-The first operational profile targets **16 GiB RAM** and **20 GiB free disk**. `real-smoke` applies a low-memory guard below 12 GiB unless explicitly overridden.
+Stonkfly recommends **16 GB RAM** and several GB of storage. `real-smoke` applies a low-memory guard below 12 GiB unless explicitly overridden.
 
 ### 2. Prepare MaleCNS
 
@@ -74,11 +74,46 @@ python -m neurofly real-smoke \
 
 A successful receipt records the pinned upstream revision, host information, seed, action, reward, neural simulation time, compute time, spike counts, memory hash and a SHA-256 digest over the receipt.
 
-Ordinary CI does **not** count as a full MaleCNS execution because CI deliberately does not download the multi-GB dataset.
+## Free full-MaleCNS runner
 
-## 24/7 runtime
+The repository includes [`.github/workflows/full-malecns-free.yml`](.github/workflows/full-malecns-free.yml).
 
-### Direct persistent server
+For this public repository it uses the standard `ubuntu-latest` GitHub-hosted runner rather than a paid larger runner. The workflow is bounded to 330 minutes and is designed for resumable chunks instead of pretending to be a permanent 24/7 VM.
+
+The free runner:
+
+1. restores a cached prepared MaleCNS dataset when available;
+2. restores the newest NeuroFly brain/Maze checkpoint cache;
+3. installs the exact pinned Stonkfly revision;
+4. runs `stonkfly prepare` / verification;
+5. runs the real MaleCNS Maze smoke;
+6. saves the prepared data only when it is below the 9 GB cache safety ceiling;
+7. saves the latest resumable NeuroFly state separately;
+8. publishes only small evidence receipts as short-retention artifacts.
+
+This keeps the large static dataset out of Git history and keeps evidence artifacts small.
+
+### Important free-mode limitation
+
+GitHub-hosted jobs are finite sessions, not always-on servers. NeuroFly therefore treats free cloud execution as:
+
+```text
+restore checkpoint
+      ↓
+run bounded MaleCNS session
+      ↓
+save checkpoint
+      ↓
+runner stops
+      ↓
+next run resumes
+```
+
+That is enough for repeated experiments and learning checkpoints, but it is not literally one uninterrupted process running forever.
+
+## Optional local / always-on runtime
+
+If a machine with sufficient resources is already available, NeuroFly can still run continuously without changing the experiment format:
 
 ```bash
 python -m neurofly maze-server \
@@ -88,45 +123,13 @@ python -m neurofly maze-server \
   --checkpoint runs/maze-fly-001/brain.npz
 ```
 
-### Cloud-safe first boot
-
-```bash
-python -m neurofly cloud-server \
-  --host 0.0.0.0 \
-  --port 8765 \
-  --checkpoint /var/data/neurofly/maze-fly-001/brain.npz
-```
-
-`cloud-server` immediately exposes the website/API in a paused `preparing-malecns` phase. It performs MaleCNS preparation on the runtime disk in the background and **does not run DemoBrain actions** while preparation is in progress. Once verification and preflight pass, authority switches to `malecns-ready` and Maze episodes start.
-
-The server exposes:
-
-```text
-GET  /api/status
-GET  /api/state
-POST /api/control
-```
-
 The browser visualizer can use the same-origin API or a remote backend:
 
 ```text
 https://qookey109-pixel.github.io/NeuroFly/?api=https://your-neurofly-backend.example
 ```
 
-## Render deployment template
-
-The repository includes [`render.yaml`](render.yaml) for an optional always-on deployment profile:
-
-```text
-Region: Singapore
-Compute: 2 CPU / 16 GB RAM
-Persistent disk: 20 GB mounted at /var/data
-STONKFLY_DATA: /var/data/stonkfly
-Auto deploy: OFF
-Health: /api/status
-```
-
-The Blueprint intentionally has `autoDeployTrigger: off`. Creating or syncing the service can provision paid cloud resources, so NeuroFly does not create the service automatically.
+No paid hosting template is included in V0.4.
 
 ## Visualizer
 
@@ -145,7 +148,7 @@ GitHub Pages deployment is defined in [`.github/workflows/pages.yml`](.github/wo
 
 `https://qookey109-pixel.github.io/NeuroFly/`
 
-A GitHub Pages tab by itself is not a 24/7 brain process. The persistent runtime must live on an always-on host if the fly should keep running while all browsers are closed.
+A GitHub Pages tab by itself is not a persistent brain process. In zero-cost mode, full-MaleCNS compute is executed in bounded GitHub Actions sessions and resumed from checkpoints.
 
 ## Stonkfly upstream
 
@@ -207,7 +210,7 @@ Neural activity, changing weights or improved game scores alone do not establish
 
 ## Status
 
-**v0.4 — full MaleCNS smoke tooling / cloud-safe bootstrap / deploy-ready 24/7 profile**
+**v0.4 — full MaleCNS smoke tooling / free 16 GB runner / resumable experiment state**
 
 Implemented on the V0.4 development branch:
 
@@ -215,13 +218,12 @@ Implemented on the V0.4 development branch:
 - host resource/prepared-data preflight;
 - bounded real-brain smoke runner;
 - hashed real-smoke receipt;
-- paused cloud preparation phase;
-- automatic promotion to MaleCNS only after verified preparation;
-- persistent brain + Maze checkpoint support;
-- guarded Render Blueprint with auto-deploy disabled;
-- CI coverage for Python, website/API, Blueprint safety and pinned Stonkfly import compatibility.
+- free GitHub Actions full-MaleCNS workflow for this public repository;
+- separate caching for prepared MaleCNS data and resumable NeuroFly state;
+- no paid Render deployment template;
+- CI coverage for Python, website/API, free-runner safety and pinned Stonkfly import compatibility.
 
-`FULL_MALECNS_SMOKE_PASS` is intentionally **not** claimed until a prepared 16 GB-class host actually executes `python -m neurofly real-smoke` and produces the receipt.
+`FULL_MALECNS_SMOKE_PASS` is claimed only after the free full-brain workflow (or another prepared host) actually executes `python -m neurofly real-smoke` and produces a valid receipt.
 
 See [`docs/V0_4_FULL_MALECNS_SMOKE.md`](docs/V0_4_FULL_MALECNS_SMOKE.md), [`docs/V0_3_REAL_BRAIN_RUNTIME.md`](docs/V0_3_REAL_BRAIN_RUNTIME.md) and [`docs/24_7_RUNTIME.md`](docs/24_7_RUNTIME.md).
 
