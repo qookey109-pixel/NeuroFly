@@ -10,6 +10,7 @@ from collections import deque
 from pathlib import Path
 from typing import Any
 
+from .behavior_evidence import summarize_behavior
 from .brain_runtime import MaleCNSBrain
 from .curriculum import CURRICULUM_VERSION, CurriculumMazeEnvironment
 from .goal_training import GoalMazeSession
@@ -189,7 +190,12 @@ def run_self_training(
     )
     live = GitHubOIDCLivePublisher.from_environment()
     pump = LiveStatePump(live)
-    clears_before = session.environment.total_clears
+    clears_before = int(session.environment.total_clears)
+    deaths_before = int(session.environment.total_deaths)
+    food_before = int(session.environment.total_food)
+    navigable_cells = sum(
+        1 for row in session.environment.grid for cell in row if cell != "#"
+    )
     observations: list[dict[str, Any]] = []
     playback: deque[dict[str, Any]] = deque(maxlen=playback_steps)
     world_states_seen = 0
@@ -209,6 +215,7 @@ def run_self_training(
 
             telemetry = state["brain"]["telemetry"]
             public_state = _public_goal_state(state)
+            fly = state.get("fly") or {}
             odor = state.get("olfaction") or {}
             food_odor = odor.get("food") or {}
             danger_odor = odor.get("danger") or {}
@@ -221,8 +228,12 @@ def run_self_training(
                     "applied_action": state.get("applied_action") or state["last_action"],
                     "action_overridden": state.get("action_overridden", False),
                     "override_reason": state.get("override_reason"),
+                    "anti_stall_policy": state.get("anti_stall_policy"),
                     "decision_applied": state.get("decision_applied", True),
                     "state_kind": state.get("state_kind", "neural_decision"),
+                    "fly_x": fly.get("x"),
+                    "fly_y": fly.get("y"),
+                    "fly_dir": fly.get("dir"),
                     "reward": state["last_reward"],
                     "event": state.get("step_event"),
                     "food_left": state["food_left"],
@@ -265,7 +276,19 @@ def run_self_training(
 
     session.save()
     final_state = _public_goal_state(session.snapshot())
-    clears_after = int(final_state.get("total_clears") or 0)
+    clears_after = int(session.environment.total_clears)
+    deaths_after = int(session.environment.total_deaths)
+    food_after = int(session.environment.total_food)
+    behavior_summary = summarize_behavior(
+        observations,
+        navigable_cells=navigable_cells,
+        food_before=food_before,
+        food_after=food_after,
+        clears_before=clears_before,
+        clears_after=clears_after,
+        deaths_before=deaths_before,
+        deaths_after=deaths_after,
+    )
     finished = time.time()
     body: dict[str, Any] = {
         "schema": "neurofly-self-training-v3" if curriculum else "neurofly-self-training-v2",
@@ -301,9 +324,16 @@ def run_self_training(
             "captured": -10.0,
             "maze_cleared": 100.0,
         },
+        "food_before": food_before,
+        "food_after": food_after,
+        "batch_food": behavior_summary["batch_food"],
         "clears_before": clears_before,
         "clears_after": clears_after,
-        "batch_clears": max(0, clears_after - clears_before),
+        "batch_clears": behavior_summary["batch_clears"],
+        "deaths_before": deaths_before,
+        "deaths_after": deaths_after,
+        "batch_deaths": behavior_summary["batch_deaths"],
+        "behavior_summary": behavior_summary,
         "observations": observations,
         "trajectory": list(playback),
         "final_state": final_state,
@@ -342,11 +372,18 @@ def main(argv: list[str] | None = None) -> int:
         allow_low_memory=args.allow_low_memory,
     )
     final_state = result["final_state"]
+    behavior = result["behavior_summary"]
     summary = {
         "passed": result["passed"],
         "goal": result["goal"],
         "steps": result["steps"],
+        "batch_food": result["batch_food"],
+        "food_per_100_decisions": behavior["food_per_100_decisions"],
         "batch_clears": result["batch_clears"],
+        "batch_deaths": result["batch_deaths"],
+        "unique_cells": behavior["unique_cells"],
+        "coverage_ratio": behavior["coverage_ratio"],
+        "override_rate": behavior["override_rate"],
         "total_clears": result["clears_after"],
         "curriculum_stage": final_state.get("curriculum_stage"),
         "curriculum_stage_name": final_state.get("curriculum_stage_name"),
