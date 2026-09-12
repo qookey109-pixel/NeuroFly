@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
+
+from .olfaction import DANGER_ORN_TYPE, FOOD_ORN_TYPE, OLFACTION_MODEL
 
 
 @dataclass(slots=True)
@@ -64,8 +67,8 @@ class MaleCNSBrain:
     """Maze decoder on top of Stonkfly's pinned MaleCNS VisualMemoryBrain.
 
     The retained anatomy and visual dynamics come from the pinned Stonkfly
-    implementation. The maze action mapping below is NeuroFly-specific and is
-    deliberately treated as an engineered interface rather than biology.
+    implementation. The maze action mapping and virtual odor transduction below
+    are NeuroFly-specific engineered interfaces rather than biological claims.
     """
 
     name = "malecns"
@@ -77,6 +80,7 @@ class MaleCNSBrain:
         neural_bin_ms: float = 10.0,
         pulse_ms: float = 200.0,
         pulse_current: float = 20.0,
+        odor_current: float = 8.0,
         decoder_threshold_hz: float = 2.0,
         learning: bool = True,
         checkpoint: str | Path | None = None,
@@ -91,11 +95,15 @@ class MaleCNSBrain:
                 "`python -m stonkfly prepare` first."
             ) from exc
 
+        if not math.isfinite(float(odor_current)) or float(odor_current) < 0:
+            raise ValueError("odor_current must be finite and nonnegative")
+
         self.np = np
         self.neural_ms = float(neural_ms)
         self.neural_bin_ms = float(neural_bin_ms)
         self.pulse_ms = float(pulse_ms)
         self.pulse_current = float(pulse_current)
+        self.odor_current = float(odor_current)
         self.decoder_threshold_hz = float(decoder_threshold_hz)
         self.learning = bool(learning)
         self.brain = VisualMemoryBrain()
@@ -110,10 +118,46 @@ class MaleCNSBrain:
         if not len(self.left) or not len(self.right) or not len(self.gate):
             raise RuntimeError("Required DNp20/DNpe017 readout annotations are missing")
 
+        self.food_orn_left = np.flatnonzero(types.eq(FOOD_ORN_TYPE) & sides.eq("L"))
+        self.food_orn_right = np.flatnonzero(types.eq(FOOD_ORN_TYPE) & sides.eq("R"))
+        self.danger_orn_left = np.flatnonzero(types.eq(DANGER_ORN_TYPE) & sides.eq("L"))
+        self.danger_orn_right = np.flatnonzero(types.eq(DANGER_ORN_TYPE) & sides.eq("R"))
+        if any(
+            len(group) == 0
+            for group in (
+                self.food_orn_left,
+                self.food_orn_right,
+                self.danger_orn_left,
+                self.danger_orn_right,
+            )
+        ):
+            raise RuntimeError(
+                "Required MaleCNS olfactory annotations are missing: "
+                f"{FOOD_ORN_TYPE} and {DANGER_ORN_TYPE} must exist bilaterally"
+            )
+
         self.identities = {
             "left": [str(self.brain.ids[i]) for i in self.left],
             "right": [str(self.brain.ids[i]) for i in self.right],
             "gate": [str(self.brain.ids[i]) for i in self.gate],
+        }
+        self.olfaction_report = {
+            "model": OLFACTION_MODEL,
+            "engineered_proxy": True,
+            "food": {
+                "orn_type": FOOD_ORN_TYPE,
+                "receptor_proxy": "Or42b",
+                "left_neurons": int(len(self.food_orn_left)),
+                "right_neurons": int(len(self.food_orn_right)),
+            },
+            "danger": {
+                "orn_type": DANGER_ORN_TYPE,
+                "receptor_proxy": "Or56a/geosmin-like",
+                "left_neurons": int(len(self.danger_orn_left)),
+                "right_neurons": int(len(self.danger_orn_right)),
+            },
+            "max_external_current": self.odor_current,
+            "validated": False,
         }
         self.checkpoint_path = Path(checkpoint) if checkpoint else None
         if self.checkpoint_path and self.checkpoint_path.exists():
@@ -142,6 +186,51 @@ class MaleCNSBrain:
             "cell_ids": self.identities,
         }
 
+    @staticmethod
+    def _odor_level(channel: dict[str, Any], side: str) -> float:
+        try:
+            value = float(channel.get(side, 0.0))
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError(f"Invalid olfactory {side} intensity") from exc
+        if not math.isfinite(value) or not 0.0 <= value <= 1.0:
+            raise ValueError(f"Olfactory {side} intensity must be within [0, 1]")
+        return value
+
+    def _olfactory_stimulation(
+        self,
+        context: dict[str, Any] | None,
+    ) -> tuple[list[tuple[Any, float]], dict[str, Any]]:
+        olfaction = {} if context is None else (context.get("olfaction") or {})
+        if not olfaction:
+            levels = {
+                "food_left": 0.0,
+                "food_right": 0.0,
+                "danger_left": 0.0,
+                "danger_right": 0.0,
+            }
+            return [], levels
+        if olfaction.get("model") != OLFACTION_MODEL:
+            raise ValueError("Unsupported NeuroFly olfaction model")
+
+        food = olfaction.get("food") or {}
+        danger = olfaction.get("danger") or {}
+        levels = {
+            "food_left": self._odor_level(food, "left"),
+            "food_right": self._odor_level(food, "right"),
+            "danger_left": self._odor_level(danger, "left"),
+            "danger_right": self._odor_level(danger, "right"),
+        }
+        pulses: list[tuple[Any, float]] = []
+        for indices, level in (
+            (self.food_orn_left, levels["food_left"]),
+            (self.food_orn_right, levels["food_right"]),
+            (self.danger_orn_left, levels["danger_left"]),
+            (self.danger_orn_right, levels["danger_right"]),
+        ):
+            if level > 0.0 and self.odor_current > 0.0:
+                pulses.append((indices, self.odor_current * level))
+        return pulses, levels
+
     def decide(
         self,
         frame: Any,
@@ -158,6 +247,7 @@ class MaleCNSBrain:
             raise ValueError("MaleCNSBrain requires an HxWx3 RGB frame")
 
         b = self.brain
+        odor_pulses, odor_levels = self._olfactory_stimulation(context)
         counts = np.zeros(b.n, dtype=np.int32)
         compute_seconds = 0.0
         remaining = round(self.neural_ms / b.dt)
@@ -168,14 +258,14 @@ class MaleCNSBrain:
             n = min(remaining, round(self.neural_bin_ms / b.dt))
             if pulse:
                 n = min(n, pulse)
-            stimulation = (
-                (b.circuit[reinforcement], self.pulse_current) if pulse else None
-            )
+            stimulation = list(odor_pulses)
+            if pulse:
+                stimulation.append((b.circuit[reinforcement], self.pulse_current))
             current, elapsed = b.rgb_step(
                 rgb,
                 n * b.dt,
                 learning=self.learning,
-                stimulation=stimulation,
+                stimulation=stimulation or None,
             )
             counts += current
             compute_seconds += elapsed
@@ -197,6 +287,15 @@ class MaleCNSBrain:
             "aversive_spikes": int(counts[b.circuit["aversive"]].sum()),
             "kc_spikes": int(counts[b.circuit["kc"]].sum()),
             "total_spikes": int(counts.sum()),
+            "olfaction_model": OLFACTION_MODEL,
+            "olfaction": odor_levels,
+            "food_odor_spikes": int(
+                counts[self.food_orn_left].sum() + counts[self.food_orn_right].sum()
+            ),
+            "danger_odor_spikes": int(
+                counts[self.danger_orn_left].sum() + counts[self.danger_orn_right].sum()
+            ),
+            "olfaction_report": self.olfaction_report,
             "memory": b.memory(),
         }
         return BrainDecision(action=action, backend=self.name, telemetry=telemetry)
