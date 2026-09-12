@@ -3,7 +3,7 @@ name: NeuroFly GitHub Pages
 on:
   push:
     branches:
-      - feature/v0.6-curriculum-learning
+      - main
     paths:
       - 'site/**'
       - '.github/workflows/pages.yml'
@@ -25,7 +25,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout V0.6
+      - name: Checkout main
         uses: actions/checkout@v6
 
       - name: Configure GitHub Pages
@@ -39,5 +39,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-# Fresh run after GitHub Pages was enabled.
