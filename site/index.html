@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="styles.css?v=hud-console-1" />
   <link rel="stylesheet" href="glance.css?v=hud-console-1" />
   <link rel="stylesheet" href="hud.css?v=hud-console-1" />
+  <link rel="stylesheet" href="hud-safe.css?v=hud-safe-1" />
 </head>
 <body>
   <main class="stage hud-stage">
@@ -50,23 +51,33 @@
               <strong id="currentAction">—</strong>
               <small>本步獎勵 <b id="lastReward">—</b></small>
             </div>
-            <div class="hud-kpi-strip">
-              <div class="hud-kpi hud-kpi-reward">
-                <span>Reward</span>
-                <strong id="cumulativeReward">—</strong>
-              </div>
-              <div class="hud-kpi hud-kpi-enemy">
-                <span>敵人</span>
-                <strong id="enemyCount">—</strong>
-              </div>
-              <div class="hud-kpi hud-kpi-food">
-                <span>食物</span>
-                <strong id="foodLeft">—</strong>
-              </div>
+          </div>
+
+          <div class="hud-overlay hud-overlay-bottom-right" aria-label="迷宮圖例">
+            <span>🪰 果蠅</span>
+            <span class="legend-food">● 食物</span>
+            <span class="legend-energy">● 能量</span>
+            <span class="legend-enemy">● 敵人</span>
+          </div>
+        </section>
+
+        <section class="arena-dock" aria-label="遊戲即時狀態列">
+          <div class="dock-kpis">
+            <div class="hud-kpi hud-kpi-reward">
+              <span>Reward</span>
+              <strong id="cumulativeReward">—</strong>
+            </div>
+            <div class="hud-kpi hud-kpi-enemy">
+              <span>敵人</span>
+              <strong id="enemyCount">—</strong>
+            </div>
+            <div class="hud-kpi hud-kpi-food">
+              <span>食物</span>
+              <strong id="foodLeft">—</strong>
             </div>
           </div>
 
-          <div class="hud-overlay hud-overlay-bottom-left">
+          <div class="dock-tech">
             <div class="hud-tech-item">
               <span>神經視窗</span>
               <strong id="neuralWindowMs">50 毫秒</strong>
@@ -83,13 +94,6 @@
               <span>右輸出</span>
               <strong id="rightHz">—</strong>
             </div>
-          </div>
-
-          <div class="hud-overlay hud-overlay-bottom-right" aria-label="迷宮圖例">
-            <span>🪰 果蠅</span>
-            <span class="legend-food">● 食物</span>
-            <span class="legend-energy">● 能量</span>
-            <span class="legend-enemy">● 敵人</span>
           </div>
         </section>
 
@@ -196,8 +200,8 @@
     </section>
   </main>
 
-  <script src="app.js?v=hud-console-1"></script>
-  <script src="glance.js?v=hud-console-1"></script>
+  <script src="app.js?v=hud-safe-1"></script>
+  <script src="glance.js?v=hud-safe-1"></script>
   <script src="all-clear-history.js?v=c60c108b"></script>
 </body>
 </html>
