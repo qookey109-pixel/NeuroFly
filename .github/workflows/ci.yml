@@ -49,6 +49,7 @@ jobs:
           test -f site/app.js
           test -f site/glance.js
           test -f site/glance.css
+          test -f site/hud.css
           test -f site/malecns-state.json
           node --check site/app.js
           node --check site/glance.js
@@ -59,7 +60,9 @@ jobs:
           grep -q 'id="rewardTrendPath"' site/index.html
           grep -q 'id="computeTrendPath"' site/index.html
           grep -q 'id="motorLeftTrendPath"' site/index.html
-          grep -q 'glance.css' site/glance.js
+          grep -q 'glance.css' site/index.html
+          grep -q 'hud.css' site/index.html
+          grep -q 'hud-overlay-top-right' site/index.html
           grep -q 'source_receipt_sha256' site/malecns-state.json
           grep -q '世界持續運作' site/app.js
           grep -q 'neurofly-curriculum-relay.onrender.com/events' site/app.js
@@ -74,6 +77,27 @@ jobs:
           ! grep -q 'architecture-card' site/index.html
           python - <<'PY'
           import json
+          import re
+          from collections import Counter
+
+          html = open('site/index.html', encoding='utf-8').read()
+          ids = re.findall(r'id="([^"]+)"', html)
+          duplicates = [name for name, count in Counter(ids).items() if count > 1]
+          assert not duplicates, duplicates
+
+          required = {
+              'mazeCanvas', 'brainBadge', 'currentAction', 'lastReward',
+              'survivalTime', 'episodeNumber', 'rawAction', 'appliedAction',
+              'reinforcement', 'brainInput', 'brainOutput', 'neuralWindowMs',
+              'brainMs', 'computeSeconds', 'totalSpikes', 'gateSpikes',
+              'leftHz', 'rightHz', 'foodOdorSpikes', 'dangerOdorSpikes',
+              'foodLeft', 'episodeFood', 'totalFood', 'totalDeaths',
+              'enemyCount', 'decisionTicks', 'worldTicks', 'powerState',
+              'cumulativeReward', 'totalTime', 'firstClear', 'latestClear',
+              'bestClear', 'clearCount', 'clearHistory', 'allClearHistory',
+          }
+          assert required.issubset(set(ids)), sorted(required - set(ids))
+
           state = json.load(open('site/malecns-state.json'))
           if state.get('verified') is True:
               assert state.get('backend') == 'malecns'
