@@ -29,6 +29,50 @@ class BrainBackend(Protocol):
     def save(self, path: str | Path) -> None: ...
 
 
+def _bilateral_type_indices(np: Any, annotations: Any, neuron_type: str) -> tuple[Any, Any, dict[str, Any]]:
+    """Resolve bilateral MaleCNS neurons without assuming somaSide is populated.
+
+    Sensory neurons can have no in-volume soma annotation even when their curated
+    instance is explicitly lateralized (for example ORN_DM1_L / ORN_DM1_R).
+    Use curated somaSide first and the instance suffix only as a documented
+    fallback. Never infer side from body id or geometry.
+    """
+
+    types = annotations.type.fillna("").astype(str)
+    type_mask = types.eq(neuron_type)
+    sides = annotations.somaSide.fillna("").astype(str).str.upper()
+
+    if "instance" in annotations.columns:
+        instances = annotations["instance"].fillna("").astype(str)
+    else:
+        instances = types.map(lambda _: "")
+
+    left_by_soma = type_mask & sides.eq("L")
+    right_by_soma = type_mask & sides.eq("R")
+    left_by_instance = type_mask & instances.str.endswith("_L")
+    right_by_instance = type_mask & instances.str.endswith("_R")
+
+    left_mask = left_by_soma | left_by_instance
+    right_mask = right_by_soma | right_by_instance
+    left = np.flatnonzero(left_mask.to_numpy())
+    right = np.flatnonzero(right_mask.to_numpy())
+
+    matched = type_mask & (left_mask | right_mask)
+    unresolved = type_mask & ~matched
+    report = {
+        "type_neurons": int(type_mask.sum()),
+        "left_neurons": int(len(left)),
+        "right_neurons": int(len(right)),
+        "left_from_soma_side": int(left_by_soma.sum()),
+        "right_from_soma_side": int(right_by_soma.sum()),
+        "left_from_instance_suffix": int((left_by_instance & ~left_by_soma).sum()),
+        "right_from_instance_suffix": int((right_by_instance & ~right_by_soma).sum()),
+        "unresolved_side": int(unresolved.sum()),
+        "side_policy": "somaSide_then_curated_instance_suffix",
+    }
+    return left, right, report
+
+
 class DemoBrain:
     """Small deterministic baseline used by CI and UI smoke tests."""
 
@@ -118,10 +162,14 @@ class MaleCNSBrain:
         if not len(self.left) or not len(self.right) or not len(self.gate):
             raise RuntimeError("Required DNp20/DNpe017 readout annotations are missing")
 
-        self.food_orn_left = np.flatnonzero(types.eq(FOOD_ORN_TYPE) & sides.eq("L"))
-        self.food_orn_right = np.flatnonzero(types.eq(FOOD_ORN_TYPE) & sides.eq("R"))
-        self.danger_orn_left = np.flatnonzero(types.eq(DANGER_ORN_TYPE) & sides.eq("L"))
-        self.danger_orn_right = np.flatnonzero(types.eq(DANGER_ORN_TYPE) & sides.eq("R"))
+        self.food_orn_left, self.food_orn_right, food_side_report = _bilateral_type_indices(
+            np, a, FOOD_ORN_TYPE
+        )
+        (
+            self.danger_orn_left,
+            self.danger_orn_right,
+            danger_side_report,
+        ) = _bilateral_type_indices(np, a, DANGER_ORN_TYPE)
         if any(
             len(group) == 0
             for group in (
@@ -132,8 +180,8 @@ class MaleCNSBrain:
             )
         ):
             raise RuntimeError(
-                "Required MaleCNS olfactory annotations are missing: "
-                f"{FOOD_ORN_TYPE} and {DANGER_ORN_TYPE} must exist bilaterally"
+                "Required MaleCNS olfactory annotations are not resolvable bilaterally: "
+                f"{FOOD_ORN_TYPE}={food_side_report}; {DANGER_ORN_TYPE}={danger_side_report}"
             )
 
         self.identities = {
@@ -147,14 +195,12 @@ class MaleCNSBrain:
             "food": {
                 "orn_type": FOOD_ORN_TYPE,
                 "receptor_proxy": "Or42b",
-                "left_neurons": int(len(self.food_orn_left)),
-                "right_neurons": int(len(self.food_orn_right)),
+                **food_side_report,
             },
             "danger": {
                 "orn_type": DANGER_ORN_TYPE,
                 "receptor_proxy": "Or56a/geosmin-like",
-                "left_neurons": int(len(self.danger_orn_left)),
-                "right_neurons": int(len(self.danger_orn_right)),
+                **danger_side_report,
             },
             "max_external_current": self.odor_current,
             "validated": False,
