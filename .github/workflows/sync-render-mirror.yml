@@ -1,0 +1,47 @@
+name: Sync Render Mirror
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: neurofly-render-mirror
+  cancel-in-progress: true
+
+jobs:
+  sync-render-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fast-forward Render mirror to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          MIRROR_BRANCH='feature/v0.6-curriculum-learning'
+          git fetch origin main "$MIRROR_BRANCH"
+          MAIN_SHA="$(git rev-parse origin/main)"
+          MIRROR_SHA="$(git rev-parse "origin/$MIRROR_BRANCH")"
+
+          echo "main=$MAIN_SHA"
+          echo "render_mirror=$MIRROR_SHA"
+
+          if [ "$MAIN_SHA" = "$MIRROR_SHA" ]; then
+            echo "Render mirror is already current."
+            exit 0
+          fi
+
+          if ! git merge-base --is-ancestor "$MIRROR_SHA" "$MAIN_SHA"; then
+            echo "ERROR: Render mirror contains commits not present in main. Refusing to force-push." >&2
+            exit 1
+          fi
+
+          git push origin "$MAIN_SHA:refs/heads/$MIRROR_BRANCH"
+          echo "Render mirror fast-forwarded to $MAIN_SHA"
