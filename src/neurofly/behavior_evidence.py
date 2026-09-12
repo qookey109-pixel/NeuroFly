@@ -6,6 +6,8 @@ from typing import Any, Iterable
 
 BEHAVIOR_EVIDENCE_SCHEMA = "neurofly-behavior-evidence-v1"
 VALID_ACTIONS = ("TURN_LEFT", "TURN_RIGHT", "FORWARD", "HOLD")
+FOOD_CUE_SIDES = ("LEFT", "RIGHT", "BALANCED")
+FOOD_CUE_EPSILON = 1e-6
 
 
 def _action_histogram(observations: Iterable[dict[str, Any]], field: str) -> dict[str, int]:
@@ -15,6 +17,66 @@ def _action_histogram(observations: Iterable[dict[str, Any]], field: str) -> dic
         if item.get(field) in VALID_ACTIONS
     )
     return {action: int(counts.get(action, 0)) for action in VALID_ACTIONS}
+
+
+def _food_cue_side(item: dict[str, Any]) -> str:
+    try:
+        left = float(item.get("food_odor_left") or 0.0)
+        right = float(item.get("food_odor_right") or 0.0)
+    except (TypeError, ValueError, OverflowError):
+        return "BALANCED"
+    difference = left - right
+    if difference > FOOD_CUE_EPSILON:
+        return "LEFT"
+    if difference < -FOOD_CUE_EPSILON:
+        return "RIGHT"
+    return "BALANCED"
+
+
+def _food_cue_evidence(observations: list[dict[str, Any]]) -> dict[str, Any]:
+    cue_counts = Counter({side: 0 for side in FOOD_CUE_SIDES})
+    actions_by_cue = {
+        side: Counter({action: 0 for action in VALID_ACTIONS})
+        for side in FOOD_CUE_SIDES
+    }
+    directional_turn_trials = 0
+    directional_turn_aligned = 0
+
+    for item in observations:
+        side = _food_cue_side(item)
+        cue_counts[side] += 1
+        raw_action = item.get("raw_brain_action")
+        if raw_action in VALID_ACTIONS:
+            actions_by_cue[side][str(raw_action)] += 1
+
+        if side not in {"LEFT", "RIGHT"} or raw_action not in {"TURN_LEFT", "TURN_RIGHT"}:
+            continue
+        directional_turn_trials += 1
+        if (side == "LEFT" and raw_action == "TURN_LEFT") or (
+            side == "RIGHT" and raw_action == "TURN_RIGHT"
+        ):
+            directional_turn_aligned += 1
+
+    return {
+        "food_cue_side_counts": {
+            side: int(cue_counts[side])
+            for side in FOOD_CUE_SIDES
+        },
+        "raw_action_by_food_cue": {
+            side: {
+                action: int(actions_by_cue[side][action])
+                for action in VALID_ACTIONS
+            }
+            for side in FOOD_CUE_SIDES
+        },
+        "raw_food_directional_turn_trials": directional_turn_trials,
+        "raw_food_directional_turn_aligned": directional_turn_aligned,
+        "raw_food_directional_turn_alignment_rate": (
+            round(directional_turn_aligned / float(directional_turn_trials), 6)
+            if directional_turn_trials
+            else None
+        ),
+    }
 
 
 def summarize_behavior(
@@ -32,7 +94,9 @@ def summarize_behavior(
 
     The summary only aggregates outcomes and provenance already emitted by a
     training batch. It never feeds back into the MaleCNS decoder, reward model,
-    sensory adapters, maze state, or anti-stall policy.
+    sensory adapters, maze state, or anti-stall policy. Bilateral food-cue
+    statistics are observational associations only and do not establish learned
+    navigation, causality, or biological intent.
     """
 
     decisions = len(observations)
@@ -66,7 +130,7 @@ def summarize_behavior(
     batch_deaths = max(0, int(deaths_after) - int(deaths_before))
     unique_cells = len(positions)
 
-    return {
+    summary = {
         "schema": BEHAVIOR_EVIDENCE_SCHEMA,
         "decisions": decisions,
         "batch_food": batch_food,
@@ -84,3 +148,5 @@ def summarize_behavior(
         "curriculum_stage_start": stages[0] if stages else None,
         "curriculum_stage_end": stages[-1] if stages else None,
     }
+    summary.update(_food_cue_evidence(observations))
+    return summary
