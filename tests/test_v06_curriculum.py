@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from neurofly.curriculum import CURRICULUM_VERSION, CurriculumMazeEnvironment
 from neurofly.goal_training import GoalMazeEnvironment
+from neurofly.olfaction import DANGER_ORN_TYPE, FOOD_ORN_TYPE, OLFACTION_MODEL, virtual_olfaction
 from neurofly.site_state import _digest_json, build_site_state
 from neurofly.upstream import STONKFLY_COMMIT
 
@@ -30,6 +31,24 @@ def test_curriculum_starts_with_safe_food_corridor() -> None:
     assert env.enemies == []
     assert env.food_left() == 5
     assert env.effective_world_tick_seconds(0.5) == 1.0
+    assert state["olfaction"]["model"] == OLFACTION_MODEL
+    assert state["olfaction"]["food"]["intensity"] > 0
+    assert state["olfaction"]["danger"]["intensity"] == 0
+
+
+def test_virtual_odor_field_is_bilateral_and_directional() -> None:
+    grid = [[" " for _ in range(7)] for _ in range(7)]
+    grid[2][3] = "."
+    fly = {"x": 3, "y": 3, "dir": "RIGHT"}
+    enemies = [{"x": 3, "y": 4}]
+
+    odor = virtual_olfaction(grid=grid, fly=fly, enemies=enemies)
+
+    # Facing right: north is the fly's left side and south is its right side.
+    assert odor["food"]["left"] > odor["food"]["right"]
+    assert odor["danger"]["right"] > odor["danger"]["left"]
+    assert odor["food"]["orn_type"] == FOOD_ORN_TYPE
+    assert odor["danger"]["orn_type"] == DANGER_ORN_TYPE
 
 
 def test_two_verified_clears_promote_stage_one_to_turning_food() -> None:
@@ -59,9 +78,11 @@ def test_later_stages_restore_predators_gradually() -> None:
 
     env.curriculum_stage = 3
     env.reset("test")
+    state = env.snapshot()
     assert env.stage.name == "slow-predator"
     assert len(env.enemies) == 1
     assert env.effective_world_tick_seconds(0.5) == 2.0
+    assert state["olfaction"]["danger"]["intensity"] > 0
 
     env.curriculum_stage = 4
     env.reset("test")
@@ -111,7 +132,13 @@ def test_v3_curriculum_receipt_is_verified_for_site_state() -> None:
     state["decision_applied"] = True
     state["brain"] = {
         "backend": "malecns",
-        "telemetry": {"brain_ms": 500.0, "total_spikes": 123},
+        "telemetry": {
+            "brain_ms": 500.0,
+            "total_spikes": 123,
+            "olfaction_model": OLFACTION_MODEL,
+            "food_odor_spikes": 11,
+            "danger_odor_spikes": 0,
+        },
     }
     receipt = {
         "schema": "neurofly-self-training-v3",
@@ -125,6 +152,21 @@ def test_v3_curriculum_receipt_is_verified_for_site_state() -> None:
         "world_states_seen": 1,
         "curriculum": True,
         "curriculum_version": CURRICULUM_VERSION,
+        "olfaction_model": OLFACTION_MODEL,
+        "olfaction": {
+            "model": OLFACTION_MODEL,
+            "engineered_proxy": True,
+            "food": {
+                "orn_type": FOOD_ORN_TYPE,
+                "left_neurons": 1,
+                "right_neurons": 1,
+            },
+            "danger": {
+                "orn_type": DANGER_ORN_TYPE,
+                "left_neurons": 1,
+                "right_neurons": 1,
+            },
+        },
         "trajectory": [state],
         "final_state": state,
     }
@@ -136,4 +178,5 @@ def test_v3_curriculum_receipt_is_verified_for_site_state() -> None:
     assert site["source_receipt_schema"] == "neurofly-self-training-v3"
     assert site["curriculum"] is True
     assert site["curriculum_version"] == CURRICULUM_VERSION
+    assert site["olfaction_model"] == OLFACTION_MODEL
     assert site["final_state"]["curriculum_stage"] == 1
