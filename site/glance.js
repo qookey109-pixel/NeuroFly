@@ -1,4 +1,9 @@
 (() => {
+  const styleLink = document.createElement('link');
+  styleLink.rel = 'stylesheet';
+  styleLink.href = 'glance.css?v=glance-monitor-1';
+  document.head.appendChild(styleLink);
+
   const byId = id => document.getElementById(id);
   const status = byId('runStatus');
   if (!status) return;
