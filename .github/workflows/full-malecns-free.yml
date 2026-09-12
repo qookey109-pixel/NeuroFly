@@ -79,6 +79,7 @@ jobs:
           python -m neurofly host-preflight | tee "$NEUROFLY_STATE/preflight.json"
 
       - name: Let MaleCNS train through staged curriculum
+        id: train
         env:
           INPUT_STEPS: ${{ github.event_name == 'workflow_dispatch' && inputs.steps || '1200' }}
         run: |
@@ -89,7 +90,21 @@ jobs:
             --checkpoint "$CHECKPOINT" \
             --receipt "$RECEIPT"
 
+      # Persistence is part of the runtime authority. Save it immediately after
+      # a successful neural run so a later site-state/publish failure can never
+      # strand the continuous brain on a dead runner.
+      - name: Save isolated V0.6 brain and curriculum state
+        id: state-cache
+        if: ${{ always() && steps.train.outcome == 'success' }}
+        uses: actions/cache/save@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-v06-state-${{ github.run_id }}-${{ github.run_attempt }}
+
       - name: Build verified curriculum state
+        id: build-state
+        if: ${{ always() && steps.train.outcome == 'success' }}
+        continue-on-error: true
         run: |
           python -m neurofly publish-site-state \
             --receipt "$RECEIPT" \
@@ -142,6 +157,7 @@ jobs:
           assert final['curriculum_stage_name']
           assert int(final.get('total_world_ticks', 0)) > 0
           assert final.get('olfaction', {}).get('model') == 'neurofly-virtual-olfaction-v1'
+          assert len(final.get('enemies', [])) >= 1
           print(
               'CURRICULUM_V3_OLFACTION_GATE_PASS',
               state['source_receipt_sha256'],
@@ -150,13 +166,21 @@ jobs:
               'food=', final.get('total_food', 0),
               'clears=', final.get('total_clears', 0),
               'deaths=', final.get('total_deaths', 0),
+              'enemies=', len(final.get('enemies', [])),
               'world_states=', state['world_states_seen'],
               'food_orn=', odor_report['food'],
               'danger_orn=', odor_report['danger'],
           )
           PY
 
+      - name: Warn if verified curriculum state could not be built
+        if: ${{ always() && steps.train.outcome == 'success' && steps.build-state.outcome != 'success' }}
+        run: echo "::warning::MaleCNS checkpoint was saved, but verified site-state validation failed. Continuous runtime will continue from the saved brain."
+
       - name: Publish latest verified curriculum trajectory to main
+        id: publish-state
+        if: ${{ always() && steps.build-state.outcome == 'success' }}
+        continue-on-error: true
         run: |
           AUTHORITY_BRANCH=main
           cp site/malecns-state.json /tmp/neurofly-malecns-state.json
@@ -173,8 +197,13 @@ jobs:
             git push origin "HEAD:${AUTHORITY_BRANCH}"
           fi
 
+      - name: Warn if verified state could not be published
+        if: ${{ always() && steps.build-state.outcome == 'success' && steps.publish-state.outcome != 'success' }}
+        run: echo "::warning::Verified state publish failed, but the checkpoint is safe and continuous runtime may continue."
+
       - name: Check dataset cache size
         id: dataset-size
+        if: ${{ always() && steps.train.outcome == 'success' }}
         shell: bash
         run: |
           bytes=$(du -sb "$STONKFLY_DATA" | cut -f1)
@@ -187,19 +216,14 @@ jobs:
           fi
 
       - name: Save prepared MaleCNS cache
-        if: steps.malecns-cache.outputs.cache-hit != 'true' && steps.dataset-size.outputs.cacheable == 'true'
+        if: ${{ always() && steps.train.outcome == 'success' && steps.malecns-cache.outputs.cache-hit != 'true' && steps.dataset-size.outputs.cacheable == 'true' }}
         uses: actions/cache/save@v4
         with:
           path: /home/runner/.cache/neurofly/stonkfly
           key: malecns-v1-${{ hashFiles('pyproject.toml') }}
 
-      - name: Save isolated V0.6 brain and curriculum state
-        uses: actions/cache/save@v4
-        with:
-          path: runs/free-malecns
-          key: neurofly-v06-state-${{ github.run_id }}-${{ github.run_attempt }}
-
       - name: Publish compact evidence
+        if: ${{ always() && steps.train.outcome == 'success' }}
         uses: actions/upload-artifact@v4
         with:
           name: neurofly-v06-curriculum-${{ github.run_id }}-${{ github.run_attempt }}
@@ -207,10 +231,12 @@ jobs:
             runs/free-malecns/preflight.json
             runs/free-malecns/self-training-receipt.json
             site/malecns-state.json
+          if-no-files-found: warn
           retention-days: 1
 
       - name: Read continuous runtime policy
         id: runtime-policy
+        if: ${{ always() && steps.train.outcome == 'success' && steps.state-cache.outcome == 'success' }}
         shell: bash
         run: |
           git fetch origin main
@@ -234,12 +260,12 @@ jobs:
           PY
 
       - name: Continue NeuroFly on next free runner
-        if: ${{ success() && steps.runtime-policy.outputs.enabled == 'true' && (github.event_name != 'workflow_dispatch' || inputs.continuous) }}
+        if: ${{ always() && steps.train.outcome == 'success' && steps.state-cache.outcome == 'success' && steps.runtime-policy.outcome == 'success' && steps.runtime-policy.outputs.enabled == 'true' && (github.event_name != 'workflow_dispatch' || inputs.continuous) }}
         env:
           GH_TOKEN: ${{ github.token }}
           NEXT_STEPS: ${{ steps.runtime-policy.outputs.steps }}
         run: |
-          echo "Checkpoint and evidence are saved. Dispatching the next NeuroFly runner with ${NEXT_STEPS} decisions."
+          echo "Checkpoint is safely persisted. Dispatching the next NeuroFly runner with ${NEXT_STEPS} decisions."
           gh api --method POST \
             -H "Accept: application/vnd.github+json" \
             "/repos/${GITHUB_REPOSITORY}/actions/workflows/full-malecns-free.yml/dispatches" \
