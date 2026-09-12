@@ -61,6 +61,28 @@ At the end of that evidence batch:
 - final decision danger-ORN spikes: 88 while danger cue current was zero;
 - final memory: 3,413 changed edges out of 7,835 plastic edges.
 
-The nonzero danger-ORN spike count with zero danger cue is important: spike count alone is not causal proof of odor stimulation because the recurrent network has background/network-driven activity. A controlled odor-off versus odor-on calibration is therefore required before claiming a causal sensory response magnitude.
+The nonzero danger-ORN spike count with zero danger cue is important: spike count alone is not causal proof of odor stimulation because the recurrent network has background/network-driven activity.
 
 The same batch ate no food and did not clear Stage 1, so V0.6 does **not** yet claim that MaleCNS learned to follow food odor. That remains the behavioral training target.
+
+## Controlled calibration protocol
+
+Before interpreting odor spike magnitude, NeuroFly should run a frozen-plasticity matched-state calibration from the same checkpoint and identical RGB frame. Each condition starts from the same restored checkpoint and receives no reward or aversive reinforcement.
+
+Conditions:
+
+1. `odor_off` — food 0 / danger 0;
+2. `food_left` — food left 1 / right 0, danger 0;
+3. `food_right` — food left 0 / right 1, danger 0;
+4. `danger_left` — danger left 1 / right 0, food 0;
+5. `danger_right` — danger left 0 / right 1, food 0.
+
+Primary evidence:
+
+- target ORN spike delta versus `odor_off`;
+- ipsilateral versus contralateral target ORN activity;
+- off-target ORN change;
+- downstream DNp20/DNpe017 and total-spike changes;
+- exact checkpoint identity and Stonkfly pin.
+
+Pass criteria must require a positive target-channel delta above baseline and the intended stimulated side to exceed the unstimulated side. This calibration validates the engineered sensory transduction only; it does not by itself demonstrate navigation learning.
