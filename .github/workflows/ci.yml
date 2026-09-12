@@ -25,6 +25,7 @@ jobs:
           python -m neurofly upstream-status
           python -m neurofly brain-status
           python -m neurofly.training --help >/dev/null
+          python -m neurofly.olfaction_calibration --help >/dev/null
           set +e
           python -m neurofly host-preflight >/tmp/neurofly-preflight.json
           rc=$?
@@ -76,6 +77,7 @@ jobs:
         run: |
           test ! -f render.yaml
           test -f .github/workflows/full-malecns-free.yml
+          test -f .github/workflows/olfaction-calibration.yml
           grep -q 'name: NeuroFly Curriculum Training' .github/workflows/full-malecns-free.yml
           grep -q 'runs-on: ubuntu-latest' .github/workflows/full-malecns-free.yml
           grep -q 'timeout-minutes: 330' .github/workflows/full-malecns-free.yml
@@ -89,6 +91,13 @@ jobs:
           grep -q 'publish-site-state' .github/workflows/full-malecns-free.yml
           grep -q 'contents: write' .github/workflows/full-malecns-free.yml
           ! grep -q '2c-16g' .github/workflows/full-malecns-free.yml
+          grep -q 'name: NeuroFly Olfaction Calibration' .github/workflows/olfaction-calibration.yml
+          grep -q 'runs-on: ubuntu-latest' .github/workflows/olfaction-calibration.yml
+          grep -q 'contents: read' .github/workflows/olfaction-calibration.yml
+          grep -q 'python -m neurofly.olfaction_calibration' .github/workflows/olfaction-calibration.yml
+          ! grep -q 'actions/cache/save' .github/workflows/olfaction-calibration.yml
+          ! grep -q 'contents: write' .github/workflows/olfaction-calibration.yml
+          ! grep -q '2c-16g' .github/workflows/olfaction-calibration.yml
 
   stonkfly-integration:
     runs-on: ubuntu-latest
@@ -108,6 +117,7 @@ jobs:
           from neurofly.curriculum import CurriculumMazeEnvironment
           from neurofly.goal_training import GoalMazeEnvironment
           from neurofly.olfaction import DANGER_ORN_TYPE, FOOD_ORN_TYPE, OLFACTION_MODEL
+          from neurofly.olfaction_calibration import CONDITIONS, SCHEMA
           from neurofly.preflight import collect_preflight
           status = brain_status()
           preflight = collect_preflight()
@@ -121,5 +131,7 @@ jobs:
           assert env.snapshot()["olfaction"]["model"] == OLFACTION_MODEL
           assert FOOD_ORN_TYPE == "ORN_DM1"
           assert DANGER_ORN_TYPE == "ORN_DA2"
+          assert SCHEMA == "neurofly-olfaction-calibration-v1"
+          assert set(CONDITIONS) == {"odor_off", "food_left", "food_right", "danger_left", "danger_right"}
           print(status)
           PY
