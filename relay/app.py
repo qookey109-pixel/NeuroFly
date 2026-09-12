@@ -198,7 +198,8 @@ class Handler(BaseHTTPRequestHandler):
 
         # Compact live diagnostics: enough to distinguish transport problems
         # from a fly that is genuinely turning/holding in place. Avoid logging
-        # the large neural payload or any credentials.
+        # the large neural payload or any credentials. Keep raw MaleCNS action
+        # separate from the environment action when anti-stall intervenes.
         if sequence % 10 == 0:
             fly = state.get("fly") or {}
             print(
@@ -208,6 +209,11 @@ class Handler(BaseHTTPRequestHandler):
                 f" relay_seq={event['relay_sequence']}"
                 f" kind={state.get('state_kind')}"
                 f" action={state.get('last_action')}"
+                f" raw={state.get('raw_brain_action')}"
+                f" applied={state.get('applied_action')}"
+                f" overridden={state.get('action_overridden')}"
+                f" reason={state.get('override_reason')}"
+                f" stationary={state.get('anti_stall_stationary_steps')}"
                 f" pos={fly.get('x')},{fly.get('y')}"
                 f" dir={fly.get('dir')}"
                 f" episode={state.get('episode')}"
