@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from neurofly.curriculum import CURRICULUM_VERSION, CurriculumMazeEnvironment
+from neurofly.curriculum import (
+    ANTI_STALL_POLICY,
+    ANTI_STALL_STATIONARY_LIMIT,
+    CURRICULUM_VERSION,
+    CurriculumMazeEnvironment,
+)
 from neurofly.goal_training import GoalMazeEnvironment
 from neurofly.olfaction import DANGER_ORN_TYPE, FOOD_ORN_TYPE, OLFACTION_MODEL, virtual_olfaction
 from neurofly.site_state import _digest_json, build_site_state
@@ -37,6 +42,7 @@ def test_curriculum_starts_on_full_canonical_maze() -> None:
     assert state["olfaction"]["model"] == OLFACTION_MODEL
     assert state["olfaction"]["food"]["intensity"] > 0
     assert state["olfaction"]["danger"]["intensity"] == 0
+    assert state["anti_stall_policy"] == ANTI_STALL_POLICY
 
 
 def test_virtual_odor_field_is_bilateral_and_directional() -> None:
@@ -52,6 +58,46 @@ def test_virtual_odor_field_is_bilateral_and_directional() -> None:
     assert odor["danger"]["right"] > odor["danger"]["left"]
     assert odor["food"]["orn_type"] == FOOD_ORN_TYPE
     assert odor["danger"]["orn_type"] == DANGER_ORN_TYPE
+
+
+def test_anti_stall_preserves_raw_action_and_forces_one_forward_attempt() -> None:
+    env = CurriculumMazeEnvironment(seed=109)
+    start = dict(env.fly)
+
+    for _ in range(ANTI_STALL_STATIONARY_LIMIT):
+        env.agent_step("HOLD", move_enemies=False)
+
+    assert env.fly["x"] == start["x"]
+    assert env.fly["y"] == start["y"]
+
+    env.agent_step("HOLD", move_enemies=False)
+    state = env.snapshot()
+
+    assert state["raw_brain_action"] == "HOLD"
+    assert state["applied_action"] == "FORWARD"
+    assert state["action_overridden"] is True
+    assert state["override_reason"] == "anti_stall_hold_forward"
+    assert state["last_action"] == "FORWARD"
+    assert env.fly["x"] == start["x"] + 1
+    assert env.fly["y"] == start["y"]
+    assert state["anti_stall_stationary_steps"] == 0
+
+
+def test_anti_stall_state_survives_curriculum_checkpoint() -> None:
+    env = CurriculumMazeEnvironment(seed=109)
+    env.agent_step("HOLD", move_enemies=False)
+    env.agent_step("HOLD", move_enemies=False)
+    payload = env.persistence_snapshot()
+
+    restored = CurriculumMazeEnvironment(seed=999)
+    restored.restore(payload)
+    state = restored.snapshot()
+
+    assert state["anti_stall_policy"] == ANTI_STALL_POLICY
+    assert state["anti_stall_stationary_steps"] == 2
+    assert state["raw_brain_action"] == "HOLD"
+    assert state["applied_action"] == "HOLD"
+    assert state["action_overridden"] is False
 
 
 def test_two_verified_clears_promote_stage_one_to_full_maze_slow_predator() -> None:
