@@ -1,0 +1,277 @@
+/* NeuroFly HUD safe-zone layer — keep the maze readable while retaining game-style overlays. */
+
+:root {
+  --hud-safe-glass: rgba(2, 10, 8, .36);
+  --hud-safe-glass-strong: rgba(2, 10, 8, .48);
+}
+
+.arena-column {
+  grid-template-rows: minmax(0, 1fr) 72px 150px;
+  gap: 8px;
+}
+
+.arena-card canvas {
+  object-fit: contain;
+  background: #020605;
+}
+
+.arena-vignette {
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.18), transparent 16%, transparent 80%, rgba(0,0,0,.20)),
+    linear-gradient(90deg, rgba(0,0,0,.10), transparent 12%, transparent 88%, rgba(0,0,0,.10));
+}
+
+.hud-overlay {
+  pointer-events: none;
+}
+
+.hud-overlay-top-left {
+  top: 10px;
+  left: 10px;
+  min-width: 0;
+  padding: 8px 10px;
+  border-left-width: 2px;
+  background: linear-gradient(90deg, var(--hud-safe-glass-strong), rgba(2,10,8,.08));
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.hud-system-row strong {
+  font-size: .76rem;
+}
+
+.hud-session-row {
+  gap: 18px;
+  margin-top: 7px;
+}
+
+.hud-session-row span {
+  font-size: .64rem;
+}
+
+.hud-session-row strong {
+  font-size: .96rem;
+}
+
+.hud-overlay-top-right {
+  top: 9px;
+  right: 10px;
+  gap: 0;
+}
+
+.hud-action-block {
+  min-width: 176px;
+  padding: 8px 10px 9px;
+  border-right-width: 2px;
+  background: linear-gradient(270deg, var(--hud-safe-glass-strong), rgba(2,10,8,.06));
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.hud-action-block > span {
+  font-size: .64rem;
+}
+
+.hud-action-block > strong {
+  font-size: clamp(1.85rem, 2.7vw, 2.75rem);
+}
+
+.hud-action-block small {
+  margin-top: 4px;
+  font-size: .68rem;
+}
+
+.hud-action-block small b {
+  font-size: .78rem;
+}
+
+.hud-overlay-bottom-right {
+  right: 9px;
+  bottom: 8px;
+  gap: 8px;
+  padding: 5px 8px;
+  background: rgba(2,10,8,.30);
+  font-size: .64rem;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.arena-dock {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(260px, .72fr) minmax(0, 1.28fr);
+  gap: 10px;
+  align-items: stretch;
+  overflow: hidden;
+  border-top: 1px solid rgba(143,242,183,.20);
+  border-bottom: 1px solid rgba(143,242,183,.10);
+  background: linear-gradient(90deg, rgba(6,17,14,.90), rgba(5,14,12,.62));
+}
+
+.dock-kpis,
+.dock-tech {
+  min-width: 0;
+  display: grid;
+  align-items: stretch;
+}
+
+.dock-kpis {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dock-tech {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-left: 1px solid rgba(143,242,183,.14);
+}
+
+.arena-dock .hud-kpi,
+.arena-dock .hud-tech-item {
+  min-width: 0;
+  padding: 9px 12px 8px;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.arena-dock .hud-kpi {
+  text-align: left;
+  border-top: 2px solid var(--hud-rule-strong);
+  border-right: 1px solid rgba(143,242,183,.10);
+}
+
+.arena-dock .hud-kpi:last-child {
+  border-right: 0;
+}
+
+.arena-dock .hud-kpi span,
+.arena-dock .hud-tech-item span {
+  font-size: .66rem;
+}
+
+.arena-dock .hud-kpi strong {
+  margin-top: 3px;
+  font-size: clamp(1.25rem, 1.7vw, 1.7rem);
+}
+
+.arena-dock .hud-tech-item {
+  border-right: 1px solid rgba(143,242,183,.10);
+}
+
+.arena-dock .hud-tech-item:last-child {
+  border-right: 0;
+}
+
+.arena-dock .hud-tech-item strong {
+  margin-top: 3px;
+  font-size: .94rem;
+}
+
+.trend-deck {
+  min-height: 0;
+}
+
+.large-trend {
+  padding-top: 9px;
+  padding-bottom: 7px;
+}
+
+.large-chart {
+  height: 72px;
+}
+
+@media (max-width: 1230px) and (min-width: 901px) {
+  .arena-column {
+    grid-template-rows: minmax(0, 1fr) 68px 132px;
+  }
+
+  .arena-dock {
+    grid-template-columns: 1fr 1.35fr;
+  }
+
+  .arena-dock .hud-kpi,
+  .arena-dock .hud-tech-item {
+    padding-inline: 8px;
+  }
+
+  .arena-dock .hud-kpi span,
+  .arena-dock .hud-tech-item span {
+    font-size: .58rem;
+  }
+
+  .arena-dock .hud-kpi strong {
+    font-size: 1.18rem;
+  }
+
+  .arena-dock .hud-tech-item strong {
+    font-size: .82rem;
+  }
+}
+
+@media (max-height: 780px) and (min-width: 901px) {
+  .arena-column {
+    grid-template-rows: minmax(0, 1fr) 62px 112px;
+  }
+
+  .hud-overlay-top-left,
+  .hud-action-block {
+    padding-block: 6px;
+  }
+
+  .hud-session-row {
+    margin-top: 5px;
+  }
+
+  .large-chart {
+    height: 52px;
+  }
+}
+
+@media (max-width: 900px) {
+  .arena-column {
+    grid-template-rows: auto auto auto;
+  }
+
+  .arena-card {
+    aspect-ratio: 950 / 700;
+    min-height: 0;
+  }
+
+  .arena-dock {
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+
+  .dock-tech {
+    border-left: 0;
+    border-top: 1px solid rgba(143,242,183,.12);
+  }
+}
+
+@media (max-width: 560px) {
+  .hud-overlay-top-left {
+    top: 7px;
+    left: 7px;
+  }
+
+  .hud-overlay-top-right {
+    top: 7px;
+    right: 7px;
+  }
+
+  .hud-action-block {
+    min-width: 142px;
+  }
+
+  .hud-action-block > strong {
+    font-size: 1.65rem;
+  }
+
+  .dock-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dock-tech {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
