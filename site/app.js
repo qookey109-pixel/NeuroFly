@@ -4,6 +4,7 @@
   const ui = {
     badge: document.getElementById('brainBadge'),
     status: document.getElementById('runStatus'),
+    total: document.getElementById('totalTime'),
     first: document.getElementById('firstClear'),
     latest: document.getElementById('latestClear'),
     best: document.getElementById('bestClear'),
@@ -26,13 +27,25 @@
   let liveSeen = false;
   let flashUntil = 0;
   let flashText = '';
+  let totalClockBase = 0;
+  let totalClockAnchor = 0;
+  let lastLiveStateAt = 0;
+
+  const actionName = action => ({
+    TURN_LEFT: '左轉',
+    TURN_RIGHT: '右轉',
+    FORWARD: '前進',
+    HOLD: '停留',
+  })[action] || action || '—';
 
   function formatSeconds(value) {
     const seconds = Number(value);
     if (!Number.isFinite(seconds) || seconds < 0) return '—';
-    if (seconds < 60) return `${seconds.toFixed(1)}s`;
+    if (seconds < 60) return `${seconds.toFixed(1)} 秒`;
     const minutes = Math.floor(seconds / 60);
-    return `${minutes}m ${(seconds % 60).toFixed(1)}s`;
+    if (minutes < 60) return `${minutes} 分 ${(seconds % 60).toFixed(1)} 秒`;
+    const hours = Math.floor(minutes / 60);
+    return `${hours} 小時 ${minutes % 60} 分 ${Math.floor(seconds % 60)} 秒`;
   }
 
   function neuralStateIsVerified(view) {
@@ -49,6 +62,31 @@
     if (payload.verified !== true || payload.backend !== 'malecns') return false;
     if (!/^[a-f0-9]{64}$/i.test(payload.source_receipt_sha256 || '')) return false;
     return neuralStateIsVerified(payload.final_state || payload.trajectory?.at?.(-1));
+  }
+
+  function syncTotalClock(view, { live = false } = {}) {
+    const authoritative = Number(view?.total_active_seconds);
+    const fallback = Number(view?.survival_seconds);
+    const next = Number.isFinite(authoritative) && authoritative >= 0
+      ? authoritative
+      : (Number.isFinite(fallback) && fallback >= 0 ? fallback : totalClockBase);
+    totalClockBase = next;
+    totalClockAnchor = Date.now();
+    if (live) lastLiveStateAt = Date.now();
+    renderTotalClock();
+  }
+
+  function renderTotalClock() {
+    let seconds = totalClockBase;
+    if (
+      liveSeen &&
+      totalClockAnchor > 0 &&
+      lastLiveStateAt > 0 &&
+      Date.now() - lastLiveStateAt <= LIVE_SILENCE_MS
+    ) {
+      seconds += Math.max(0, Date.now() - totalClockAnchor) / 1000;
+    }
+    ui.total.textContent = formatSeconds(seconds);
   }
 
   function roundedRect(x, y, w, h, r) {
@@ -173,23 +211,24 @@
     }
   }
 
-  function updateGoalHud(view) {
+  function updateGoalHud(view, { live = false } = {}) {
     const history = Array.isArray(view?.clear_history) ? view.clear_history : [];
+    syncTotalClock(view, { live });
     ui.first.textContent = formatSeconds(view?.first_clear_seconds);
     ui.latest.textContent = formatSeconds(view?.latest_clear_seconds);
     ui.best.textContent = formatSeconds(view?.best_clear_seconds);
     ui.clears.textContent = String(view?.total_clears || history.length || 0);
     ui.history.textContent = history.length
-      ? history.slice(-5).map(item => `#${item.clear_index} ${formatSeconds(item.seconds)} · ${item.ticks} decisions`).join('   ')
-      : 'No clear yet';
+      ? history.slice(-5).map(item => `第 ${item.clear_index} 次：${formatSeconds(item.seconds)} · ${item.ticks} 次決策`).join('　')
+      : '尚未破關';
   }
 
   function flashForState(view) {
     if (view.last_event === 'captured') {
-      flashText = 'CAPTURED · AUTHORITATIVE RESTART';
+      flashText = '被敵人抓到 · 重新開始';
       flashUntil = Date.now() + 900;
     } else if (view.last_event === 'maze_cleared') {
-      flashText = `CLEAR · ${formatSeconds(view.latest_clear_seconds)}`;
+      flashText = `成功破關 · ${formatSeconds(view.latest_clear_seconds)}`;
       flashUntil = Date.now() + 1400;
     }
   }
@@ -197,15 +236,15 @@
   function stateStatus(event, view) {
     const kind = view.state_kind || 'neural_decision';
     if (kind === 'world_tick') {
-      return `WORLD LIVE · tick ${view.total_world_ticks ?? '—'} · MaleCNS computing · episode ${view.episode}`;
+      return `世界持續運作 · 世界步 ${view.total_world_ticks ?? '—'} · MaleCNS 正在運算 · 第 ${view.episode} 局`;
     }
     if (kind === 'episode_reset') {
-      return `WORLD LIVE · episode reset · episode ${view.episode}`;
+      return `新一局已開始 · 第 ${view.episode} 局`;
     }
     if (kind === 'stale_decision') {
-      return `MALECNS · stale ${view.decision_action || view.last_action} discarded · episode ${view.episode}`;
+      return `MaleCNS 過期決策「${actionName(view.decision_action || view.last_action)}」已丟棄 · 第 ${view.episode} 局`;
     }
-    return `MALECNS LIVE · decision ${event.sequence} · ${view.decision_action || view.last_action} · episode ${view.episode}`;
+    return `MaleCNS 即時運作 · 決策 ${event.sequence} · ${actionName(view.decision_action || view.last_action)} · 第 ${view.episode} 局`;
   }
 
   function showLiveState(event) {
@@ -220,11 +259,12 @@
     currentView = view;
     flashForState(view);
     draw(view);
-    updateGoalHud(view);
-    ui.badge.textContent = 'MALECNS · LIVE';
+    updateGoalHud(view, { live: true });
+    ui.badge.textContent = 'MALECNS · 即時運作中';
     ui.status.textContent = stateStatus(event, view);
     liveSilenceTimer = setTimeout(() => {
-      ui.status.textContent = `WAITING AUTHORITATIVE STATE · MaleCNS may be computing · episode ${currentView?.episode || '—'}`;
+      renderTotalClock();
+      ui.status.textContent = `等待下一個已驗證狀態 · MaleCNS 可能正在運算 · 第 ${currentView?.episode || '—'} 局`;
     }, LIVE_SILENCE_MS);
   }
 
@@ -237,11 +277,11 @@
       const view = payload.final_state || payload.trajectory[payload.trajectory.length - 1];
       currentView = view;
       draw(view);
-      updateGoalHud(view);
-      ui.badge.textContent = 'MALECNS · LAST VERIFIED';
-      ui.status.textContent = `WAITING LIVE MALECNS · episode ${view.episode}`;
+      updateGoalHud(view, { live: false });
+      ui.badge.textContent = 'MALECNS · 最近驗證狀態';
+      ui.status.textContent = `等待 MaleCNS 即時資料 · 第 ${view.episode} 局`;
     } catch (_) {
-      // Static fallback is optional; SSE is the primary live path.
+      // 靜態狀態只是備援；SSE 才是主要即時來源。
     }
   }
 
@@ -252,18 +292,19 @@
     });
     source.onopen = () => {
       if (!liveSeen) {
-        ui.badge.textContent = 'MALECNS · LIVE LINK';
-        ui.status.textContent = 'LIVE LINK READY · waiting authoritative state';
+        ui.badge.textContent = 'MALECNS · 即時連線已建立';
+        ui.status.textContent = '即時連線已建立 · 等待已驗證的 MaleCNS 狀態';
       }
     };
     source.onerror = () => {
-      if (liveSeen) ui.status.textContent = 'LIVE LINK RECONNECTING…';
-      else ui.badge.textContent = 'MALECNS · CONNECTING';
+      if (liveSeen) ui.status.textContent = '即時連線重新連接中…';
+      else ui.badge.textContent = 'MALECNS · 連線中';
     };
   }
 
-  drawWaiting('Connecting to live neural + world state…');
+  drawWaiting('正在連接即時神經與世界狀態…');
   loadFallback();
   connectLive();
+  setInterval(renderTotalClock, 250);
   setInterval(() => { if (!liveSeen) loadFallback(); }, FALLBACK_REFRESH_MS);
 })();
