@@ -22,7 +22,7 @@ class CurriculumStage:
 
 
 STAGES: tuple[CurriculumStage, ...] = (
-    CurriculumStage(1, "full-maze-food-only", 2, 1.0, 0),
+    CurriculumStage(1, "full-maze-intro-predator", 2, 1.0, 1),
     CurriculumStage(2, "full-maze-slow-predator", 2, 2.0, 1),
     CurriculumStage(3, "full-maze-predator", 3, 1.0, 1),
     CurriculumStage(4, "full-live-maze", None, 0.5, 2),
@@ -77,19 +77,38 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
         self.last_action_overridden = False
         self.last_override_reason = None
 
+    def _canonical_enemy_spawns(self) -> list[dict[str, int]]:
+        return [
+            {"x": self.cols - 2, "y": self.rows - 2},
+            {"x": self.cols - 3, "y": 1},
+        ]
+
+    def _ensure_stage_enemies(self) -> None:
+        """Keep restored checkpoints aligned with the stage predator contract."""
+        target = self.stage.enemy_count
+        current = [dict(enemy) for enemy in self.enemies[:target]]
+        occupied = {(int(enemy["x"]), int(enemy["y"])) for enemy in current}
+        fly_xy = (int(self.fly["x"]), int(self.fly["y"]))
+        for spawn in self._canonical_enemy_spawns():
+            if len(current) >= target:
+                break
+            xy = (spawn["x"], spawn["y"])
+            if xy == fly_xy or xy in occupied:
+                continue
+            current.append(dict(spawn))
+            occupied.add(xy)
+        self.enemies = current
+
     def _apply_stage_layout(self) -> None:
         """Rebuild the exact canonical maze and vary only predator pressure."""
         self.grid = self._make_grid()
         self.fly = {"x": 1, "y": 1, "dir": "RIGHT"}
 
-        canonical_enemy_spawns = [
-            {"x": self.cols - 2, "y": self.rows - 2},
-            {"x": self.cols - 3, "y": 1},
-        ]
+        canonical_enemy_spawns = self._canonical_enemy_spawns()
         self.enemies = [dict(item) for item in canonical_enemy_spawns[: self.stage.enemy_count]]
 
         # Preserve the canonical V0.5 visual/food geometry even when a curriculum
-        # stage temporarily disables one or both predators.
+        # stage temporarily uses fewer than the full two predators.
         self.grid[1][1] = " "
         for enemy in canonical_enemy_spawns:
             self.grid[enemy["y"]][enemy["x"]] = " "
@@ -194,8 +213,8 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
         empty_enemies = payload.get("enemies") == []
         if empty_enemies:
             # The generic V0.5 persistence validator requires at least one enemy.
-            # Feed it a temporary valid enemy so both v1 and v2 enemy-free
-            # checkpoints can migrate safely.
+            # Feed it a temporary valid enemy so historical enemy-free checkpoints
+            # can migrate safely before the current stage predator floor is applied.
             compatible = dict(payload)
             compatible["enemies"] = [self._compat_enemy_for_empty_checkpoint(payload)]
             super().restore(compatible)
@@ -225,7 +244,9 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
             self.last_action_overridden = bool(payload.get("action_overridden", False))
             reason = payload.get("override_reason")
             self.last_override_reason = None if reason is None else str(reason)
-            # The superclass already restored exact grid/fly/RNG state.
+            self._ensure_stage_enemies()
+            # The superclass already restored exact grid/fly/RNG state. Only the
+            # predator floor is repaired when an older checkpoint had no enemy.
             return
 
         # Migration from V0.5 or curriculum v1: retain the trained brain and
