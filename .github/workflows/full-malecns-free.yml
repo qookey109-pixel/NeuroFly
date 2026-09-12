@@ -11,14 +11,20 @@ on:
         description: "Number of real MaleCNS curriculum decisions"
         required: false
         default: "1200"
+      continuous:
+        description: "Continue onto the next checkpointed free runner after this run"
+        required: false
+        type: boolean
+        default: true
 
 permissions:
+  actions: write
   contents: write
   id-token: write
 
 concurrency:
   group: neurofly-v06-curriculum-training
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   self-train-malecns:
@@ -202,3 +208,41 @@ jobs:
             runs/free-malecns/self-training-receipt.json
             site/malecns-state.json
           retention-days: 1
+
+      - name: Read continuous runtime policy
+        id: runtime-policy
+        shell: bash
+        run: |
+          git fetch origin main
+          git show origin/main:config/neurofly_continuous_runtime.json > /tmp/neurofly-continuous-runtime.json
+          python - <<'PY'
+          import json
+          import os
+
+          policy = json.load(open('/tmp/neurofly-continuous-runtime.json'))
+          assert policy['schema'] == 'neurofly-continuous-runtime-v1'
+          assert policy['authority_branch'] == 'main'
+          assert policy['runner'] == 'ubuntu-latest'
+          assert policy['paid_resources'] is False
+          steps = int(policy['steps_per_run'])
+          assert 1 <= steps <= 5000
+          enabled = bool(policy['enabled'])
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f"enabled={'true' if enabled else 'false'}\n")
+              output.write(f"steps={steps}\n")
+          print('CONTINUOUS_RUNTIME_POLICY', 'enabled=', enabled, 'steps=', steps)
+          PY
+
+      - name: Continue NeuroFly on next free runner
+        if: ${{ success() && steps.runtime-policy.outputs.enabled == 'true' && (github.event_name != 'workflow_dispatch' || inputs.continuous) }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEXT_STEPS: ${{ steps.runtime-policy.outputs.steps }}
+        run: |
+          echo "Checkpoint and evidence are saved. Dispatching the next NeuroFly runner with ${NEXT_STEPS} decisions."
+          gh api --method POST \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/actions/workflows/full-malecns-free.yml/dispatches" \
+            -f ref=main \
+            -f "inputs[steps]=${NEXT_STEPS}" \
+            -f "inputs[continuous]=true"
