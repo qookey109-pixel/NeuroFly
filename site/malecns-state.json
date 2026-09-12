@@ -8,25 +8,25 @@
     "brain": {
       "backend": "malecns",
       "telemetry": {
-        "aversive_spikes": 74,
-        "brain_ms": 21000.0,
-        "compute_seconds": 3.7781892209998773,
-        "danger_odor_spikes": 88,
-        "food_odor_spikes": 2590,
-        "kc_spikes": 4861,
+        "aversive_spikes": 81,
+        "brain_ms": 27000.0,
+        "compute_seconds": 3.6876755049996746,
+        "danger_odor_spikes": 93,
+        "food_odor_spikes": 2649,
+        "kc_spikes": 4690,
         "memory": {
-          "changed_edges": 3413,
-          "mean_efficacy": 1.0083924531936646,
-          "minimum_efficacy": 0.47739657759666443,
+          "changed_edges": 3426,
+          "mean_efficacy": 1.0015833377838135,
+          "minimum_efficacy": 0.479135662317276,
           "model": "stonkfly-dual-compartment-v1",
           "plastic_edges": 7835,
-          "sha256": "8acfcdad34a4e8eb2b47520ad4e86af66b49647e292026b84a2880a2cbd1ae8f"
+          "sha256": "4eb09d34dc4042354957c9b24e67a3792a1811dde7ba34b174fa5ee2e465b3bd"
         },
         "olfaction": {
           "danger_left": 0.0,
           "danger_right": 0.0,
-          "food_left": 0.879469,
-          "food_right": 0.333592
+          "food_left": 0.333592,
+          "food_right": 0.879469
         },
         "olfaction_model": "neurofly-virtual-olfaction-v1",
         "olfaction_report": {
@@ -62,11 +62,11 @@
           "validated": false
         },
         "reward_spikes": 0,
-        "total_spikes": 560985
+        "total_spikes": 562049
       }
     },
     "clear_history": [],
-    "cumulative_reward": -0.42,
+    "cumulative_reward": -0.54,
     "curriculum_clears_to_advance": 2,
     "curriculum_complete": false,
     "curriculum_enemy_count": 0,
@@ -79,11 +79,11 @@
     "enemies": [],
     "episode": 1,
     "episode_food": 0,
-    "episode_reward": -0.42,
+    "episode_reward": -0.54,
     "first_clear_seconds": null,
     "first_clear_ticks": null,
     "fly": {
-      "dir": "LEFT",
+      "dir": "RIGHT",
       "x": 2,
       "y": 7
     },
@@ -137,16 +137,16 @@
     },
     "power_ticks": 0,
     "state_kind": "snapshot",
-    "survival_seconds": 158.4,
-    "ticks": 42,
+    "survival_seconds": 207.9,
+    "ticks": 54,
     "total_clears": 0,
     "total_deaths": 0,
-    "total_ticks": 42,
-    "total_world_ticks": 119,
+    "total_ticks": 54,
+    "total_world_ticks": 155,
     "world_tick_seconds": 1.0,
-    "world_ticks": 119
+    "world_ticks": 155
   },
-  "generated_unix": 1789177460.0945141,
+  "generated_unix": 1789178816.084867,
   "goal": "maze_cleared",
   "mode": "recorded-malecns",
   "olfaction": {
@@ -191,7 +191,7 @@
   },
   "schema": "neurofly-malecns-site-state-v1",
   "source_receipt_schema": "neurofly-self-training-v3",
-  "source_receipt_sha256": "93d64edbb47ebe3a950c2a59276194c60cf231f6e8d55443cca158c17bcd2541",
+  "source_receipt_sha256": "3b0f0131b5839c4859f683495bb9b2bf96532c9971b779c27295f304fa3f0be1",
   "steps": 12,
   "stonkfly_commit": "78ef3e05ab0fa086032098558d893667068944a0",
   "trajectory": [
@@ -201,19 +201,19 @@
       "brain": {
         "backend": "malecns",
         "telemetry": {
-          "aversive_spikes": 83,
-          "brain_ms": 15500.0,
-          "compute_seconds": 3.8557091969999107,
+          "aversive_spikes": 75,
+          "brain_ms": 21500.0,
+          "compute_seconds": 3.6704224869998257,
           "danger_odor_spikes": 94,
-          "food_odor_spikes": 2627,
-          "kc_spikes": 4702,
+          "food_odor_spikes": 2637,
+          "kc_spikes": 4429,
           "memory": {
-            "changed_edges": 3392,
-            "mean_efficacy": 0.999972939491272,
-            "minimum_efficacy": 0.4757978320121765,
+            "changed_edges": 3413,
+            "mean_efficacy": 1.005311131477356,
+            "minimum_efficacy": 0.4775417149066925,
             "model": "stonkfly-dual-compartment-v1",
             "plastic_edges": 7835,
-            "sha256": "8ac09403d59b00944f2713b14eed41b32ecf536bdefef2adbf14f49292a94ca7"
+            "sha256": "280099bf6755dac57d77566e316b08ae8334e71c7a80225cc6b25bf32a5a1d1e"
           },
           "olfaction": {
             "danger_left": 0.0,
@@ -255,11 +255,11 @@
             "validated": false
           },
           "reward_spikes": 0,
-          "total_spikes": 563553
+          "total_spikes": 561495
         }
       },
       "clear_history": [],
-      "cumulative_reward": -0.31,
+      "cumulative_reward": -0.43,
       "curriculum_clears_to_advance": 2,
       "curriculum_complete": false,
       "curriculum_enemy_count": 0,
@@ -274,591 +274,7 @@
       "enemies": [],
       "episode": 1,
       "episode_food": 0,
-      "episode_reward": -0.31,
-      "first_clear_seconds": null,
-      "first_clear_ticks": null,
-      "fly": {
-        "dir": "RIGHT",
-        "x": 2,
-        "y": 7
-      },
-      "food_left": 5,
-      "goal": "maze_cleared",
-      "grid": [
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "##  .  .  .  .  .##",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################"
-      ],
-      "last_action": "HOLD",
-      "last_event": null,
-      "last_reward": -0.01,
-      "latest_clear_seconds": null,
-      "latest_clear_ticks": null,
-      "olfaction": {
-        "danger": {
-          "distance_cells": null,
-          "intensity": 0.0,
-          "left": 0.0,
-          "orn_type": "ORN_DA2",
-          "receptor_proxy": "Or56a/geosmin-like",
-          "right": 0.0,
-          "source": null
-        },
-        "engineered_proxy": true,
-        "food": {
-          "distance_cells": 2.0,
-          "intensity": 0.606531,
-          "left": 0.606531,
-          "orn_type": "ORN_DM1",
-          "receptor_proxy": "Or42b",
-          "right": 0.606531,
-          "source": {
-            "x": 4,
-            "y": 7
-          }
-        },
-        "model": "neurofly-virtual-olfaction-v1"
-      },
-      "power_ticks": 0,
-      "state_kind": "neural_decision",
-      "survival_seconds": 110.9,
-      "ticks": 31,
-      "total_clears": 0,
-      "total_deaths": 0,
-      "total_ticks": 31,
-      "total_world_ticks": 86,
-      "world_tick_seconds": 1.0,
-      "world_ticks": 86
-    },
-    {
-      "best_clear_seconds": null,
-      "best_clear_ticks": null,
-      "brain": {
-        "backend": "malecns",
-        "telemetry": {
-          "aversive_spikes": 76,
-          "brain_ms": 16000.0,
-          "compute_seconds": 3.875755018999982,
-          "danger_odor_spikes": 94,
-          "food_odor_spikes": 2624,
-          "kc_spikes": 4593,
-          "memory": {
-            "changed_edges": 3395,
-            "mean_efficacy": 1.0020779371261597,
-            "minimum_efficacy": 0.4759432077407837,
-            "model": "stonkfly-dual-compartment-v1",
-            "plastic_edges": 7835,
-            "sha256": "87a6111cef22bcf3045fb061b0c121046695bcd591320f2ab5fc6072ca6db639"
-          },
-          "olfaction": {
-            "danger_left": 0.0,
-            "danger_right": 0.0,
-            "food_left": 0.606531,
-            "food_right": 0.606531
-          },
-          "olfaction_model": "neurofly-virtual-olfaction-v1",
-          "olfaction_report": {
-            "danger": {
-              "left_from_instance_suffix": 21,
-              "left_from_soma_side": 0,
-              "left_neurons": 21,
-              "orn_type": "ORN_DA2",
-              "receptor_proxy": "Or56a/geosmin-like",
-              "right_from_instance_suffix": 20,
-              "right_from_soma_side": 0,
-              "right_neurons": 20,
-              "side_policy": "somaSide_then_curated_instance_suffix",
-              "type_neurons": 48,
-              "unresolved_side": 7
-            },
-            "engineered_proxy": true,
-            "food": {
-              "left_from_instance_suffix": 35,
-              "left_from_soma_side": 0,
-              "left_neurons": 35,
-              "orn_type": "ORN_DM1",
-              "receptor_proxy": "Or42b",
-              "right_from_instance_suffix": 39,
-              "right_from_soma_side": 0,
-              "right_neurons": 39,
-              "side_policy": "somaSide_then_curated_instance_suffix",
-              "type_neurons": 74,
-              "unresolved_side": 0
-            },
-            "max_external_current": 8.0,
-            "model": "neurofly-virtual-olfaction-v1",
-            "validated": false
-          },
-          "reward_spikes": 0,
-          "total_spikes": 561328
-        }
-      },
-      "clear_history": [],
-      "cumulative_reward": -0.32,
-      "curriculum_clears_to_advance": 2,
-      "curriculum_complete": false,
-      "curriculum_enemy_count": 0,
-      "curriculum_stage": 1,
-      "curriculum_stage_clears": 0,
-      "curriculum_stage_history": [],
-      "curriculum_stage_name": "food-corridor",
-      "curriculum_version": "neurofly-curriculum-v1",
-      "curriculum_world_tick_seconds": 1.0,
-      "decision_action": "TURN_RIGHT",
-      "decision_applied": true,
-      "enemies": [],
-      "episode": 1,
-      "episode_food": 0,
-      "episode_reward": -0.32,
-      "first_clear_seconds": null,
-      "first_clear_ticks": null,
-      "fly": {
-        "dir": "DOWN",
-        "x": 2,
-        "y": 7
-      },
-      "food_left": 5,
-      "goal": "maze_cleared",
-      "grid": [
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "##  .  .  .  .  .##",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################"
-      ],
-      "last_action": "TURN_RIGHT",
-      "last_event": null,
-      "last_reward": -0.01,
-      "latest_clear_seconds": null,
-      "latest_clear_ticks": null,
-      "olfaction": {
-        "danger": {
-          "distance_cells": null,
-          "intensity": 0.0,
-          "left": 0.0,
-          "orn_type": "ORN_DA2",
-          "receptor_proxy": "Or56a/geosmin-like",
-          "right": 0.0,
-          "source": null
-        },
-        "engineered_proxy": true,
-        "food": {
-          "distance_cells": 2.0,
-          "intensity": 0.606531,
-          "left": 0.879469,
-          "orn_type": "ORN_DM1",
-          "receptor_proxy": "Or42b",
-          "right": 0.333592,
-          "source": {
-            "x": 4,
-            "y": 7
-          }
-        },
-        "model": "neurofly-virtual-olfaction-v1"
-      },
-      "power_ticks": 0,
-      "state_kind": "neural_decision",
-      "survival_seconds": 114.9,
-      "ticks": 32,
-      "total_clears": 0,
-      "total_deaths": 0,
-      "total_ticks": 32,
-      "total_world_ticks": 89,
-      "world_tick_seconds": 1.0,
-      "world_ticks": 89
-    },
-    {
-      "best_clear_seconds": null,
-      "best_clear_ticks": null,
-      "brain": {
-        "backend": "malecns",
-        "telemetry": {
-          "aversive_spikes": 76,
-          "brain_ms": 16500.0,
-          "compute_seconds": 3.8652954350000215,
-          "danger_odor_spikes": 84,
-          "food_odor_spikes": 2588,
-          "kc_spikes": 4719,
-          "memory": {
-            "changed_edges": 3395,
-            "mean_efficacy": 1.0036263465881348,
-            "minimum_efficacy": 0.47608864307403564,
-            "model": "stonkfly-dual-compartment-v1",
-            "plastic_edges": 7835,
-            "sha256": "8be804af7729f3d3c5401fa0f3b7466f28ecc918560b0664bfb3a17bf54848ad"
-          },
-          "olfaction": {
-            "danger_left": 0.0,
-            "danger_right": 0.0,
-            "food_left": 0.879469,
-            "food_right": 0.333592
-          },
-          "olfaction_model": "neurofly-virtual-olfaction-v1",
-          "olfaction_report": {
-            "danger": {
-              "left_from_instance_suffix": 21,
-              "left_from_soma_side": 0,
-              "left_neurons": 21,
-              "orn_type": "ORN_DA2",
-              "receptor_proxy": "Or56a/geosmin-like",
-              "right_from_instance_suffix": 20,
-              "right_from_soma_side": 0,
-              "right_neurons": 20,
-              "side_policy": "somaSide_then_curated_instance_suffix",
-              "type_neurons": 48,
-              "unresolved_side": 7
-            },
-            "engineered_proxy": true,
-            "food": {
-              "left_from_instance_suffix": 35,
-              "left_from_soma_side": 0,
-              "left_neurons": 35,
-              "orn_type": "ORN_DM1",
-              "receptor_proxy": "Or42b",
-              "right_from_instance_suffix": 39,
-              "right_from_soma_side": 0,
-              "right_neurons": 39,
-              "side_policy": "somaSide_then_curated_instance_suffix",
-              "type_neurons": 74,
-              "unresolved_side": 0
-            },
-            "max_external_current": 8.0,
-            "model": "neurofly-virtual-olfaction-v1",
-            "validated": false
-          },
-          "reward_spikes": 0,
-          "total_spikes": 558006
-        }
-      },
-      "clear_history": [],
-      "cumulative_reward": -0.33,
-      "curriculum_clears_to_advance": 2,
-      "curriculum_complete": false,
-      "curriculum_enemy_count": 0,
-      "curriculum_stage": 1,
-      "curriculum_stage_clears": 0,
-      "curriculum_stage_history": [],
-      "curriculum_stage_name": "food-corridor",
-      "curriculum_version": "neurofly-curriculum-v1",
-      "curriculum_world_tick_seconds": 1.0,
-      "decision_action": "HOLD",
-      "decision_applied": true,
-      "enemies": [],
-      "episode": 1,
-      "episode_food": 0,
-      "episode_reward": -0.33,
-      "first_clear_seconds": null,
-      "first_clear_ticks": null,
-      "fly": {
-        "dir": "DOWN",
-        "x": 2,
-        "y": 7
-      },
-      "food_left": 5,
-      "goal": "maze_cleared",
-      "grid": [
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "##  .  .  .  .  .##",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################"
-      ],
-      "last_action": "HOLD",
-      "last_event": null,
-      "last_reward": -0.01,
-      "latest_clear_seconds": null,
-      "latest_clear_ticks": null,
-      "olfaction": {
-        "danger": {
-          "distance_cells": null,
-          "intensity": 0.0,
-          "left": 0.0,
-          "orn_type": "ORN_DA2",
-          "receptor_proxy": "Or56a/geosmin-like",
-          "right": 0.0,
-          "source": null
-        },
-        "engineered_proxy": true,
-        "food": {
-          "distance_cells": 2.0,
-          "intensity": 0.606531,
-          "left": 0.879469,
-          "orn_type": "ORN_DM1",
-          "receptor_proxy": "Or42b",
-          "right": 0.333592,
-          "source": {
-            "x": 4,
-            "y": 7
-          }
-        },
-        "model": "neurofly-virtual-olfaction-v1"
-      },
-      "power_ticks": 0,
-      "state_kind": "neural_decision",
-      "survival_seconds": 118.8,
-      "ticks": 33,
-      "total_clears": 0,
-      "total_deaths": 0,
-      "total_ticks": 33,
-      "total_world_ticks": 92,
-      "world_tick_seconds": 1.0,
-      "world_ticks": 92
-    },
-    {
-      "best_clear_seconds": null,
-      "best_clear_ticks": null,
-      "brain": {
-        "backend": "malecns",
-        "telemetry": {
-          "aversive_spikes": 80,
-          "brain_ms": 17000.0,
-          "compute_seconds": 3.811409148000024,
-          "danger_odor_spikes": 91,
-          "food_odor_spikes": 2626,
-          "kc_spikes": 4570,
-          "memory": {
-            "changed_edges": 3400,
-            "mean_efficacy": 1.0029882192611694,
-            "minimum_efficacy": 0.4762340486049652,
-            "model": "stonkfly-dual-compartment-v1",
-            "plastic_edges": 7835,
-            "sha256": "bb51c5202e5408c5d99921cd8e25b316ba59627b272ef3a113349b4d1d130068"
-          },
-          "olfaction": {
-            "danger_left": 0.0,
-            "danger_right": 0.0,
-            "food_left": 0.879469,
-            "food_right": 0.333592
-          },
-          "olfaction_model": "neurofly-virtual-olfaction-v1",
-          "olfaction_report": {
-            "danger": {
-              "left_from_instance_suffix": 21,
-              "left_from_soma_side": 0,
-              "left_neurons": 21,
-              "orn_type": "ORN_DA2",
-              "receptor_proxy": "Or56a/geosmin-like",
-              "right_from_instance_suffix": 20,
-              "right_from_soma_side": 0,
-              "right_neurons": 20,
-              "side_policy": "somaSide_then_curated_instance_suffix",
-              "type_neurons": 48,
-              "unresolved_side": 7
-            },
-            "engineered_proxy": true,
-            "food": {
-              "left_from_instance_suffix": 35,
-              "left_from_soma_side": 0,
-              "left_neurons": 35,
-              "orn_type": "ORN_DM1",
-              "receptor_proxy": "Or42b",
-              "right_from_instance_suffix": 39,
-              "right_from_soma_side": 0,
-              "right_neurons": 39,
-              "side_policy": "somaSide_then_curated_instance_suffix",
-              "type_neurons": 74,
-              "unresolved_side": 0
-            },
-            "max_external_current": 8.0,
-            "model": "neurofly-virtual-olfaction-v1",
-            "validated": false
-          },
-          "reward_spikes": 0,
-          "total_spikes": 561103
-        }
-      },
-      "clear_history": [],
-      "cumulative_reward": -0.34,
-      "curriculum_clears_to_advance": 2,
-      "curriculum_complete": false,
-      "curriculum_enemy_count": 0,
-      "curriculum_stage": 1,
-      "curriculum_stage_clears": 0,
-      "curriculum_stage_history": [],
-      "curriculum_stage_name": "food-corridor",
-      "curriculum_version": "neurofly-curriculum-v1",
-      "curriculum_world_tick_seconds": 1.0,
-      "decision_action": "HOLD",
-      "decision_applied": true,
-      "enemies": [],
-      "episode": 1,
-      "episode_food": 0,
-      "episode_reward": -0.34,
-      "first_clear_seconds": null,
-      "first_clear_ticks": null,
-      "fly": {
-        "dir": "DOWN",
-        "x": 2,
-        "y": 7
-      },
-      "food_left": 5,
-      "goal": "maze_cleared",
-      "grid": [
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "##  .  .  .  .  .##",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################"
-      ],
-      "last_action": "HOLD",
-      "last_event": null,
-      "last_reward": -0.01,
-      "latest_clear_seconds": null,
-      "latest_clear_ticks": null,
-      "olfaction": {
-        "danger": {
-          "distance_cells": null,
-          "intensity": 0.0,
-          "left": 0.0,
-          "orn_type": "ORN_DA2",
-          "receptor_proxy": "Or56a/geosmin-like",
-          "right": 0.0,
-          "source": null
-        },
-        "engineered_proxy": true,
-        "food": {
-          "distance_cells": 2.0,
-          "intensity": 0.606531,
-          "left": 0.879469,
-          "orn_type": "ORN_DM1",
-          "receptor_proxy": "Or42b",
-          "right": 0.333592,
-          "source": {
-            "x": 4,
-            "y": 7
-          }
-        },
-        "model": "neurofly-virtual-olfaction-v1"
-      },
-      "power_ticks": 0,
-      "state_kind": "neural_decision",
-      "survival_seconds": 122.7,
-      "ticks": 34,
-      "total_clears": 0,
-      "total_deaths": 0,
-      "total_ticks": 34,
-      "total_world_ticks": 95,
-      "world_tick_seconds": 1.0,
-      "world_ticks": 95
-    },
-    {
-      "best_clear_seconds": null,
-      "best_clear_ticks": null,
-      "brain": {
-        "backend": "malecns",
-        "telemetry": {
-          "aversive_spikes": 72,
-          "brain_ms": 17500.0,
-          "compute_seconds": 3.7288580050001485,
-          "danger_odor_spikes": 95,
-          "food_odor_spikes": 2609,
-          "kc_spikes": 4627,
-          "memory": {
-            "changed_edges": 3401,
-            "mean_efficacy": 1.005804181098938,
-            "minimum_efficacy": 0.47637948393821716,
-            "model": "stonkfly-dual-compartment-v1",
-            "plastic_edges": 7835,
-            "sha256": "abe94ea7f36b003b5cc0e15896d41b66e046fbde18faccc7f29c0be3c6c06cc1"
-          },
-          "olfaction": {
-            "danger_left": 0.0,
-            "danger_right": 0.0,
-            "food_left": 0.879469,
-            "food_right": 0.333592
-          },
-          "olfaction_model": "neurofly-virtual-olfaction-v1",
-          "olfaction_report": {
-            "danger": {
-              "left_from_instance_suffix": 21,
-              "left_from_soma_side": 0,
-              "left_neurons": 21,
-              "orn_type": "ORN_DA2",
-              "receptor_proxy": "Or56a/geosmin-like",
-              "right_from_instance_suffix": 20,
-              "right_from_soma_side": 0,
-              "right_neurons": 20,
-              "side_policy": "somaSide_then_curated_instance_suffix",
-              "type_neurons": 48,
-              "unresolved_side": 7
-            },
-            "engineered_proxy": true,
-            "food": {
-              "left_from_instance_suffix": 35,
-              "left_from_soma_side": 0,
-              "left_neurons": 35,
-              "orn_type": "ORN_DM1",
-              "receptor_proxy": "Or42b",
-              "right_from_instance_suffix": 39,
-              "right_from_soma_side": 0,
-              "right_neurons": 39,
-              "side_policy": "somaSide_then_curated_instance_suffix",
-              "type_neurons": 74,
-              "unresolved_side": 0
-            },
-            "max_external_current": 8.0,
-            "model": "neurofly-virtual-olfaction-v1",
-            "validated": false
-          },
-          "reward_spikes": 0,
-          "total_spikes": 563460
-        }
-      },
-      "clear_history": [],
-      "cumulative_reward": -0.35,
-      "curriculum_clears_to_advance": 2,
-      "curriculum_complete": false,
-      "curriculum_enemy_count": 0,
-      "curriculum_stage": 1,
-      "curriculum_stage_clears": 0,
-      "curriculum_stage_history": [],
-      "curriculum_stage_name": "food-corridor",
-      "curriculum_version": "neurofly-curriculum-v1",
-      "curriculum_world_tick_seconds": 1.0,
-      "decision_action": "TURN_RIGHT",
-      "decision_applied": true,
-      "enemies": [],
-      "episode": 1,
-      "episode_food": 0,
-      "episode_reward": -0.35,
+      "episode_reward": -0.43,
       "first_clear_seconds": null,
       "first_clear_ticks": null,
       "fly": {
@@ -884,7 +300,7 @@
         "###################",
         "###################"
       ],
-      "last_action": "TURN_RIGHT",
+      "last_action": "HOLD",
       "last_event": null,
       "last_reward": -0.01,
       "latest_clear_seconds": null,
@@ -916,14 +332,14 @@
       },
       "power_ticks": 0,
       "state_kind": "neural_decision",
-      "survival_seconds": 126.5,
-      "ticks": 35,
+      "survival_seconds": 162.2,
+      "ticks": 43,
       "total_clears": 0,
       "total_deaths": 0,
-      "total_ticks": 35,
-      "total_world_ticks": 98,
+      "total_ticks": 43,
+      "total_world_ticks": 122,
       "world_tick_seconds": 1.0,
-      "world_ticks": 98
+      "world_ticks": 122
     },
     {
       "best_clear_seconds": null,
@@ -931,19 +347,19 @@
       "brain": {
         "backend": "malecns",
         "telemetry": {
-          "aversive_spikes": 74,
-          "brain_ms": 18000.0,
-          "compute_seconds": 3.8432329699998604,
-          "danger_odor_spikes": 88,
-          "food_odor_spikes": 2602,
-          "kc_spikes": 4529,
+          "aversive_spikes": 79,
+          "brain_ms": 22000.0,
+          "compute_seconds": 3.6833951109999816,
+          "danger_odor_spikes": 95,
+          "food_odor_spikes": 2636,
+          "kc_spikes": 4745,
           "memory": {
-            "changed_edges": 3401,
-            "mean_efficacy": 1.006170392036438,
-            "minimum_efficacy": 0.47652488946914673,
+            "changed_edges": 3413,
+            "mean_efficacy": 1.0051679611206055,
+            "minimum_efficacy": 0.4776868224143982,
             "model": "stonkfly-dual-compartment-v1",
             "plastic_edges": 7835,
-            "sha256": "7f4cc64bb016074313a7379a7c43168d638b8b118232db80de2fb98c196e7966"
+            "sha256": "d3eeca905ad4c892bdca29d16ac81a315ea2dff2a26d7c30d630abc37836e8f5"
           },
           "olfaction": {
             "danger_left": 0.0,
@@ -985,11 +401,303 @@
             "validated": false
           },
           "reward_spikes": 0,
-          "total_spikes": 560910
+          "total_spikes": 562979
         }
       },
       "clear_history": [],
-      "cumulative_reward": -0.36,
+      "cumulative_reward": -0.44,
+      "curriculum_clears_to_advance": 2,
+      "curriculum_complete": false,
+      "curriculum_enemy_count": 0,
+      "curriculum_stage": 1,
+      "curriculum_stage_clears": 0,
+      "curriculum_stage_history": [],
+      "curriculum_stage_name": "food-corridor",
+      "curriculum_version": "neurofly-curriculum-v1",
+      "curriculum_world_tick_seconds": 1.0,
+      "decision_action": "HOLD",
+      "decision_applied": true,
+      "enemies": [],
+      "episode": 1,
+      "episode_food": 0,
+      "episode_reward": -0.44,
+      "first_clear_seconds": null,
+      "first_clear_ticks": null,
+      "fly": {
+        "dir": "LEFT",
+        "x": 2,
+        "y": 7
+      },
+      "food_left": 5,
+      "goal": "maze_cleared",
+      "grid": [
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "##  .  .  .  .  .##",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################"
+      ],
+      "last_action": "HOLD",
+      "last_event": null,
+      "last_reward": -0.01,
+      "latest_clear_seconds": null,
+      "latest_clear_ticks": null,
+      "olfaction": {
+        "danger": {
+          "distance_cells": null,
+          "intensity": 0.0,
+          "left": 0.0,
+          "orn_type": "ORN_DA2",
+          "receptor_proxy": "Or56a/geosmin-like",
+          "right": 0.0,
+          "source": null
+        },
+        "engineered_proxy": true,
+        "food": {
+          "distance_cells": 2.0,
+          "intensity": 0.606531,
+          "left": 0.606531,
+          "orn_type": "ORN_DM1",
+          "receptor_proxy": "Or42b",
+          "right": 0.606531,
+          "source": {
+            "x": 4,
+            "y": 7
+          }
+        },
+        "model": "neurofly-virtual-olfaction-v1"
+      },
+      "power_ticks": 0,
+      "state_kind": "neural_decision",
+      "survival_seconds": 165.9,
+      "ticks": 44,
+      "total_clears": 0,
+      "total_deaths": 0,
+      "total_ticks": 44,
+      "total_world_ticks": 125,
+      "world_tick_seconds": 1.0,
+      "world_ticks": 125
+    },
+    {
+      "best_clear_seconds": null,
+      "best_clear_ticks": null,
+      "brain": {
+        "backend": "malecns",
+        "telemetry": {
+          "aversive_spikes": 82,
+          "brain_ms": 22500.0,
+          "compute_seconds": 3.6687045260002265,
+          "danger_odor_spikes": 88,
+          "food_odor_spikes": 2635,
+          "kc_spikes": 4744,
+          "memory": {
+            "changed_edges": 3417,
+            "mean_efficacy": 1.0033458471298218,
+            "minimum_efficacy": 0.4778319001197815,
+            "model": "stonkfly-dual-compartment-v1",
+            "plastic_edges": 7835,
+            "sha256": "7b4fc015f2e92980eee4c66c99477ed295119c5a7520007a6007b71116540d09"
+          },
+          "olfaction": {
+            "danger_left": 0.0,
+            "danger_right": 0.0,
+            "food_left": 0.606531,
+            "food_right": 0.606531
+          },
+          "olfaction_model": "neurofly-virtual-olfaction-v1",
+          "olfaction_report": {
+            "danger": {
+              "left_from_instance_suffix": 21,
+              "left_from_soma_side": 0,
+              "left_neurons": 21,
+              "orn_type": "ORN_DA2",
+              "receptor_proxy": "Or56a/geosmin-like",
+              "right_from_instance_suffix": 20,
+              "right_from_soma_side": 0,
+              "right_neurons": 20,
+              "side_policy": "somaSide_then_curated_instance_suffix",
+              "type_neurons": 48,
+              "unresolved_side": 7
+            },
+            "engineered_proxy": true,
+            "food": {
+              "left_from_instance_suffix": 35,
+              "left_from_soma_side": 0,
+              "left_neurons": 35,
+              "orn_type": "ORN_DM1",
+              "receptor_proxy": "Or42b",
+              "right_from_instance_suffix": 39,
+              "right_from_soma_side": 0,
+              "right_neurons": 39,
+              "side_policy": "somaSide_then_curated_instance_suffix",
+              "type_neurons": 74,
+              "unresolved_side": 0
+            },
+            "max_external_current": 8.0,
+            "model": "neurofly-virtual-olfaction-v1",
+            "validated": false
+          },
+          "reward_spikes": 0,
+          "total_spikes": 558329
+        }
+      },
+      "clear_history": [],
+      "cumulative_reward": -0.45,
+      "curriculum_clears_to_advance": 2,
+      "curriculum_complete": false,
+      "curriculum_enemy_count": 0,
+      "curriculum_stage": 1,
+      "curriculum_stage_clears": 0,
+      "curriculum_stage_history": [],
+      "curriculum_stage_name": "food-corridor",
+      "curriculum_version": "neurofly-curriculum-v1",
+      "curriculum_world_tick_seconds": 1.0,
+      "decision_action": "HOLD",
+      "decision_applied": true,
+      "enemies": [],
+      "episode": 1,
+      "episode_food": 0,
+      "episode_reward": -0.45,
+      "first_clear_seconds": null,
+      "first_clear_ticks": null,
+      "fly": {
+        "dir": "LEFT",
+        "x": 2,
+        "y": 7
+      },
+      "food_left": 5,
+      "goal": "maze_cleared",
+      "grid": [
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "##  .  .  .  .  .##",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################"
+      ],
+      "last_action": "HOLD",
+      "last_event": null,
+      "last_reward": -0.01,
+      "latest_clear_seconds": null,
+      "latest_clear_ticks": null,
+      "olfaction": {
+        "danger": {
+          "distance_cells": null,
+          "intensity": 0.0,
+          "left": 0.0,
+          "orn_type": "ORN_DA2",
+          "receptor_proxy": "Or56a/geosmin-like",
+          "right": 0.0,
+          "source": null
+        },
+        "engineered_proxy": true,
+        "food": {
+          "distance_cells": 2.0,
+          "intensity": 0.606531,
+          "left": 0.606531,
+          "orn_type": "ORN_DM1",
+          "receptor_proxy": "Or42b",
+          "right": 0.606531,
+          "source": {
+            "x": 4,
+            "y": 7
+          }
+        },
+        "model": "neurofly-virtual-olfaction-v1"
+      },
+      "power_ticks": 0,
+      "state_kind": "neural_decision",
+      "survival_seconds": 169.6,
+      "ticks": 45,
+      "total_clears": 0,
+      "total_deaths": 0,
+      "total_ticks": 45,
+      "total_world_ticks": 128,
+      "world_tick_seconds": 1.0,
+      "world_ticks": 128
+    },
+    {
+      "best_clear_seconds": null,
+      "best_clear_ticks": null,
+      "brain": {
+        "backend": "malecns",
+        "telemetry": {
+          "aversive_spikes": 82,
+          "brain_ms": 23000.0,
+          "compute_seconds": 3.678581238999982,
+          "danger_odor_spikes": 90,
+          "food_odor_spikes": 2583,
+          "kc_spikes": 4540,
+          "memory": {
+            "changed_edges": 3418,
+            "mean_efficacy": 1.000340223312378,
+            "minimum_efficacy": 0.47797691822052,
+            "model": "stonkfly-dual-compartment-v1",
+            "plastic_edges": 7835,
+            "sha256": "c3e1a50cc779c7918b411e8a44f4efaca228aa3d59e11a018625c554446ffff6"
+          },
+          "olfaction": {
+            "danger_left": 0.0,
+            "danger_right": 0.0,
+            "food_left": 0.606531,
+            "food_right": 0.606531
+          },
+          "olfaction_model": "neurofly-virtual-olfaction-v1",
+          "olfaction_report": {
+            "danger": {
+              "left_from_instance_suffix": 21,
+              "left_from_soma_side": 0,
+              "left_neurons": 21,
+              "orn_type": "ORN_DA2",
+              "receptor_proxy": "Or56a/geosmin-like",
+              "right_from_instance_suffix": 20,
+              "right_from_soma_side": 0,
+              "right_neurons": 20,
+              "side_policy": "somaSide_then_curated_instance_suffix",
+              "type_neurons": 48,
+              "unresolved_side": 7
+            },
+            "engineered_proxy": true,
+            "food": {
+              "left_from_instance_suffix": 35,
+              "left_from_soma_side": 0,
+              "left_neurons": 35,
+              "orn_type": "ORN_DM1",
+              "receptor_proxy": "Or42b",
+              "right_from_instance_suffix": 39,
+              "right_from_soma_side": 0,
+              "right_neurons": 39,
+              "side_policy": "somaSide_then_curated_instance_suffix",
+              "type_neurons": 74,
+              "unresolved_side": 0
+            },
+            "max_external_current": 8.0,
+            "model": "neurofly-virtual-olfaction-v1",
+            "validated": false
+          },
+          "reward_spikes": 0,
+          "total_spikes": 563016
+        }
+      },
+      "clear_history": [],
+      "cumulative_reward": -0.46,
       "curriculum_clears_to_advance": 2,
       "curriculum_complete": false,
       "curriculum_enemy_count": 0,
@@ -1004,7 +712,7 @@
       "enemies": [],
       "episode": 1,
       "episode_food": 0,
-      "episode_reward": -0.36,
+      "episode_reward": -0.46,
       "first_clear_seconds": null,
       "first_clear_ticks": null,
       "fly": {
@@ -1062,14 +770,14 @@
       },
       "power_ticks": 0,
       "state_kind": "neural_decision",
-      "survival_seconds": 130.5,
-      "ticks": 36,
+      "survival_seconds": 173.4,
+      "ticks": 46,
       "total_clears": 0,
       "total_deaths": 0,
-      "total_ticks": 36,
-      "total_world_ticks": 101,
+      "total_ticks": 46,
+      "total_world_ticks": 131,
       "world_tick_seconds": 1.0,
-      "world_ticks": 101
+      "world_ticks": 131
     },
     {
       "best_clear_seconds": null,
@@ -1077,19 +785,19 @@
       "brain": {
         "backend": "malecns",
         "telemetry": {
-          "aversive_spikes": 76,
-          "brain_ms": 18500.0,
-          "compute_seconds": 3.7250648740000827,
-          "danger_odor_spikes": 91,
-          "food_odor_spikes": 2614,
-          "kc_spikes": 4610,
+          "aversive_spikes": 75,
+          "brain_ms": 23500.0,
+          "compute_seconds": 3.664228797999783,
+          "danger_odor_spikes": 85,
+          "food_odor_spikes": 2611,
+          "kc_spikes": 4569,
           "memory": {
-            "changed_edges": 3401,
-            "mean_efficacy": 1.0064282417297363,
-            "minimum_efficacy": 0.4766702353954315,
+            "changed_edges": 3418,
+            "mean_efficacy": 1.0016002655029297,
+            "minimum_efficacy": 0.47812187671661377,
             "model": "stonkfly-dual-compartment-v1",
             "plastic_edges": 7835,
-            "sha256": "0e4c3e4a264c154c69192039445ed99be4b41e9acca1648d6dcfe0a2c02e7eb6"
+            "sha256": "e3e8a6b13ce5ffda9355ee8e2ff1372692e2029482198e3aa1ab14f587e6d5ce"
           },
           "olfaction": {
             "danger_left": 0.0,
@@ -1131,595 +839,11 @@
             "validated": false
           },
           "reward_spikes": 0,
-          "total_spikes": 558461
+          "total_spikes": 560757
         }
       },
       "clear_history": [],
-      "cumulative_reward": -0.37,
-      "curriculum_clears_to_advance": 2,
-      "curriculum_complete": false,
-      "curriculum_enemy_count": 0,
-      "curriculum_stage": 1,
-      "curriculum_stage_clears": 0,
-      "curriculum_stage_history": [],
-      "curriculum_stage_name": "food-corridor",
-      "curriculum_version": "neurofly-curriculum-v1",
-      "curriculum_world_tick_seconds": 1.0,
-      "decision_action": "TURN_RIGHT",
-      "decision_applied": true,
-      "enemies": [],
-      "episode": 1,
-      "episode_food": 0,
-      "episode_reward": -0.37,
-      "first_clear_seconds": null,
-      "first_clear_ticks": null,
-      "fly": {
-        "dir": "RIGHT",
-        "x": 2,
-        "y": 7
-      },
-      "food_left": 5,
-      "goal": "maze_cleared",
-      "grid": [
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "##  .  .  .  .  .##",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################"
-      ],
-      "last_action": "TURN_RIGHT",
-      "last_event": null,
-      "last_reward": -0.01,
-      "latest_clear_seconds": null,
-      "latest_clear_ticks": null,
-      "olfaction": {
-        "danger": {
-          "distance_cells": null,
-          "intensity": 0.0,
-          "left": 0.0,
-          "orn_type": "ORN_DA2",
-          "receptor_proxy": "Or56a/geosmin-like",
-          "right": 0.0,
-          "source": null
-        },
-        "engineered_proxy": true,
-        "food": {
-          "distance_cells": 2.0,
-          "intensity": 0.606531,
-          "left": 0.606531,
-          "orn_type": "ORN_DM1",
-          "receptor_proxy": "Or42b",
-          "right": 0.606531,
-          "source": {
-            "x": 4,
-            "y": 7
-          }
-        },
-        "model": "neurofly-virtual-olfaction-v1"
-      },
-      "power_ticks": 0,
-      "state_kind": "neural_decision",
-      "survival_seconds": 134.3,
-      "ticks": 37,
-      "total_clears": 0,
-      "total_deaths": 0,
-      "total_ticks": 37,
-      "total_world_ticks": 104,
-      "world_tick_seconds": 1.0,
-      "world_ticks": 104
-    },
-    {
-      "best_clear_seconds": null,
-      "best_clear_ticks": null,
-      "brain": {
-        "backend": "malecns",
-        "telemetry": {
-          "aversive_spikes": 76,
-          "brain_ms": 19000.0,
-          "compute_seconds": 3.7972739090000687,
-          "danger_odor_spikes": 93,
-          "food_odor_spikes": 2604,
-          "kc_spikes": 4848,
-          "memory": {
-            "changed_edges": 3403,
-            "mean_efficacy": 1.0068655014038086,
-            "minimum_efficacy": 0.4768155813217163,
-            "model": "stonkfly-dual-compartment-v1",
-            "plastic_edges": 7835,
-            "sha256": "90a9464e7e047d28521cd6cd64524f83d3005727419f91c64ff78e0ecf4ff450"
-          },
-          "olfaction": {
-            "danger_left": 0.0,
-            "danger_right": 0.0,
-            "food_left": 0.606531,
-            "food_right": 0.606531
-          },
-          "olfaction_model": "neurofly-virtual-olfaction-v1",
-          "olfaction_report": {
-            "danger": {
-              "left_from_instance_suffix": 21,
-              "left_from_soma_side": 0,
-              "left_neurons": 21,
-              "orn_type": "ORN_DA2",
-              "receptor_proxy": "Or56a/geosmin-like",
-              "right_from_instance_suffix": 20,
-              "right_from_soma_side": 0,
-              "right_neurons": 20,
-              "side_policy": "somaSide_then_curated_instance_suffix",
-              "type_neurons": 48,
-              "unresolved_side": 7
-            },
-            "engineered_proxy": true,
-            "food": {
-              "left_from_instance_suffix": 35,
-              "left_from_soma_side": 0,
-              "left_neurons": 35,
-              "orn_type": "ORN_DM1",
-              "receptor_proxy": "Or42b",
-              "right_from_instance_suffix": 39,
-              "right_from_soma_side": 0,
-              "right_neurons": 39,
-              "side_policy": "somaSide_then_curated_instance_suffix",
-              "type_neurons": 74,
-              "unresolved_side": 0
-            },
-            "max_external_current": 8.0,
-            "model": "neurofly-virtual-olfaction-v1",
-            "validated": false
-          },
-          "reward_spikes": 0,
-          "total_spikes": 562023
-        }
-      },
-      "clear_history": [],
-      "cumulative_reward": -0.38,
-      "curriculum_clears_to_advance": 2,
-      "curriculum_complete": false,
-      "curriculum_enemy_count": 0,
-      "curriculum_stage": 1,
-      "curriculum_stage_clears": 0,
-      "curriculum_stage_history": [],
-      "curriculum_stage_name": "food-corridor",
-      "curriculum_version": "neurofly-curriculum-v1",
-      "curriculum_world_tick_seconds": 1.0,
-      "decision_action": "TURN_RIGHT",
-      "decision_applied": true,
-      "enemies": [],
-      "episode": 1,
-      "episode_food": 0,
-      "episode_reward": -0.38,
-      "first_clear_seconds": null,
-      "first_clear_ticks": null,
-      "fly": {
-        "dir": "DOWN",
-        "x": 2,
-        "y": 7
-      },
-      "food_left": 5,
-      "goal": "maze_cleared",
-      "grid": [
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "##  .  .  .  .  .##",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################"
-      ],
-      "last_action": "TURN_RIGHT",
-      "last_event": null,
-      "last_reward": -0.01,
-      "latest_clear_seconds": null,
-      "latest_clear_ticks": null,
-      "olfaction": {
-        "danger": {
-          "distance_cells": null,
-          "intensity": 0.0,
-          "left": 0.0,
-          "orn_type": "ORN_DA2",
-          "receptor_proxy": "Or56a/geosmin-like",
-          "right": 0.0,
-          "source": null
-        },
-        "engineered_proxy": true,
-        "food": {
-          "distance_cells": 2.0,
-          "intensity": 0.606531,
-          "left": 0.879469,
-          "orn_type": "ORN_DM1",
-          "receptor_proxy": "Or42b",
-          "right": 0.333592,
-          "source": {
-            "x": 4,
-            "y": 7
-          }
-        },
-        "model": "neurofly-virtual-olfaction-v1"
-      },
-      "power_ticks": 0,
-      "state_kind": "neural_decision",
-      "survival_seconds": 138.1,
-      "ticks": 38,
-      "total_clears": 0,
-      "total_deaths": 0,
-      "total_ticks": 38,
-      "total_world_ticks": 107,
-      "world_tick_seconds": 1.0,
-      "world_ticks": 107
-    },
-    {
-      "best_clear_seconds": null,
-      "best_clear_ticks": null,
-      "brain": {
-        "backend": "malecns",
-        "telemetry": {
-          "aversive_spikes": 72,
-          "brain_ms": 19500.0,
-          "compute_seconds": 3.860962916000034,
-          "danger_odor_spikes": 86,
-          "food_odor_spikes": 2600,
-          "kc_spikes": 4299,
-          "memory": {
-            "changed_edges": 3403,
-            "mean_efficacy": 1.0062037706375122,
-            "minimum_efficacy": 0.4769608974456787,
-            "model": "stonkfly-dual-compartment-v1",
-            "plastic_edges": 7835,
-            "sha256": "669be9d9aa8ed2d961ec5cd26d1423742ab11992a5be1f1935e0aecbb5a901b6"
-          },
-          "olfaction": {
-            "danger_left": 0.0,
-            "danger_right": 0.0,
-            "food_left": 0.879469,
-            "food_right": 0.333592
-          },
-          "olfaction_model": "neurofly-virtual-olfaction-v1",
-          "olfaction_report": {
-            "danger": {
-              "left_from_instance_suffix": 21,
-              "left_from_soma_side": 0,
-              "left_neurons": 21,
-              "orn_type": "ORN_DA2",
-              "receptor_proxy": "Or56a/geosmin-like",
-              "right_from_instance_suffix": 20,
-              "right_from_soma_side": 0,
-              "right_neurons": 20,
-              "side_policy": "somaSide_then_curated_instance_suffix",
-              "type_neurons": 48,
-              "unresolved_side": 7
-            },
-            "engineered_proxy": true,
-            "food": {
-              "left_from_instance_suffix": 35,
-              "left_from_soma_side": 0,
-              "left_neurons": 35,
-              "orn_type": "ORN_DM1",
-              "receptor_proxy": "Or42b",
-              "right_from_instance_suffix": 39,
-              "right_from_soma_side": 0,
-              "right_neurons": 39,
-              "side_policy": "somaSide_then_curated_instance_suffix",
-              "type_neurons": 74,
-              "unresolved_side": 0
-            },
-            "max_external_current": 8.0,
-            "model": "neurofly-virtual-olfaction-v1",
-            "validated": false
-          },
-          "reward_spikes": 0,
-          "total_spikes": 561283
-        }
-      },
-      "clear_history": [],
-      "cumulative_reward": -0.39,
-      "curriculum_clears_to_advance": 2,
-      "curriculum_complete": false,
-      "curriculum_enemy_count": 0,
-      "curriculum_stage": 1,
-      "curriculum_stage_clears": 0,
-      "curriculum_stage_history": [],
-      "curriculum_stage_name": "food-corridor",
-      "curriculum_version": "neurofly-curriculum-v1",
-      "curriculum_world_tick_seconds": 1.0,
-      "decision_action": "TURN_LEFT",
-      "decision_applied": true,
-      "enemies": [],
-      "episode": 1,
-      "episode_food": 0,
-      "episode_reward": -0.39,
-      "first_clear_seconds": null,
-      "first_clear_ticks": null,
-      "fly": {
-        "dir": "RIGHT",
-        "x": 2,
-        "y": 7
-      },
-      "food_left": 5,
-      "goal": "maze_cleared",
-      "grid": [
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "##  .  .  .  .  .##",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################"
-      ],
-      "last_action": "TURN_LEFT",
-      "last_event": null,
-      "last_reward": -0.01,
-      "latest_clear_seconds": null,
-      "latest_clear_ticks": null,
-      "olfaction": {
-        "danger": {
-          "distance_cells": null,
-          "intensity": 0.0,
-          "left": 0.0,
-          "orn_type": "ORN_DA2",
-          "receptor_proxy": "Or56a/geosmin-like",
-          "right": 0.0,
-          "source": null
-        },
-        "engineered_proxy": true,
-        "food": {
-          "distance_cells": 2.0,
-          "intensity": 0.606531,
-          "left": 0.606531,
-          "orn_type": "ORN_DM1",
-          "receptor_proxy": "Or42b",
-          "right": 0.606531,
-          "source": {
-            "x": 4,
-            "y": 7
-          }
-        },
-        "model": "neurofly-virtual-olfaction-v1"
-      },
-      "power_ticks": 0,
-      "state_kind": "neural_decision",
-      "survival_seconds": 142.1,
-      "ticks": 39,
-      "total_clears": 0,
-      "total_deaths": 0,
-      "total_ticks": 39,
-      "total_world_ticks": 110,
-      "world_tick_seconds": 1.0,
-      "world_ticks": 110
-    },
-    {
-      "best_clear_seconds": null,
-      "best_clear_ticks": null,
-      "brain": {
-        "backend": "malecns",
-        "telemetry": {
-          "aversive_spikes": 83,
-          "brain_ms": 20000.0,
-          "compute_seconds": 3.8962027179998984,
-          "danger_odor_spikes": 91,
-          "food_odor_spikes": 2634,
-          "kc_spikes": 4851,
-          "memory": {
-            "changed_edges": 3409,
-            "mean_efficacy": 1.0045284032821655,
-            "minimum_efficacy": 0.47710615396499634,
-            "model": "stonkfly-dual-compartment-v1",
-            "plastic_edges": 7835,
-            "sha256": "20b24fb1d58d04cb93c6e7378fd5a089f426d1c159a94836ee23a2a647c5fc2b"
-          },
-          "olfaction": {
-            "danger_left": 0.0,
-            "danger_right": 0.0,
-            "food_left": 0.606531,
-            "food_right": 0.606531
-          },
-          "olfaction_model": "neurofly-virtual-olfaction-v1",
-          "olfaction_report": {
-            "danger": {
-              "left_from_instance_suffix": 21,
-              "left_from_soma_side": 0,
-              "left_neurons": 21,
-              "orn_type": "ORN_DA2",
-              "receptor_proxy": "Or56a/geosmin-like",
-              "right_from_instance_suffix": 20,
-              "right_from_soma_side": 0,
-              "right_neurons": 20,
-              "side_policy": "somaSide_then_curated_instance_suffix",
-              "type_neurons": 48,
-              "unresolved_side": 7
-            },
-            "engineered_proxy": true,
-            "food": {
-              "left_from_instance_suffix": 35,
-              "left_from_soma_side": 0,
-              "left_neurons": 35,
-              "orn_type": "ORN_DM1",
-              "receptor_proxy": "Or42b",
-              "right_from_instance_suffix": 39,
-              "right_from_soma_side": 0,
-              "right_neurons": 39,
-              "side_policy": "somaSide_then_curated_instance_suffix",
-              "type_neurons": 74,
-              "unresolved_side": 0
-            },
-            "max_external_current": 8.0,
-            "model": "neurofly-virtual-olfaction-v1",
-            "validated": false
-          },
-          "reward_spikes": 0,
-          "total_spikes": 563927
-        }
-      },
-      "clear_history": [],
-      "cumulative_reward": -0.4,
-      "curriculum_clears_to_advance": 2,
-      "curriculum_complete": false,
-      "curriculum_enemy_count": 0,
-      "curriculum_stage": 1,
-      "curriculum_stage_clears": 0,
-      "curriculum_stage_history": [],
-      "curriculum_stage_name": "food-corridor",
-      "curriculum_version": "neurofly-curriculum-v1",
-      "curriculum_world_tick_seconds": 1.0,
-      "decision_action": "TURN_RIGHT",
-      "decision_applied": true,
-      "enemies": [],
-      "episode": 1,
-      "episode_food": 0,
-      "episode_reward": -0.4,
-      "first_clear_seconds": null,
-      "first_clear_ticks": null,
-      "fly": {
-        "dir": "DOWN",
-        "x": 2,
-        "y": 7
-      },
-      "food_left": 5,
-      "goal": "maze_cleared",
-      "grid": [
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "##  .  .  .  .  .##",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################",
-        "###################"
-      ],
-      "last_action": "TURN_RIGHT",
-      "last_event": null,
-      "last_reward": -0.01,
-      "latest_clear_seconds": null,
-      "latest_clear_ticks": null,
-      "olfaction": {
-        "danger": {
-          "distance_cells": null,
-          "intensity": 0.0,
-          "left": 0.0,
-          "orn_type": "ORN_DA2",
-          "receptor_proxy": "Or56a/geosmin-like",
-          "right": 0.0,
-          "source": null
-        },
-        "engineered_proxy": true,
-        "food": {
-          "distance_cells": 2.0,
-          "intensity": 0.606531,
-          "left": 0.879469,
-          "orn_type": "ORN_DM1",
-          "receptor_proxy": "Or42b",
-          "right": 0.333592,
-          "source": {
-            "x": 4,
-            "y": 7
-          }
-        },
-        "model": "neurofly-virtual-olfaction-v1"
-      },
-      "power_ticks": 0,
-      "state_kind": "neural_decision",
-      "survival_seconds": 146.0,
-      "ticks": 40,
-      "total_clears": 0,
-      "total_deaths": 0,
-      "total_ticks": 40,
-      "total_world_ticks": 113,
-      "world_tick_seconds": 1.0,
-      "world_ticks": 113
-    },
-    {
-      "best_clear_seconds": null,
-      "best_clear_ticks": null,
-      "brain": {
-        "backend": "malecns",
-        "telemetry": {
-          "aversive_spikes": 72,
-          "brain_ms": 20500.0,
-          "compute_seconds": 3.8763544529999763,
-          "danger_odor_spikes": 92,
-          "food_odor_spikes": 2611,
-          "kc_spikes": 4410,
-          "memory": {
-            "changed_edges": 3409,
-            "mean_efficacy": 1.0054024457931519,
-            "minimum_efficacy": 0.4772513806819916,
-            "model": "stonkfly-dual-compartment-v1",
-            "plastic_edges": 7835,
-            "sha256": "5a0c667c38d75b97394975c129861cd967ade2cad586d93cf6f494b1a04e83db"
-          },
-          "olfaction": {
-            "danger_left": 0.0,
-            "danger_right": 0.0,
-            "food_left": 0.879469,
-            "food_right": 0.333592
-          },
-          "olfaction_model": "neurofly-virtual-olfaction-v1",
-          "olfaction_report": {
-            "danger": {
-              "left_from_instance_suffix": 21,
-              "left_from_soma_side": 0,
-              "left_neurons": 21,
-              "orn_type": "ORN_DA2",
-              "receptor_proxy": "Or56a/geosmin-like",
-              "right_from_instance_suffix": 20,
-              "right_from_soma_side": 0,
-              "right_neurons": 20,
-              "side_policy": "somaSide_then_curated_instance_suffix",
-              "type_neurons": 48,
-              "unresolved_side": 7
-            },
-            "engineered_proxy": true,
-            "food": {
-              "left_from_instance_suffix": 35,
-              "left_from_soma_side": 0,
-              "left_neurons": 35,
-              "orn_type": "ORN_DM1",
-              "receptor_proxy": "Or42b",
-              "right_from_instance_suffix": 39,
-              "right_from_soma_side": 0,
-              "right_neurons": 39,
-              "side_policy": "somaSide_then_curated_instance_suffix",
-              "type_neurons": 74,
-              "unresolved_side": 0
-            },
-            "max_external_current": 8.0,
-            "model": "neurofly-virtual-olfaction-v1",
-            "validated": false
-          },
-          "reward_spikes": 0,
-          "total_spikes": 557130
-        }
-      },
-      "clear_history": [],
-      "cumulative_reward": -0.41,
+      "cumulative_reward": -0.47,
       "curriculum_clears_to_advance": 2,
       "curriculum_complete": false,
       "curriculum_enemy_count": 0,
@@ -1734,11 +858,11 @@
       "enemies": [],
       "episode": 1,
       "episode_food": 0,
-      "episode_reward": -0.41,
+      "episode_reward": -0.47,
       "first_clear_seconds": null,
       "first_clear_ticks": null,
       "fly": {
-        "dir": "DOWN",
+        "dir": "UP",
         "x": 2,
         "y": 7
       },
@@ -1779,6 +903,444 @@
         "food": {
           "distance_cells": 2.0,
           "intensity": 0.606531,
+          "left": 0.333592,
+          "orn_type": "ORN_DM1",
+          "receptor_proxy": "Or42b",
+          "right": 0.879469,
+          "source": {
+            "x": 4,
+            "y": 7
+          }
+        },
+        "model": "neurofly-virtual-olfaction-v1"
+      },
+      "power_ticks": 0,
+      "state_kind": "neural_decision",
+      "survival_seconds": 177.1,
+      "ticks": 47,
+      "total_clears": 0,
+      "total_deaths": 0,
+      "total_ticks": 47,
+      "total_world_ticks": 134,
+      "world_tick_seconds": 1.0,
+      "world_ticks": 134
+    },
+    {
+      "best_clear_seconds": null,
+      "best_clear_ticks": null,
+      "brain": {
+        "backend": "malecns",
+        "telemetry": {
+          "aversive_spikes": 81,
+          "brain_ms": 24000.0,
+          "compute_seconds": 3.676812292999898,
+          "danger_odor_spikes": 93,
+          "food_odor_spikes": 2630,
+          "kc_spikes": 4579,
+          "memory": {
+            "changed_edges": 3418,
+            "mean_efficacy": 1.0007908344268799,
+            "minimum_efficacy": 0.4782668352127075,
+            "model": "stonkfly-dual-compartment-v1",
+            "plastic_edges": 7835,
+            "sha256": "c297267c2a5f0b51f7535fe674cbf6340e87d01a1ee60e5d6e7b5bae023aafc7"
+          },
+          "olfaction": {
+            "danger_left": 0.0,
+            "danger_right": 0.0,
+            "food_left": 0.333592,
+            "food_right": 0.879469
+          },
+          "olfaction_model": "neurofly-virtual-olfaction-v1",
+          "olfaction_report": {
+            "danger": {
+              "left_from_instance_suffix": 21,
+              "left_from_soma_side": 0,
+              "left_neurons": 21,
+              "orn_type": "ORN_DA2",
+              "receptor_proxy": "Or56a/geosmin-like",
+              "right_from_instance_suffix": 20,
+              "right_from_soma_side": 0,
+              "right_neurons": 20,
+              "side_policy": "somaSide_then_curated_instance_suffix",
+              "type_neurons": 48,
+              "unresolved_side": 7
+            },
+            "engineered_proxy": true,
+            "food": {
+              "left_from_instance_suffix": 35,
+              "left_from_soma_side": 0,
+              "left_neurons": 35,
+              "orn_type": "ORN_DM1",
+              "receptor_proxy": "Or42b",
+              "right_from_instance_suffix": 39,
+              "right_from_soma_side": 0,
+              "right_neurons": 39,
+              "side_policy": "somaSide_then_curated_instance_suffix",
+              "type_neurons": 74,
+              "unresolved_side": 0
+            },
+            "max_external_current": 8.0,
+            "model": "neurofly-virtual-olfaction-v1",
+            "validated": false
+          },
+          "reward_spikes": 0,
+          "total_spikes": 560024
+        }
+      },
+      "clear_history": [],
+      "cumulative_reward": -0.48,
+      "curriculum_clears_to_advance": 2,
+      "curriculum_complete": false,
+      "curriculum_enemy_count": 0,
+      "curriculum_stage": 1,
+      "curriculum_stage_clears": 0,
+      "curriculum_stage_history": [],
+      "curriculum_stage_name": "food-corridor",
+      "curriculum_version": "neurofly-curriculum-v1",
+      "curriculum_world_tick_seconds": 1.0,
+      "decision_action": "TURN_RIGHT",
+      "decision_applied": true,
+      "enemies": [],
+      "episode": 1,
+      "episode_food": 0,
+      "episode_reward": -0.48,
+      "first_clear_seconds": null,
+      "first_clear_ticks": null,
+      "fly": {
+        "dir": "RIGHT",
+        "x": 2,
+        "y": 7
+      },
+      "food_left": 5,
+      "goal": "maze_cleared",
+      "grid": [
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "##  .  .  .  .  .##",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################"
+      ],
+      "last_action": "TURN_RIGHT",
+      "last_event": null,
+      "last_reward": -0.01,
+      "latest_clear_seconds": null,
+      "latest_clear_ticks": null,
+      "olfaction": {
+        "danger": {
+          "distance_cells": null,
+          "intensity": 0.0,
+          "left": 0.0,
+          "orn_type": "ORN_DA2",
+          "receptor_proxy": "Or56a/geosmin-like",
+          "right": 0.0,
+          "source": null
+        },
+        "engineered_proxy": true,
+        "food": {
+          "distance_cells": 2.0,
+          "intensity": 0.606531,
+          "left": 0.606531,
+          "orn_type": "ORN_DM1",
+          "receptor_proxy": "Or42b",
+          "right": 0.606531,
+          "source": {
+            "x": 4,
+            "y": 7
+          }
+        },
+        "model": "neurofly-virtual-olfaction-v1"
+      },
+      "power_ticks": 0,
+      "state_kind": "neural_decision",
+      "survival_seconds": 180.9,
+      "ticks": 48,
+      "total_clears": 0,
+      "total_deaths": 0,
+      "total_ticks": 48,
+      "total_world_ticks": 137,
+      "world_tick_seconds": 1.0,
+      "world_ticks": 137
+    },
+    {
+      "best_clear_seconds": null,
+      "best_clear_ticks": null,
+      "brain": {
+        "backend": "malecns",
+        "telemetry": {
+          "aversive_spikes": 87,
+          "brain_ms": 24500.0,
+          "compute_seconds": 3.6881743379999534,
+          "danger_odor_spikes": 93,
+          "food_odor_spikes": 2620,
+          "kc_spikes": 4566,
+          "memory": {
+            "changed_edges": 3418,
+            "mean_efficacy": 0.9972929358482361,
+            "minimum_efficacy": 0.4784117639064789,
+            "model": "stonkfly-dual-compartment-v1",
+            "plastic_edges": 7835,
+            "sha256": "9ce19dde6a3e29d5656a87b6efb4955f01994a5c4396a5444ab9a3effb9a9e54"
+          },
+          "olfaction": {
+            "danger_left": 0.0,
+            "danger_right": 0.0,
+            "food_left": 0.606531,
+            "food_right": 0.606531
+          },
+          "olfaction_model": "neurofly-virtual-olfaction-v1",
+          "olfaction_report": {
+            "danger": {
+              "left_from_instance_suffix": 21,
+              "left_from_soma_side": 0,
+              "left_neurons": 21,
+              "orn_type": "ORN_DA2",
+              "receptor_proxy": "Or56a/geosmin-like",
+              "right_from_instance_suffix": 20,
+              "right_from_soma_side": 0,
+              "right_neurons": 20,
+              "side_policy": "somaSide_then_curated_instance_suffix",
+              "type_neurons": 48,
+              "unresolved_side": 7
+            },
+            "engineered_proxy": true,
+            "food": {
+              "left_from_instance_suffix": 35,
+              "left_from_soma_side": 0,
+              "left_neurons": 35,
+              "orn_type": "ORN_DM1",
+              "receptor_proxy": "Or42b",
+              "right_from_instance_suffix": 39,
+              "right_from_soma_side": 0,
+              "right_neurons": 39,
+              "side_policy": "somaSide_then_curated_instance_suffix",
+              "type_neurons": 74,
+              "unresolved_side": 0
+            },
+            "max_external_current": 8.0,
+            "model": "neurofly-virtual-olfaction-v1",
+            "validated": false
+          },
+          "reward_spikes": 0,
+          "total_spikes": 562105
+        }
+      },
+      "clear_history": [],
+      "cumulative_reward": -0.49,
+      "curriculum_clears_to_advance": 2,
+      "curriculum_complete": false,
+      "curriculum_enemy_count": 0,
+      "curriculum_stage": 1,
+      "curriculum_stage_clears": 0,
+      "curriculum_stage_history": [],
+      "curriculum_stage_name": "food-corridor",
+      "curriculum_version": "neurofly-curriculum-v1",
+      "curriculum_world_tick_seconds": 1.0,
+      "decision_action": "HOLD",
+      "decision_applied": true,
+      "enemies": [],
+      "episode": 1,
+      "episode_food": 0,
+      "episode_reward": -0.49,
+      "first_clear_seconds": null,
+      "first_clear_ticks": null,
+      "fly": {
+        "dir": "RIGHT",
+        "x": 2,
+        "y": 7
+      },
+      "food_left": 5,
+      "goal": "maze_cleared",
+      "grid": [
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "##  .  .  .  .  .##",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################"
+      ],
+      "last_action": "HOLD",
+      "last_event": null,
+      "last_reward": -0.01,
+      "latest_clear_seconds": null,
+      "latest_clear_ticks": null,
+      "olfaction": {
+        "danger": {
+          "distance_cells": null,
+          "intensity": 0.0,
+          "left": 0.0,
+          "orn_type": "ORN_DA2",
+          "receptor_proxy": "Or56a/geosmin-like",
+          "right": 0.0,
+          "source": null
+        },
+        "engineered_proxy": true,
+        "food": {
+          "distance_cells": 2.0,
+          "intensity": 0.606531,
+          "left": 0.606531,
+          "orn_type": "ORN_DM1",
+          "receptor_proxy": "Or42b",
+          "right": 0.606531,
+          "source": {
+            "x": 4,
+            "y": 7
+          }
+        },
+        "model": "neurofly-virtual-olfaction-v1"
+      },
+      "power_ticks": 0,
+      "state_kind": "neural_decision",
+      "survival_seconds": 184.6,
+      "ticks": 49,
+      "total_clears": 0,
+      "total_deaths": 0,
+      "total_ticks": 49,
+      "total_world_ticks": 140,
+      "world_tick_seconds": 1.0,
+      "world_ticks": 140
+    },
+    {
+      "best_clear_seconds": null,
+      "best_clear_ticks": null,
+      "brain": {
+        "backend": "malecns",
+        "telemetry": {
+          "aversive_spikes": 78,
+          "brain_ms": 25000.0,
+          "compute_seconds": 3.682529547000115,
+          "danger_odor_spikes": 91,
+          "food_odor_spikes": 2640,
+          "kc_spikes": 4657,
+          "memory": {
+            "changed_edges": 3424,
+            "mean_efficacy": 0.9993413686752319,
+            "minimum_efficacy": 0.47855663299560547,
+            "model": "stonkfly-dual-compartment-v1",
+            "plastic_edges": 7835,
+            "sha256": "a9a3175a2e12b224584ed1e730f6659ee8a56037caa2d0329798ba240f6e66e1"
+          },
+          "olfaction": {
+            "danger_left": 0.0,
+            "danger_right": 0.0,
+            "food_left": 0.606531,
+            "food_right": 0.606531
+          },
+          "olfaction_model": "neurofly-virtual-olfaction-v1",
+          "olfaction_report": {
+            "danger": {
+              "left_from_instance_suffix": 21,
+              "left_from_soma_side": 0,
+              "left_neurons": 21,
+              "orn_type": "ORN_DA2",
+              "receptor_proxy": "Or56a/geosmin-like",
+              "right_from_instance_suffix": 20,
+              "right_from_soma_side": 0,
+              "right_neurons": 20,
+              "side_policy": "somaSide_then_curated_instance_suffix",
+              "type_neurons": 48,
+              "unresolved_side": 7
+            },
+            "engineered_proxy": true,
+            "food": {
+              "left_from_instance_suffix": 35,
+              "left_from_soma_side": 0,
+              "left_neurons": 35,
+              "orn_type": "ORN_DM1",
+              "receptor_proxy": "Or42b",
+              "right_from_instance_suffix": 39,
+              "right_from_soma_side": 0,
+              "right_neurons": 39,
+              "side_policy": "somaSide_then_curated_instance_suffix",
+              "type_neurons": 74,
+              "unresolved_side": 0
+            },
+            "max_external_current": 8.0,
+            "model": "neurofly-virtual-olfaction-v1",
+            "validated": false
+          },
+          "reward_spikes": 0,
+          "total_spikes": 563118
+        }
+      },
+      "clear_history": [],
+      "cumulative_reward": -0.5,
+      "curriculum_clears_to_advance": 2,
+      "curriculum_complete": false,
+      "curriculum_enemy_count": 0,
+      "curriculum_stage": 1,
+      "curriculum_stage_clears": 0,
+      "curriculum_stage_history": [],
+      "curriculum_stage_name": "food-corridor",
+      "curriculum_version": "neurofly-curriculum-v1",
+      "curriculum_world_tick_seconds": 1.0,
+      "decision_action": "TURN_RIGHT",
+      "decision_applied": true,
+      "enemies": [],
+      "episode": 1,
+      "episode_food": 0,
+      "episode_reward": -0.5,
+      "first_clear_seconds": null,
+      "first_clear_ticks": null,
+      "fly": {
+        "dir": "DOWN",
+        "x": 2,
+        "y": 7
+      },
+      "food_left": 5,
+      "goal": "maze_cleared",
+      "grid": [
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "##  .  .  .  .  .##",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################"
+      ],
+      "last_action": "TURN_RIGHT",
+      "last_event": null,
+      "last_reward": -0.01,
+      "latest_clear_seconds": null,
+      "latest_clear_ticks": null,
+      "olfaction": {
+        "danger": {
+          "distance_cells": null,
+          "intensity": 0.0,
+          "left": 0.0,
+          "orn_type": "ORN_DA2",
+          "receptor_proxy": "Or56a/geosmin-like",
+          "right": 0.0,
+          "source": null
+        },
+        "engineered_proxy": true,
+        "food": {
+          "distance_cells": 2.0,
+          "intensity": 0.606531,
           "left": 0.879469,
           "orn_type": "ORN_DM1",
           "receptor_proxy": "Or42b",
@@ -1792,14 +1354,14 @@
       },
       "power_ticks": 0,
       "state_kind": "neural_decision",
-      "survival_seconds": 150.0,
-      "ticks": 41,
+      "survival_seconds": 188.4,
+      "ticks": 50,
       "total_clears": 0,
       "total_deaths": 0,
-      "total_ticks": 41,
-      "total_world_ticks": 116,
+      "total_ticks": 50,
+      "total_world_ticks": 143,
       "world_tick_seconds": 1.0,
-      "world_ticks": 116
+      "world_ticks": 143
     },
     {
       "best_clear_seconds": null,
@@ -1807,19 +1369,19 @@
       "brain": {
         "backend": "malecns",
         "telemetry": {
-          "aversive_spikes": 74,
-          "brain_ms": 21000.0,
-          "compute_seconds": 3.7781892209998773,
-          "danger_odor_spikes": 88,
-          "food_odor_spikes": 2590,
-          "kc_spikes": 4861,
+          "aversive_spikes": 78,
+          "brain_ms": 25500.0,
+          "compute_seconds": 3.6876817389997427,
+          "danger_odor_spikes": 86,
+          "food_odor_spikes": 2588,
+          "kc_spikes": 4525,
           "memory": {
-            "changed_edges": 3413,
-            "mean_efficacy": 1.0083924531936646,
-            "minimum_efficacy": 0.47739657759666443,
+            "changed_edges": 3424,
+            "mean_efficacy": 1.0001527070999146,
+            "minimum_efficacy": 0.4787014126777649,
             "model": "stonkfly-dual-compartment-v1",
             "plastic_edges": 7835,
-            "sha256": "8acfcdad34a4e8eb2b47520ad4e86af66b49647e292026b84a2880a2cbd1ae8f"
+            "sha256": "ecf10fb42c0a3a107dce6c2db6412aaffa391435c1676b82b0fe90cd1e84eb0b"
           },
           "olfaction": {
             "danger_left": 0.0,
@@ -1861,11 +1423,11 @@
             "validated": false
           },
           "reward_spikes": 0,
-          "total_spikes": 560985
+          "total_spikes": 559944
         }
       },
       "clear_history": [],
-      "cumulative_reward": -0.42,
+      "cumulative_reward": -0.51,
       "curriculum_clears_to_advance": 2,
       "curriculum_complete": false,
       "curriculum_enemy_count": 0,
@@ -1880,7 +1442,7 @@
       "enemies": [],
       "episode": 1,
       "episode_food": 0,
-      "episode_reward": -0.42,
+      "episode_reward": -0.51,
       "first_clear_seconds": null,
       "first_clear_ticks": null,
       "fly": {
@@ -1938,14 +1500,452 @@
       },
       "power_ticks": 0,
       "state_kind": "neural_decision",
-      "survival_seconds": 153.8,
-      "ticks": 42,
+      "survival_seconds": 192.1,
+      "ticks": 51,
       "total_clears": 0,
       "total_deaths": 0,
-      "total_ticks": 42,
-      "total_world_ticks": 119,
+      "total_ticks": 51,
+      "total_world_ticks": 146,
       "world_tick_seconds": 1.0,
-      "world_ticks": 119
+      "world_ticks": 146
+    },
+    {
+      "best_clear_seconds": null,
+      "best_clear_ticks": null,
+      "brain": {
+        "backend": "malecns",
+        "telemetry": {
+          "aversive_spikes": 78,
+          "brain_ms": 26000.0,
+          "compute_seconds": 3.6827144029999204,
+          "danger_odor_spikes": 89,
+          "food_odor_spikes": 2567,
+          "kc_spikes": 4719,
+          "memory": {
+            "changed_edges": 3424,
+            "mean_efficacy": 1.001068115234375,
+            "minimum_efficacy": 0.4788462221622467,
+            "model": "stonkfly-dual-compartment-v1",
+            "plastic_edges": 7835,
+            "sha256": "1b14d4bbe307f4f25100ab2981bb85a646935a83348cf887a96c88a541be77b0"
+          },
+          "olfaction": {
+            "danger_left": 0.0,
+            "danger_right": 0.0,
+            "food_left": 0.606531,
+            "food_right": 0.606531
+          },
+          "olfaction_model": "neurofly-virtual-olfaction-v1",
+          "olfaction_report": {
+            "danger": {
+              "left_from_instance_suffix": 21,
+              "left_from_soma_side": 0,
+              "left_neurons": 21,
+              "orn_type": "ORN_DA2",
+              "receptor_proxy": "Or56a/geosmin-like",
+              "right_from_instance_suffix": 20,
+              "right_from_soma_side": 0,
+              "right_neurons": 20,
+              "side_policy": "somaSide_then_curated_instance_suffix",
+              "type_neurons": 48,
+              "unresolved_side": 7
+            },
+            "engineered_proxy": true,
+            "food": {
+              "left_from_instance_suffix": 35,
+              "left_from_soma_side": 0,
+              "left_neurons": 35,
+              "orn_type": "ORN_DM1",
+              "receptor_proxy": "Or42b",
+              "right_from_instance_suffix": 39,
+              "right_from_soma_side": 0,
+              "right_neurons": 39,
+              "side_policy": "somaSide_then_curated_instance_suffix",
+              "type_neurons": 74,
+              "unresolved_side": 0
+            },
+            "max_external_current": 8.0,
+            "model": "neurofly-virtual-olfaction-v1",
+            "validated": false
+          },
+          "reward_spikes": 0,
+          "total_spikes": 559399
+        }
+      },
+      "clear_history": [],
+      "cumulative_reward": -0.52,
+      "curriculum_clears_to_advance": 2,
+      "curriculum_complete": false,
+      "curriculum_enemy_count": 0,
+      "curriculum_stage": 1,
+      "curriculum_stage_clears": 0,
+      "curriculum_stage_history": [],
+      "curriculum_stage_name": "food-corridor",
+      "curriculum_version": "neurofly-curriculum-v1",
+      "curriculum_world_tick_seconds": 1.0,
+      "decision_action": "TURN_RIGHT",
+      "decision_applied": true,
+      "enemies": [],
+      "episode": 1,
+      "episode_food": 0,
+      "episode_reward": -0.52,
+      "first_clear_seconds": null,
+      "first_clear_ticks": null,
+      "fly": {
+        "dir": "UP",
+        "x": 2,
+        "y": 7
+      },
+      "food_left": 5,
+      "goal": "maze_cleared",
+      "grid": [
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "##  .  .  .  .  .##",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################"
+      ],
+      "last_action": "TURN_RIGHT",
+      "last_event": null,
+      "last_reward": -0.01,
+      "latest_clear_seconds": null,
+      "latest_clear_ticks": null,
+      "olfaction": {
+        "danger": {
+          "distance_cells": null,
+          "intensity": 0.0,
+          "left": 0.0,
+          "orn_type": "ORN_DA2",
+          "receptor_proxy": "Or56a/geosmin-like",
+          "right": 0.0,
+          "source": null
+        },
+        "engineered_proxy": true,
+        "food": {
+          "distance_cells": 2.0,
+          "intensity": 0.606531,
+          "left": 0.333592,
+          "orn_type": "ORN_DM1",
+          "receptor_proxy": "Or42b",
+          "right": 0.879469,
+          "source": {
+            "x": 4,
+            "y": 7
+          }
+        },
+        "model": "neurofly-virtual-olfaction-v1"
+      },
+      "power_ticks": 0,
+      "state_kind": "neural_decision",
+      "survival_seconds": 195.9,
+      "ticks": 52,
+      "total_clears": 0,
+      "total_deaths": 0,
+      "total_ticks": 52,
+      "total_world_ticks": 149,
+      "world_tick_seconds": 1.0,
+      "world_ticks": 149
+    },
+    {
+      "best_clear_seconds": null,
+      "best_clear_ticks": null,
+      "brain": {
+        "backend": "malecns",
+        "telemetry": {
+          "aversive_spikes": 72,
+          "brain_ms": 26500.0,
+          "compute_seconds": 3.670028208999895,
+          "danger_odor_spikes": 83,
+          "food_odor_spikes": 2618,
+          "kc_spikes": 4357,
+          "memory": {
+            "changed_edges": 3426,
+            "mean_efficacy": 1.0030925273895264,
+            "minimum_efficacy": 0.47899097204208374,
+            "model": "stonkfly-dual-compartment-v1",
+            "plastic_edges": 7835,
+            "sha256": "74b2288fdf6984adeb8e844735a34e7feb1b8ea9d7396022a0b660da25766fe6"
+          },
+          "olfaction": {
+            "danger_left": 0.0,
+            "danger_right": 0.0,
+            "food_left": 0.333592,
+            "food_right": 0.879469
+          },
+          "olfaction_model": "neurofly-virtual-olfaction-v1",
+          "olfaction_report": {
+            "danger": {
+              "left_from_instance_suffix": 21,
+              "left_from_soma_side": 0,
+              "left_neurons": 21,
+              "orn_type": "ORN_DA2",
+              "receptor_proxy": "Or56a/geosmin-like",
+              "right_from_instance_suffix": 20,
+              "right_from_soma_side": 0,
+              "right_neurons": 20,
+              "side_policy": "somaSide_then_curated_instance_suffix",
+              "type_neurons": 48,
+              "unresolved_side": 7
+            },
+            "engineered_proxy": true,
+            "food": {
+              "left_from_instance_suffix": 35,
+              "left_from_soma_side": 0,
+              "left_neurons": 35,
+              "orn_type": "ORN_DM1",
+              "receptor_proxy": "Or42b",
+              "right_from_instance_suffix": 39,
+              "right_from_soma_side": 0,
+              "right_neurons": 39,
+              "side_policy": "somaSide_then_curated_instance_suffix",
+              "type_neurons": 74,
+              "unresolved_side": 0
+            },
+            "max_external_current": 8.0,
+            "model": "neurofly-virtual-olfaction-v1",
+            "validated": false
+          },
+          "reward_spikes": 0,
+          "total_spikes": 559836
+        }
+      },
+      "clear_history": [],
+      "cumulative_reward": -0.53,
+      "curriculum_clears_to_advance": 2,
+      "curriculum_complete": false,
+      "curriculum_enemy_count": 0,
+      "curriculum_stage": 1,
+      "curriculum_stage_clears": 0,
+      "curriculum_stage_history": [],
+      "curriculum_stage_name": "food-corridor",
+      "curriculum_version": "neurofly-curriculum-v1",
+      "curriculum_world_tick_seconds": 1.0,
+      "decision_action": "HOLD",
+      "decision_applied": true,
+      "enemies": [],
+      "episode": 1,
+      "episode_food": 0,
+      "episode_reward": -0.53,
+      "first_clear_seconds": null,
+      "first_clear_ticks": null,
+      "fly": {
+        "dir": "UP",
+        "x": 2,
+        "y": 7
+      },
+      "food_left": 5,
+      "goal": "maze_cleared",
+      "grid": [
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "##  .  .  .  .  .##",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################"
+      ],
+      "last_action": "HOLD",
+      "last_event": null,
+      "last_reward": -0.01,
+      "latest_clear_seconds": null,
+      "latest_clear_ticks": null,
+      "olfaction": {
+        "danger": {
+          "distance_cells": null,
+          "intensity": 0.0,
+          "left": 0.0,
+          "orn_type": "ORN_DA2",
+          "receptor_proxy": "Or56a/geosmin-like",
+          "right": 0.0,
+          "source": null
+        },
+        "engineered_proxy": true,
+        "food": {
+          "distance_cells": 2.0,
+          "intensity": 0.606531,
+          "left": 0.333592,
+          "orn_type": "ORN_DM1",
+          "receptor_proxy": "Or42b",
+          "right": 0.879469,
+          "source": {
+            "x": 4,
+            "y": 7
+          }
+        },
+        "model": "neurofly-virtual-olfaction-v1"
+      },
+      "power_ticks": 0,
+      "state_kind": "neural_decision",
+      "survival_seconds": 199.6,
+      "ticks": 53,
+      "total_clears": 0,
+      "total_deaths": 0,
+      "total_ticks": 53,
+      "total_world_ticks": 152,
+      "world_tick_seconds": 1.0,
+      "world_ticks": 152
+    },
+    {
+      "best_clear_seconds": null,
+      "best_clear_ticks": null,
+      "brain": {
+        "backend": "malecns",
+        "telemetry": {
+          "aversive_spikes": 81,
+          "brain_ms": 27000.0,
+          "compute_seconds": 3.6876755049996746,
+          "danger_odor_spikes": 93,
+          "food_odor_spikes": 2649,
+          "kc_spikes": 4690,
+          "memory": {
+            "changed_edges": 3426,
+            "mean_efficacy": 1.0015833377838135,
+            "minimum_efficacy": 0.479135662317276,
+            "model": "stonkfly-dual-compartment-v1",
+            "plastic_edges": 7835,
+            "sha256": "4eb09d34dc4042354957c9b24e67a3792a1811dde7ba34b174fa5ee2e465b3bd"
+          },
+          "olfaction": {
+            "danger_left": 0.0,
+            "danger_right": 0.0,
+            "food_left": 0.333592,
+            "food_right": 0.879469
+          },
+          "olfaction_model": "neurofly-virtual-olfaction-v1",
+          "olfaction_report": {
+            "danger": {
+              "left_from_instance_suffix": 21,
+              "left_from_soma_side": 0,
+              "left_neurons": 21,
+              "orn_type": "ORN_DA2",
+              "receptor_proxy": "Or56a/geosmin-like",
+              "right_from_instance_suffix": 20,
+              "right_from_soma_side": 0,
+              "right_neurons": 20,
+              "side_policy": "somaSide_then_curated_instance_suffix",
+              "type_neurons": 48,
+              "unresolved_side": 7
+            },
+            "engineered_proxy": true,
+            "food": {
+              "left_from_instance_suffix": 35,
+              "left_from_soma_side": 0,
+              "left_neurons": 35,
+              "orn_type": "ORN_DM1",
+              "receptor_proxy": "Or42b",
+              "right_from_instance_suffix": 39,
+              "right_from_soma_side": 0,
+              "right_neurons": 39,
+              "side_policy": "somaSide_then_curated_instance_suffix",
+              "type_neurons": 74,
+              "unresolved_side": 0
+            },
+            "max_external_current": 8.0,
+            "model": "neurofly-virtual-olfaction-v1",
+            "validated": false
+          },
+          "reward_spikes": 0,
+          "total_spikes": 562049
+        }
+      },
+      "clear_history": [],
+      "cumulative_reward": -0.54,
+      "curriculum_clears_to_advance": 2,
+      "curriculum_complete": false,
+      "curriculum_enemy_count": 0,
+      "curriculum_stage": 1,
+      "curriculum_stage_clears": 0,
+      "curriculum_stage_history": [],
+      "curriculum_stage_name": "food-corridor",
+      "curriculum_version": "neurofly-curriculum-v1",
+      "curriculum_world_tick_seconds": 1.0,
+      "decision_action": "TURN_RIGHT",
+      "decision_applied": true,
+      "enemies": [],
+      "episode": 1,
+      "episode_food": 0,
+      "episode_reward": -0.54,
+      "first_clear_seconds": null,
+      "first_clear_ticks": null,
+      "fly": {
+        "dir": "RIGHT",
+        "x": 2,
+        "y": 7
+      },
+      "food_left": 5,
+      "goal": "maze_cleared",
+      "grid": [
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "##  .  .  .  .  .##",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################",
+        "###################"
+      ],
+      "last_action": "TURN_RIGHT",
+      "last_event": null,
+      "last_reward": -0.01,
+      "latest_clear_seconds": null,
+      "latest_clear_ticks": null,
+      "olfaction": {
+        "danger": {
+          "distance_cells": null,
+          "intensity": 0.0,
+          "left": 0.0,
+          "orn_type": "ORN_DA2",
+          "receptor_proxy": "Or56a/geosmin-like",
+          "right": 0.0,
+          "source": null
+        },
+        "engineered_proxy": true,
+        "food": {
+          "distance_cells": 2.0,
+          "intensity": 0.606531,
+          "left": 0.606531,
+          "orn_type": "ORN_DM1",
+          "receptor_proxy": "Or42b",
+          "right": 0.606531,
+          "source": {
+            "x": 4,
+            "y": 7
+          }
+        },
+        "model": "neurofly-virtual-olfaction-v1"
+      },
+      "power_ticks": 0,
+      "state_kind": "neural_decision",
+      "survival_seconds": 203.4,
+      "ticks": 54,
+      "total_clears": 0,
+      "total_deaths": 0,
+      "total_ticks": 54,
+      "total_world_ticks": 155,
+      "world_tick_seconds": 1.0,
+      "world_ticks": 155
     }
   ],
   "verified": true,
