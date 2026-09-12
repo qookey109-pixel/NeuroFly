@@ -9,28 +9,29 @@
 </head>
 <body>
   <main class="stage">
-    <section class="lab-layout" aria-label="NeuroFly MaleCNS self-training maze">
+    <section class="lab-layout" aria-label="NeuroFly MaleCNS 自我訓練迷宮">
       <div class="game-shell">
         <canvas id="mazeCanvas" width="950" height="700"></canvas>
       </div>
 
-      <aside class="clear-panel" aria-label="破關紀錄">
-        <div class="brain-badge" id="brainBadge">MALECNS · VERIFYING</div>
-        <h1>破關紀錄</h1>
+      <aside class="clear-panel" aria-label="活動與破關紀錄">
+        <div class="brain-badge" id="brainBadge">MALECNS · 驗證中</div>
+        <h1>活動與破關紀錄</h1>
 
         <div class="goal-hud" aria-live="polite">
-          <div><span>FIRST CLEAR</span><strong id="firstClear">—</strong></div>
-          <div><span>LATEST</span><strong id="latestClear">—</strong></div>
-          <div><span>BEST</span><strong id="bestClear">—</strong></div>
-          <div><span>CLEARS</span><strong id="clearCount">0</strong></div>
+          <div><span>總活動時間</span><strong id="totalTime">—</strong></div>
+          <div><span>首次破關</span><strong id="firstClear">—</strong></div>
+          <div><span>最近破關</span><strong id="latestClear">—</strong></div>
+          <div><span>最佳破關</span><strong id="bestClear">—</strong></div>
+          <div><span>破關次數</span><strong id="clearCount">0</strong></div>
         </div>
 
         <div class="history-block">
-          <span class="history-label">RECENT CLEARS</span>
+          <span class="history-label">最近破關紀錄</span>
           <div class="clear-history" id="clearHistory">尚未破關</div>
         </div>
 
-        <div class="run-status" id="runStatus">Waiting for verified MaleCNS trajectory…</div>
+        <div class="run-status" id="runStatus">等待已驗證的 MaleCNS 即時狀態…</div>
       </aside>
     </section>
   </main>
