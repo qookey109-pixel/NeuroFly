@@ -241,11 +241,25 @@ class GoalMazeSession:
                 if pending in {"none", "reward", "aversive"}:
                     self.pending_reinforcement = pending
 
+        # Keep one absolute world-clock deadline across neural decisions. The old
+        # per-decision timer restarted from a full interval every time tick() was
+        # called, so fast 50 ms decisions could permanently starve enemy motion.
+        # A fresh session intentionally starts a fresh deadline; offline time is
+        # never replayed as a burst of predator movement after checkpoint restore.
+        self._world_next_tick_monotonic = (
+            time.monotonic() + self._effective_world_tick_seconds()
+        )
+
     def _effective_world_tick_seconds(self) -> float:
         interval = float(self.environment.effective_world_tick_seconds(self.world_tick_seconds))
         if interval <= 0:
             raise ValueError("effective world tick interval must be > 0")
         return interval
+
+    def _reset_world_clock_deadline(self) -> None:
+        self._world_next_tick_monotonic = (
+            time.monotonic() + self._effective_world_tick_seconds()
+        )
 
     def _snapshot_locked(
         self,
@@ -291,8 +305,10 @@ class GoalMazeSession:
         on_world_tick: Callable[[dict[str, Any]], None] | None,
     ) -> None:
         while True:
-            interval = self._effective_world_tick_seconds()
-            if stop_event.wait(interval):
+            delay = max(0.0, self._world_next_tick_monotonic - time.monotonic())
+            if stop_event.wait(delay):
+                # Crucially, do not reset the deadline here. The remaining delay
+                # carries into the next neural decision.
                 return
             emitted: list[dict[str, Any]] = []
             terminal = False
@@ -310,12 +326,15 @@ class GoalMazeSession:
                 if terminal:
                     self.pending_reinforcement = _reinforcement_for_reward(result.reward)
                     self.environment.reset(result.event or "terminal")
+                    self._reset_world_clock_deadline()
                     emitted.append(
                         self._snapshot_locked(
                             state_kind="episode_reset",
                             step_event="episode_reset",
                         )
                     )
+                else:
+                    self._reset_world_clock_deadline()
             for state in emitted:
                 self._emit(on_world_tick, state)
             if terminal:
@@ -375,6 +394,7 @@ class GoalMazeSession:
             )
             if result.terminal:
                 self.environment.reset(result.event or "terminal")
+                self._reset_world_clock_deadline()
             self._checkpoint_if_due()
             return terminal_snapshot
 
