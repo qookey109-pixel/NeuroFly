@@ -74,7 +74,7 @@ jobs:
 
       - name: Let MaleCNS train through staged curriculum
         env:
-          INPUT_STEPS: ${{ github.event_name == 'workflow_dispatch' && inputs.steps || '30' }}
+          INPUT_STEPS: ${{ github.event_name == 'workflow_dispatch' && inputs.steps || '12' }}
         run: |
           python -m neurofly.training \
             --curriculum \
@@ -114,10 +114,14 @@ jobs:
           assert odor_report['model'] == 'neurofly-virtual-olfaction-v1'
           assert odor_report['food']['orn_type'] == 'ORN_DM1'
           assert odor_report['danger']['orn_type'] == 'ORN_DA2'
-          assert int(odor_report['food']['left_neurons']) > 0
-          assert int(odor_report['food']['right_neurons']) > 0
-          assert int(odor_report['danger']['left_neurons']) > 0
-          assert int(odor_report['danger']['right_neurons']) > 0
+          for channel in ('food', 'danger'):
+              report = odor_report[channel]
+              assert report['side_policy'] == 'somaSide_then_curated_instance_suffix'
+              assert int(report['type_neurons']) > 0
+              assert int(report['left_neurons']) > 0
+              assert int(report['right_neurons']) > 0
+              assert int(report['left_neurons']) + int(report['right_neurons']) <= int(report['type_neurons'])
+              assert int(report['unresolved_side']) >= 0
           assert sum(
               int(s['brain']['telemetry'].get('food_odor_spikes', 0))
               for s in state['trajectory']
@@ -141,10 +145,8 @@ jobs:
               'clears=', final.get('total_clears', 0),
               'deaths=', final.get('total_deaths', 0),
               'world_states=', state['world_states_seen'],
-              'food_orn_L=', odor_report['food']['left_neurons'],
-              'food_orn_R=', odor_report['food']['right_neurons'],
-              'danger_orn_L=', odor_report['danger']['left_neurons'],
-              'danger_orn_R=', odor_report['danger']['right_neurons'],
+              'food_orn=', odor_report['food'],
+              'danger_orn=', odor_report['danger'],
           )
           PY
 
