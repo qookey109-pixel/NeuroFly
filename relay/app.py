@@ -200,7 +200,9 @@ class Handler(BaseHTTPRequestHandler):
         # from a fly that is genuinely turning/holding in place. Avoid logging
         # the large neural payload or any credentials. Keep raw MaleCNS action
         # separate from the environment action when anti-stall intervenes.
-        if sequence % 10 == 0:
+        # Log every intervention immediately so it cannot fall between the
+        # normal 10-event sampling points.
+        if sequence % 10 == 0 or state.get("action_overridden") is True:
             fly = state.get("fly") or {}
             print(
                 "LIVE_STATE"
