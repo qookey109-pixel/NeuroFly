@@ -30,6 +30,9 @@
   let totalClockBase = 0;
   let totalClockAnchor = 0;
   let lastLiveStateAt = 0;
+  let fallbackEpisode = null;
+  let fallbackEpisodeOffset = 0;
+  let fallbackLastSurvival = 0;
 
   const actionName = action => ({
     TURN_LEFT: '左轉',
@@ -66,11 +69,28 @@
 
   function syncTotalClock(view, { live = false } = {}) {
     const authoritative = Number(view?.total_active_seconds);
-    const fallback = Number(view?.survival_seconds);
-    const next = Number.isFinite(authoritative) && authoritative >= 0
-      ? authoritative
-      : (Number.isFinite(fallback) && fallback >= 0 ? fallback : totalClockBase);
-    totalClockBase = next;
+    const survival = Number(view?.survival_seconds);
+    const episode = Number(view?.episode);
+
+    if (Number.isFinite(authoritative) && authoritative >= 0) {
+      totalClockBase = authoritative;
+      if (Number.isFinite(episode)) fallbackEpisode = episode;
+      if (Number.isFinite(survival) && survival >= 0) {
+        fallbackLastSurvival = survival;
+        fallbackEpisodeOffset = Math.max(0, authoritative - survival);
+      }
+    } else if (Number.isFinite(survival) && survival >= 0) {
+      if (fallbackEpisode === null) {
+        fallbackEpisode = Number.isFinite(episode) ? episode : null;
+      } else if (Number.isFinite(episode) && episode !== fallbackEpisode) {
+        fallbackEpisodeOffset += fallbackLastSurvival;
+        fallbackEpisode = episode;
+        fallbackLastSurvival = 0;
+      }
+      fallbackLastSurvival = Math.max(fallbackLastSurvival, survival);
+      totalClockBase = fallbackEpisodeOffset + survival;
+    }
+
     totalClockAnchor = Date.now();
     if (live) lastLiveStateAt = Date.now();
     renderTotalClock();
