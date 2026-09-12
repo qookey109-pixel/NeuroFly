@@ -49,10 +49,14 @@ jobs:
           test -f site/app.js
           test -f site/malecns-state.json
           node --check site/app.js
-          grep -q 'MALECNS · VERIFYING' site/index.html
-          grep -q 'FIRST CLEAR' site/index.html
+          grep -q 'MALECNS · 驗證中' site/index.html
+          grep -q '總活動時間' site/index.html
+          grep -q '首次破關' site/index.html
+          grep -q 'id="totalTime"' site/index.html
           grep -q 'source_receipt_sha256' site/malecns-state.json
-          grep -q 'WORLD LIVE' site/app.js
+          grep -q '世界持續運作' site/app.js
+          grep -q 'neurofly-curriculum-relay.onrender.com/events' site/app.js
+          grep -q 'total_active_seconds' site/app.js
           ! grep -q 'speedSelect' site/app.js
           ! grep -q 'startDemo' site/app.js
           ! grep -q 'startIdleEnemies' site/app.js
