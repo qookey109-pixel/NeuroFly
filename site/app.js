@@ -1,15 +1,46 @@
 (() => {
-  const canvas = document.getElementById('mazeCanvas');
+  const byId = id => document.getElementById(id);
+  const canvas = byId('mazeCanvas');
   const ctx = canvas.getContext('2d');
+
   const ui = {
-    badge: document.getElementById('brainBadge'),
-    status: document.getElementById('runStatus'),
-    total: document.getElementById('totalTime'),
-    first: document.getElementById('firstClear'),
-    latest: document.getElementById('latestClear'),
-    best: document.getElementById('bestClear'),
-    clears: document.getElementById('clearCount'),
-    history: document.getElementById('clearHistory'),
+    badge: byId('brainBadge'),
+    connection: byId('connectionState'),
+    status: byId('runStatus'),
+    pauseView: byId('pauseView'),
+    pauseNotice: byId('pauseNotice'),
+    reconnectLive: byId('reconnectLive'),
+    total: byId('totalTime'),
+    first: byId('firstClear'),
+    latest: byId('latestClear'),
+    best: byId('bestClear'),
+    clears: byId('clearCount'),
+    history: byId('clearHistory'),
+    currentAction: byId('currentAction'),
+    rawAction: byId('rawAction'),
+    appliedAction: byId('appliedAction'),
+    lastReward: byId('lastReward'),
+    survivalTime: byId('survivalTime'),
+    episodeNumber: byId('episodeNumber'),
+    reinforcement: byId('reinforcement'),
+    brainInput: byId('brainInput'),
+    brainOutput: byId('brainOutput'),
+    brainMs: byId('brainMs'),
+    computeSeconds: byId('computeSeconds'),
+    totalSpikes: byId('totalSpikes'),
+    gateSpikes: byId('gateSpikes'),
+    leftHz: byId('leftHz'),
+    rightHz: byId('rightHz'),
+    foodOdorSpikes: byId('foodOdorSpikes'),
+    dangerOdorSpikes: byId('dangerOdorSpikes'),
+    foodLeft: byId('foodLeft'),
+    episodeFood: byId('episodeFood'),
+    totalFood: byId('totalFood'),
+    totalDeaths: byId('totalDeaths'),
+    decisionTicks: byId('decisionTicks'),
+    worldTicks: byId('worldTicks'),
+    powerState: byId('powerState'),
+    cumulativeReward: byId('cumulativeReward'),
   };
 
   const COLS = 19;
@@ -23,6 +54,8 @@
   const FALLBACK_REFRESH_MS = 60000;
 
   let currentView = null;
+  let currentEvent = null;
+  let viewPaused = false;
   let liveSilenceTimer = null;
   let liveWatchdogTimer = null;
   let liveReconnectTimer = null;
@@ -45,15 +78,52 @@
     HOLD: '停留',
   })[action] || action || '—';
 
+  const reinforcementName = value => ({
+    reward: '正向獎勵',
+    aversive: '負向刺激',
+    none: '無',
+  })[value] || value || '—';
+
+  function finiteNumber(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  }
+
   function formatSeconds(value) {
-    if (value == null || value === '') return '—';
-    const seconds = Number(value);
-    if (!Number.isFinite(seconds) || seconds < 0) return '—';
+    const seconds = finiteNumber(value);
+    if (seconds == null || seconds < 0) return '—';
     if (seconds < 60) return `${seconds.toFixed(1)} 秒`;
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `${minutes} 分 ${(seconds % 60).toFixed(1)} 秒`;
     const hours = Math.floor(minutes / 60);
     return `${hours} 小時 ${minutes % 60} 分 ${Math.floor(seconds % 60)} 秒`;
+  }
+
+  function formatCount(value) {
+    const number = finiteNumber(value);
+    return number == null ? '—' : Math.round(number).toLocaleString('zh-TW');
+  }
+
+  function formatDecimal(value, digits = 2) {
+    const number = finiteNumber(value);
+    return number == null ? '—' : number.toFixed(digits);
+  }
+
+  function formatReward(value) {
+    const number = finiteNumber(value);
+    if (number == null) return '—';
+    return `${number >= 0 ? '+' : ''}${number.toFixed(2)}`;
+  }
+
+  function formatHz(value) {
+    const number = finiteNumber(value);
+    return number == null ? '—' : `${number.toFixed(2)} Hz`;
+  }
+
+  function formatOdorLevel(value) {
+    const number = finiteNumber(value);
+    if (number == null) return '—';
+    return `${Math.max(0, Math.min(1, number)) * 100}%`;
   }
 
   function neuralStateIsVerified(view) {
@@ -69,7 +139,13 @@
     if (!payload || payload.schema !== 'neurofly-malecns-site-state-v1') return false;
     if (payload.verified !== true || payload.backend !== 'malecns') return false;
     if (!/^[a-f0-9]{64}$/i.test(payload.source_receipt_sha256 || '')) return false;
-    return neuralStateIsVerified(payload.final_state || payload.trajectory?.at?.(-1));
+    const trajectory = Array.isArray(payload.trajectory) ? payload.trajectory : [];
+    return neuralStateIsVerified(payload.final_state || trajectory[trajectory.length - 1]);
+  }
+
+  function setConnection(state, text) {
+    ui.connection.dataset.state = state;
+    ui.connection.textContent = text;
   }
 
   function syncTotalClock(view, { live = false } = {}) {
@@ -102,6 +178,7 @@
   }
 
   function renderTotalClock() {
+    if (viewPaused) return;
     let seconds = totalClockBase;
     if (
       liveSeen &&
@@ -242,10 +319,54 @@
     ui.first.textContent = formatSeconds(view?.first_clear_seconds);
     ui.latest.textContent = formatSeconds(view?.latest_clear_seconds);
     ui.best.textContent = formatSeconds(view?.best_clear_seconds);
-    ui.clears.textContent = String(view?.total_clears || history.length || 0);
+    ui.clears.textContent = formatCount(view?.total_clears ?? history.length ?? 0);
     ui.history.textContent = history.length
       ? history.slice(-5).map(item => `第 ${item.clear_index} 次：${formatSeconds(item.seconds)} · ${item.ticks} 次決策`).join('　')
       : '尚未破關';
+  }
+
+  function updateTelemetry(view) {
+    const brain = view.brain || {};
+    const telemetry = brain.telemetry || {};
+    const olfaction = telemetry.olfaction || {};
+    const raw = view.raw_brain_action || view.decision_action || view.last_action;
+    const applied = view.applied_action || view.last_action;
+
+    ui.currentAction.textContent = actionName(applied);
+    ui.rawAction.textContent = actionName(raw);
+    ui.appliedAction.textContent = actionName(applied);
+    ui.lastReward.textContent = formatReward(view.last_reward);
+    ui.survivalTime.textContent = formatSeconds(view.survival_seconds);
+    ui.episodeNumber.textContent = view.episode == null ? '—' : `第 ${formatCount(view.episode)} 局`;
+    ui.reinforcement.textContent = reinforcementName(view.reinforcement || telemetry.reinforcement);
+
+    ui.brainMs.textContent = finiteNumber(telemetry.brain_ms) == null ? '—' : `${formatDecimal(telemetry.brain_ms, 1)} 毫秒`;
+    ui.computeSeconds.textContent = finiteNumber(telemetry.compute_seconds) == null ? '—' : `${formatDecimal(telemetry.compute_seconds, 2)} 秒`;
+    ui.totalSpikes.textContent = formatCount(telemetry.total_spikes);
+    ui.gateSpikes.textContent = formatCount(telemetry.gate_spikes);
+    ui.leftHz.textContent = formatHz(telemetry.left_hz);
+    ui.rightHz.textContent = formatHz(telemetry.right_hz);
+    ui.foodOdorSpikes.textContent = formatCount(telemetry.food_odor_spikes);
+    ui.dangerOdorSpikes.textContent = formatCount(telemetry.danger_odor_spikes);
+
+    ui.foodLeft.textContent = formatCount(view.food_left);
+    ui.episodeFood.textContent = formatCount(view.episode_food);
+    ui.totalFood.textContent = formatCount(view.total_food);
+    ui.totalDeaths.textContent = formatCount(view.total_deaths);
+    ui.decisionTicks.textContent = formatCount(view.ticks);
+    ui.worldTicks.textContent = formatCount(view.total_world_ticks);
+    ui.powerState.textContent = Number(view.power_ticks) > 0 ? `啟動 · 剩餘 ${formatCount(view.power_ticks)} 步` : '未啟動';
+    ui.cumulativeReward.textContent = formatReward(view.cumulative_reward);
+
+    ui.brainInput.textContent = [
+      '視覺：迷宮 RGB 畫面',
+      `食物嗅覺 左 ${formatOdorLevel(olfaction.food_left)}／右 ${formatOdorLevel(olfaction.food_right)}`,
+      `危險嗅覺 左 ${formatOdorLevel(olfaction.danger_left)}／右 ${formatOdorLevel(olfaction.danger_right)}`,
+    ].join(' · ');
+
+    ui.brainOutput.textContent = view.action_overridden === true && raw !== applied
+      ? `MaleCNS 原始輸出「${actionName(raw)}」，防停滯機制實際套用「${actionName(applied)}」`
+      : `MaleCNS 輸出「${actionName(raw)}」`;
   }
 
   function flashForState(view) {
@@ -255,6 +376,9 @@
     } else if (view.last_event === 'maze_cleared') {
       flashText = `成功破關 · ${formatSeconds(view.latest_clear_seconds)}`;
       flashUntil = Date.now() + 1400;
+    } else if (view.last_event === 'energy_food') {
+      flashText = '取得能量食物';
+      flashUntil = Date.now() + 650;
     }
   }
 
@@ -278,7 +402,19 @@
     if (kind === 'stale_decision') {
       return `MaleCNS 過期決策「${actionName(view.decision_action || view.last_action)}」已丟棄 · 第 ${view.episode} 局`;
     }
-    return `即時運作 · 決策 ${event.sequence} · ${decisionLabel(view)} · 第 ${view.episode} 局`;
+    return `即時運作 · 決策 ${event?.sequence ?? '—'} · ${decisionLabel(view)} · 第 ${view.episode} 局`;
+  }
+
+  function renderState(view, event, { live = false } = {}) {
+    if (!neuralStateIsVerified(view)) return;
+    flashForState(view);
+    draw(view);
+    updateGoalHud(view, { live });
+    updateTelemetry(view);
+    ui.badge.textContent = live ? 'MALECNS · 即時運作中' : 'MALECNS · 最近驗證狀態';
+    ui.status.textContent = live
+      ? stateStatus(event, view)
+      : `顯示最近已驗證狀態 · 第 ${view.episode} 局 · 等待即時資料`;
   }
 
   function clearLiveWatchdog() {
@@ -302,7 +438,8 @@
         liveSource.close();
         liveSource = null;
       }
-      ui.status.textContent = '即時資料逾時 · 正在切換到最新 relay…';
+      setConnection('waiting', '即時資料逾時');
+      if (!viewPaused) ui.status.textContent = '即時資料逾時 · 正在重新連線到 MaleCNS relay…';
       scheduleLiveReconnect(250);
     }, LIVE_RECONNECT_MS);
   }
@@ -313,18 +450,22 @@
     if (!neuralStateIsVerified(view)) return;
     const seq = Number(event.relay_sequence ?? event.sequence ?? -1);
     if (Number.isFinite(seq) && seq <= liveSequence) return;
+
     liveSequence = seq;
     liveSeen = true;
+    currentView = view;
+    currentEvent = event;
+    lastLiveStateAt = Date.now();
     armLiveWatchdog();
     clearTimeout(liveSilenceTimer);
-    currentView = view;
-    flashForState(view);
-    draw(view);
-    updateGoalHud(view, { live: true });
-    ui.badge.textContent = 'MALECNS · 即時運作中';
-    ui.status.textContent = stateStatus(event, view);
+    setConnection('live', 'MaleCNS 即時連線');
+
+    if (!viewPaused) renderState(view, event, { live: true });
+
     liveSilenceTimer = setTimeout(() => {
+      if (viewPaused) return;
       renderTotalClock();
+      setConnection('waiting', '等待下一個神經狀態');
       ui.status.textContent = `等待下一個已驗證狀態 · MaleCNS 可能正在運算 · 第 ${currentView?.episode || '—'} 局`;
     }, LIVE_SILENCE_MS);
   }
@@ -335,50 +476,92 @@
       if (!response.ok) return;
       const payload = await response.json();
       if (!payloadIsVerified(payload) || liveSeen) return;
-      const view = payload.final_state || payload.trajectory[payload.trajectory.length - 1];
+      const trajectory = Array.isArray(payload.trajectory) ? payload.trajectory : [];
+      const view = payload.final_state || trajectory[trajectory.length - 1];
       currentView = view;
-      draw(view);
-      updateGoalHud(view, { live: false });
-      ui.badge.textContent = 'MALECNS · 最近驗證狀態';
-      ui.status.textContent = `等待 MaleCNS 即時資料 · 第 ${view.episode} 局`;
+      currentEvent = null;
+      if (!viewPaused) renderState(view, null, { live: false });
+      setConnection('waiting', '最近驗證狀態');
     } catch (_) {
-      // 靜態狀態只是備援；SSE 才是主要即時來源。
+      if (!liveSeen) {
+        setConnection('offline', '備援資料讀取失敗');
+        if (!viewPaused) ui.status.textContent = '目前無法讀取備援狀態 · 持續嘗試即時連線';
+      }
     }
   }
 
-  function connectLive() {
+  function connectLive({ manual = false } = {}) {
     clearTimeout(liveReconnectTimer);
     liveReconnectTimer = null;
     clearLiveWatchdog();
     if (liveSource) liveSource.close();
+
+    if (manual) {
+      liveSequence = -1;
+      liveSeen = false;
+      setConnection('waiting', '正在重新連線');
+      if (!viewPaused) ui.status.textContent = '正在重新建立 MaleCNS 即時連線…';
+    }
 
     const source = new EventSource(LIVE_RELAY);
     liveSource = source;
 
     source.addEventListener('malecns', event => {
       if (source !== liveSource) return;
-      try { showLiveState(JSON.parse(event.data)); } catch (_) {}
+      try {
+        showLiveState(JSON.parse(event.data));
+      } catch (_) {
+        if (!viewPaused) ui.status.textContent = '收到無法解析的即時資料 · 等待下一筆狀態';
+      }
     });
+
     source.onopen = () => {
       if (source !== liveSource) return;
       armLiveWatchdog();
       if (!liveSeen) {
         ui.badge.textContent = 'MALECNS · 即時連線已建立';
-        ui.status.textContent = '即時連線已建立 · 等待已驗證的 MaleCNS 狀態';
+        setConnection('waiting', '連線已建立');
+        if (!viewPaused) ui.status.textContent = '即時連線已建立 · 等待已驗證的 MaleCNS 狀態';
       }
     };
+
     source.onerror = () => {
       if (source !== liveSource) return;
       source.close();
       liveSource = null;
       clearLiveWatchdog();
-      if (liveSeen) ui.status.textContent = '即時連線重新連接中…';
-      else ui.badge.textContent = 'MALECNS · 連線中';
+      setConnection('offline', '即時連線重連中');
+      if (!viewPaused) {
+        ui.status.textContent = liveSeen ? '即時連線中斷 · 正在重新連接…' : '尚未取得即時資料 · 正在重新連接…';
+      }
       scheduleLiveReconnect(1000);
     };
   }
 
+  function setPaused(paused) {
+    viewPaused = paused;
+    ui.pauseView.setAttribute('aria-pressed', String(paused));
+    ui.pauseView.textContent = paused ? '恢復畫面' : '暫停畫面';
+    ui.pauseNotice.hidden = !paused;
+
+    if (paused) {
+      ui.status.textContent = '畫面已暫停 · MaleCNS 與迷宮仍在背景持續運作';
+      return;
+    }
+
+    if (currentView) {
+      renderState(currentView, currentEvent, { live: liveSeen });
+      setConnection(liveSeen ? 'live' : 'waiting', liveSeen ? 'MaleCNS 即時連線' : '最近驗證狀態');
+    } else {
+      drawWaiting('正在等待已驗證的 MaleCNS 狀態…');
+    }
+  }
+
+  ui.pauseView.addEventListener('click', () => setPaused(!viewPaused));
+  ui.reconnectLive.addEventListener('click', () => connectLive({ manual: true }));
+
   drawWaiting('正在連接即時神經與世界狀態…');
+  setConnection('waiting', '正在連線');
   loadFallback();
   connectLive();
   setInterval(renderTotalClock, 250);
