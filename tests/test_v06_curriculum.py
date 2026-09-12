@@ -19,17 +19,20 @@ def _make_next_forward_clear(env: CurriculumMazeEnvironment) -> None:
     env.grid[target_y][target_x] = "."
 
 
-def test_curriculum_starts_with_safe_food_corridor() -> None:
+def test_curriculum_starts_on_full_canonical_maze() -> None:
     env = CurriculumMazeEnvironment(seed=109)
+    canonical = GoalMazeEnvironment(seed=109)
     state = env.snapshot()
 
     assert state["curriculum_version"] == CURRICULUM_VERSION
     assert state["curriculum_stage"] == 1
-    assert state["curriculum_stage_name"] == "food-corridor"
+    assert state["curriculum_stage_name"] == "full-maze-food-only"
     assert state["curriculum_enemy_count"] == 0
     assert state["curriculum_clears_to_advance"] == 2
     assert env.enemies == []
-    assert env.food_left() == 5
+    assert env.grid == canonical.grid
+    assert env.fly == canonical.fly
+    assert env.food_left() == canonical.food_left()
     assert env.effective_world_tick_seconds(0.5) == 1.0
     assert state["olfaction"]["model"] == OLFACTION_MODEL
     assert state["olfaction"]["food"]["intensity"] > 0
@@ -51,7 +54,7 @@ def test_virtual_odor_field_is_bilateral_and_directional() -> None:
     assert odor["danger"]["orn_type"] == DANGER_ORN_TYPE
 
 
-def test_two_verified_clears_promote_stage_one_to_turning_food() -> None:
+def test_two_verified_clears_promote_stage_one_to_full_maze_slow_predator() -> None:
     env = CurriculumMazeEnvironment(seed=109)
 
     _make_next_forward_clear(env)
@@ -66,46 +69,66 @@ def test_two_verified_clears_promote_stage_one_to_turning_food() -> None:
     assert second.event == "maze_cleared"
     env.reset("maze_cleared")
 
+    canonical = GoalMazeEnvironment(seed=109)
     assert env.curriculum_stage == 2
-    assert env.stage.name == "turning-food"
+    assert env.stage.name == "full-maze-slow-predator"
     assert env.stage_clear_counts["1"] == 2
-    assert env.enemies == []
+    assert len(env.enemies) == 1
+    assert env.grid == canonical.grid
+    assert env.fly == canonical.fly
     assert len(env.stage_history) == 2
 
 
-def test_later_stages_restore_predators_gradually() -> None:
+def test_predator_pressure_increases_without_changing_maze_geometry() -> None:
     env = CurriculumMazeEnvironment(seed=109)
+    canonical = GoalMazeEnvironment(seed=109)
+
+    env.curriculum_stage = 2
+    env.reset("test")
+    state = env.snapshot()
+    assert env.stage.name == "full-maze-slow-predator"
+    assert len(env.enemies) == 1
+    assert env.effective_world_tick_seconds(0.5) == 2.0
+    assert env.grid == canonical.grid
+    assert state["olfaction"]["danger"]["intensity"] > 0
 
     env.curriculum_stage = 3
     env.reset("test")
-    state = env.snapshot()
-    assert env.stage.name == "slow-predator"
+    assert env.stage.name == "full-maze-predator"
     assert len(env.enemies) == 1
-    assert env.effective_world_tick_seconds(0.5) == 2.0
-    assert state["olfaction"]["danger"]["intensity"] > 0
+    assert env.effective_world_tick_seconds(0.5) == 1.0
+    assert env.grid == canonical.grid
 
     env.curriculum_stage = 4
     env.reset("test")
     assert env.stage.name == "full-live-maze"
     assert len(env.enemies) == 2
     assert env.effective_world_tick_seconds(9.0) == 0.5
+    assert env.grid == canonical.grid
 
 
 def test_curriculum_checkpoint_preserves_eaten_food() -> None:
     env = CurriculumMazeEnvironment(seed=109)
-    assert env.grid[7][4] == "."
-    env.grid[7][4] = " "
+    baseline_food = env.food_left()
+    food_xy = next(
+        (x, y)
+        for y, row in enumerate(env.grid)
+        for x, cell in enumerate(row)
+        if cell in {".", "o"}
+    )
+    x, y = food_xy
+    env.grid[y][x] = " "
     payload = env.persistence_snapshot()
 
     restored = CurriculumMazeEnvironment(seed=999)
     restored.restore(payload)
 
     assert restored.curriculum_stage == 1
-    assert restored.grid[7][4] == " "
-    assert restored.food_left() == 4
+    assert restored.grid[y][x] == " "
+    assert restored.food_left() == baseline_food - 1
 
 
-def test_v05_state_migrates_to_stage_one_without_erasing_global_totals() -> None:
+def test_v05_state_migrates_to_full_maze_stage_one_without_erasing_global_totals() -> None:
     old = GoalMazeEnvironment(seed=109)
     old.total_ticks = 17
     old.total_world_ticks = 99
@@ -116,11 +139,29 @@ def test_v05_state_migrates_to_stage_one_without_erasing_global_totals() -> None
     migrated.restore(payload)
 
     assert migrated.curriculum_stage == 1
+    assert migrated.stage.name == "full-maze-food-only"
     assert migrated.enemies == []
-    assert migrated.food_left() == 5
+    assert migrated.grid == old.grid
+    assert migrated.food_left() == old.food_left()
     assert migrated.total_ticks == 17
     assert migrated.total_world_ticks == 99
     assert migrated.total_food == 3
+
+
+def test_v1_enemy_free_checkpoint_migrates_safely_to_v2_full_maze() -> None:
+    source = CurriculumMazeEnvironment(seed=109)
+    payload = source.persistence_snapshot()
+    payload["curriculum_version"] = "neurofly-curriculum-v1"
+    payload["enemies"] = []
+
+    restored = CurriculumMazeEnvironment(seed=109)
+    restored.restore(payload)
+    canonical = GoalMazeEnvironment(seed=109)
+
+    assert restored.curriculum_stage == 1
+    assert restored.stage.name == "full-maze-food-only"
+    assert restored.enemies == []
+    assert restored.grid == canonical.grid
 
 
 def test_v3_curriculum_receipt_is_verified_for_site_state() -> None:
