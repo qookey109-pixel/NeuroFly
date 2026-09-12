@@ -48,7 +48,7 @@
   const CELL_X = canvas.width / COLS;
   const CELL_Y = canvas.height / ROWS;
   const VALID_ACTIONS = new Set(['TURN_LEFT', 'TURN_RIGHT', 'FORWARD', 'HOLD']);
-  const NEURAL_WINDOW_MS = 100;
+  const NEURAL_WINDOW_MS = 50;
   const LIVE_RELAY = 'https://neurofly-curriculum-relay.onrender.com/events';
   const LIVE_SILENCE_MS = 3000;
   const LIVE_RECONNECT_MS = 15000;
