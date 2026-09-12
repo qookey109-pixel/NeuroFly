@@ -4,16 +4,18 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark" />
-  <meta name="description" content="NeuroFly MaleCNS 即時迷宮 Glance 單螢幕監控台" />
-  <title>NeuroFly｜MaleCNS Glance Monitor</title>
-  <link rel="stylesheet" href="styles.css?v=glance-monitor-1" />
+  <meta name="description" content="NeuroFly MaleCNS 即時迷宮 HUD 實驗監控台" />
+  <title>NeuroFly｜MaleCNS Live HUD</title>
+  <link rel="stylesheet" href="styles.css?v=hud-console-1" />
+  <link rel="stylesheet" href="glance.css?v=hud-console-1" />
+  <link rel="stylesheet" href="hud.css?v=hud-console-1" />
 </head>
 <body>
-  <main class="stage">
-    <header class="site-header">
+  <main class="stage hud-stage">
+    <header class="site-header hud-header">
       <div class="brand-block">
-        <div class="eyebrow">NeuroFly · MaleCNS 即時實驗</div>
-        <h1>果蠅神經迷宮 <span>Glance Monitor</span></h1>
+        <div class="eyebrow">NeuroFly · MaleCNS LIVE LAB</div>
+        <h1>果蠅神經迷宮 <span>即時 HUD</span></h1>
       </div>
 
       <div class="run-status" id="runStatus" aria-live="polite">等待已驗證的 MaleCNS 即時狀態…</div>
@@ -24,239 +26,178 @@
       </div>
     </header>
 
-    <section class="lab-layout" aria-label="NeuroFly MaleCNS 自我訓練迷宮">
-      <section class="game-workspace" aria-label="迷宮與實驗結果">
-        <div class="game-topline">
-          <div>
-            <span class="section-kicker">MAZE CHASE</span>
-            <h2>即時遊戲畫面</h2>
-          </div>
-          <div class="game-meta">
-            <span>神經視窗 <strong id="neuralWindowMs">50 毫秒</strong></span>
-            <span>只觀察，不改變神經速度</span>
-          </div>
-        </div>
+    <section class="hud-layout" aria-label="NeuroFly MaleCNS 自我訓練迷宮">
+      <section class="arena-column" aria-label="迷宮與主要狀態">
+        <section class="arena-card" aria-label="MaleCNS 即時遊戲畫面">
+          <canvas id="mazeCanvas" width="950" height="700" aria-label="MaleCNS 即時迷宮畫面"></canvas>
 
-        <div class="game-main-row">
-          <div class="game-shell">
-            <canvas id="mazeCanvas" width="950" height="700" aria-label="MaleCNS 即時迷宮畫面"></canvas>
-          </div>
+          <div class="arena-vignette" aria-hidden="true"></div>
 
-          <section class="panel status-panel compact-side-panel">
-            <div class="panel-heading compact-heading">
-              <div>
-                <span class="section-kicker">NOW</span>
-                <h2>核心狀態</h2>
-              </div>
-              <div class="brain-badge" id="brainBadge">MALECNS · 驗證中</div>
+          <div class="hud-overlay hud-overlay-top-left">
+            <div class="hud-system-row">
+              <span class="live-dot" aria-hidden="true"></span>
+              <strong id="brainBadge">MALECNS · 驗證中</strong>
             </div>
+            <div class="hud-session-row">
+              <div><span>局數</span><strong id="episodeNumber">—</strong></div>
+              <div><span>存活</span><strong id="survivalTime">—</strong></div>
+            </div>
+          </div>
 
-            <div class="status-hero">
+          <div class="hud-overlay hud-overlay-top-right">
+            <div class="hud-action-block">
               <span>目前動作</span>
               <strong id="currentAction">—</strong>
+              <small>本步獎勵 <b id="lastReward">—</b></small>
             </div>
-
-            <div class="status-mini-grid">
-              <div><span>本步獎勵</span><strong id="lastReward">—</strong></div>
-              <div><span>本局存活</span><strong id="survivalTime">—</strong></div>
-              <div><span>目前局數</span><strong id="episodeNumber">—</strong></div>
-            </div>
-
-            <div class="legend compact-legend" aria-label="迷宮圖例">
-              <span><i class="legend-fly">🪰</i> 果蠅</span>
-              <span><i class="legend-food">●</i> 食物</span>
-              <span><i class="legend-energy">●</i> 能量</span>
-              <span><i class="legend-enemy">●</i> 敵人</span>
-            </div>
-          </section>
-        </div>
-
-        <div class="under-game-grid">
-          <section class="panel world-panel">
-            <div class="panel-heading glance-heading">
-              <div>
-                <span class="section-kicker">AT A GLANCE</span>
-                <h2>遊戲世界</h2>
-              </div>
-              <span class="sample-label">即時結果</span>
-            </div>
-
-            <div class="glance-kpis">
-              <div class="glance-kpi enemy-kpi">
-                <span>目前敵人</span>
-                <strong id="enemyCount">—</strong>
-                <small>實際 Maze state</small>
-              </div>
-              <div class="glance-kpi reward-kpi">
-                <span>累積獎勵</span>
+            <div class="hud-kpi-strip">
+              <div class="hud-kpi hud-kpi-reward">
+                <span>Reward</span>
                 <strong id="cumulativeReward">—</strong>
-                <small>整體強化結果</small>
               </div>
-              <div class="glance-kpi food-kpi">
-                <span>剩餘食物</span>
+              <div class="hud-kpi hud-kpi-enemy">
+                <span>敵人</span>
+                <strong id="enemyCount">—</strong>
+              </div>
+              <div class="hud-kpi hud-kpi-food">
+                <span>食物</span>
                 <strong id="foodLeft">—</strong>
-                <small>本局尚未吃完</small>
               </div>
             </div>
+          </div>
 
-            <div class="trend-card reward-trend-card">
-              <div class="trend-head">
-                <div>
-                  <strong>Reward 趨勢</strong>
-                  <span>最近已驗證狀態</span>
-                </div>
-                <span class="trend-key lime-key">累積獎勵</span>
-              </div>
-              <svg class="micro-chart" viewBox="0 0 240 50" preserveAspectRatio="none" aria-label="累積獎勵近期趨勢">
-                <line id="rewardZeroLine" class="trend-zero" x1="3" x2="237" y1="25" y2="25" hidden></line>
-                <path id="rewardTrendPath" class="trend-path reward-path" d=""></path>
-              </svg>
+          <div class="hud-overlay hud-overlay-bottom-left">
+            <div class="hud-tech-item">
+              <span>神經視窗</span>
+              <strong id="neuralWindowMs">50 毫秒</strong>
             </div>
+            <div class="hud-tech-item">
+              <span>本次運算</span>
+              <strong id="computeSeconds">—</strong>
+            </div>
+            <div class="hud-tech-item">
+              <span>左輸出</span>
+              <strong id="leftHz">—</strong>
+            </div>
+            <div class="hud-tech-item">
+              <span>右輸出</span>
+              <strong id="rightHz">—</strong>
+            </div>
+          </div>
 
-            <div class="world-compact-grid">
-              <div><span>本局食物</span><strong id="episodeFood">—</strong></div>
-              <div><span>累積食物</span><strong id="totalFood">—</strong></div>
-              <div><span>被敵人抓到</span><strong id="totalDeaths">—</strong></div>
-              <div><span>決策步數</span><strong id="decisionTicks">—</strong></div>
-              <div><span>世界步數</span><strong id="worldTicks">—</strong></div>
-              <div><span>能量狀態</span><strong id="powerState">—</strong></div>
-            </div>
-          </section>
+          <div class="hud-overlay hud-overlay-bottom-right" aria-label="迷宮圖例">
+            <span>🪰 果蠅</span>
+            <span class="legend-food">● 食物</span>
+            <span class="legend-energy">● 能量</span>
+            <span class="legend-enemy">● 敵人</span>
+          </div>
+        </section>
 
-          <section class="panel clear-panel" aria-label="活動與破關紀錄">
-            <div class="panel-heading compact-heading">
-              <div>
-                <span class="section-kicker">EXPERIMENT LOG</span>
-                <h2>活動與破關</h2>
-              </div>
-            </div>
-            <div class="goal-hud">
-              <div class="hero-record"><span>總活動時間</span><strong id="totalTime">—</strong></div>
-              <div><span>首次破關</span><strong id="firstClear">—</strong></div>
-              <div><span>最近破關</span><strong id="latestClear">—</strong></div>
-              <div><span>最佳破關</span><strong id="bestClear">—</strong></div>
-              <div><span>破關次數</span><strong id="clearCount">0</strong></div>
-            </div>
-            <div class="history-grid">
-              <div class="history-block">
-                <span class="history-label">最近破關紀錄</span>
-                <div class="clear-history" id="clearHistory">尚未破關</div>
-              </div>
-              <div class="history-block">
-                <span class="history-label">每一次破關時間</span>
-                <div class="clear-history all-history" id="allClearHistory">尚未破關</div>
-              </div>
-            </div>
-          </section>
-        </div>
+        <section class="trend-deck" aria-label="即時趨勢">
+          <article class="large-trend reward-large-trend">
+            <header>
+              <div><span>RECENT 36 STATES</span><strong>Reward 趨勢</strong></div>
+              <b id="trendSampleCount">0 / 36</b>
+            </header>
+            <svg class="large-chart" viewBox="0 0 240 50" preserveAspectRatio="none" aria-label="累積獎勵近期趨勢">
+              <line id="rewardZeroLine" class="trend-zero" x1="3" x2="237" y1="25" y2="25" hidden></line>
+              <path id="rewardTrendPath" class="trend-path reward-path" d=""></path>
+            </svg>
+          </article>
+
+          <article class="large-trend motor-large-trend">
+            <header>
+              <div><span>MOTOR OUTPUT</span><strong>左右神經輸出</strong></div>
+              <div class="motor-legend"><span class="left-key">左</span><span class="right-key">右</span></div>
+            </header>
+            <svg class="large-chart" viewBox="0 0 240 50" preserveAspectRatio="none" aria-label="左右神經輸出頻率近期趨勢">
+              <path id="motorLeftTrendPath" class="trend-path motor-left-path" d=""></path>
+              <path id="motorRightTrendPath" class="trend-path motor-right-path" d=""></path>
+            </svg>
+          </article>
+        </section>
       </section>
 
-      <aside class="brain-console" aria-label="MaleCNS 神經監控資訊">
-        <section class="panel io-panel">
-          <div class="panel-heading">
-            <div>
-              <span class="section-kicker">BRAIN I/O</span>
-              <h2>神經輸入／輸出</h2>
-            </div>
-            <span class="live-dot" aria-hidden="true"></span>
+      <aside class="brain-rail" aria-label="MaleCNS 神經監控資訊">
+        <section class="rail-section brain-io-section">
+          <div class="rail-heading">
+            <div><span>BRAIN I/O</span><h2>現在大腦在做什麼</h2></div>
+            <span class="neural-window-chip">50 ms</span>
           </div>
 
-          <div class="io-summary">
-            <div class="io-row">
-              <span>原始動作</span>
-              <strong id="rawAction">—</strong>
-            </div>
-            <div class="io-row">
-              <span>套用動作</span>
-              <strong id="appliedAction">—</strong>
-            </div>
-            <div class="io-row">
-              <span>強化訊號</span>
-              <strong id="reinforcement">—</strong>
-            </div>
+          <div class="io-hero-row">
+            <div><span>原始動作</span><strong id="rawAction">—</strong></div>
+            <div><span>實際套用</span><strong id="appliedAction">—</strong></div>
           </div>
+          <div class="reinforcement-line"><span>強化訊號</span><strong id="reinforcement">—</strong></div>
 
-          <div class="io-description">
+          <div class="brain-sentence">
             <span>感覺輸入</span>
             <p id="brainInput">等待神經輸入資料…</p>
           </div>
-          <div class="io-description output-description">
+          <div class="brain-sentence">
             <span>動作輸出</span>
             <p id="brainOutput">等待神經輸出資料…</p>
           </div>
         </section>
 
-        <section class="panel neural-panel">
-          <div class="panel-heading glance-heading">
-            <div>
-              <span class="section-kicker">NEURAL GLANCE</span>
-              <h2>MaleCNS 即時遙測</h2>
-            </div>
-            <span class="neural-window-chip">50 ms / decision</span>
+        <section class="rail-section neural-section">
+          <div class="rail-heading">
+            <div><span>MALECNS TELEMETRY</span><h2>神經即時遙測</h2></div>
           </div>
 
-          <div class="neural-hero-kpis">
-            <div>
-              <span>本次實際運算耗時</span>
-              <strong id="computeSeconds">—</strong>
-            </div>
-            <div>
-              <span>累積神經模擬時間</span>
-              <strong id="brainMs">—</strong>
-            </div>
+          <div class="rail-big-number">
+            <span>累積神經模擬時間</span>
+            <strong id="brainMs">—</strong>
           </div>
 
-          <div class="trend-stack">
-            <div class="trend-card">
-              <div class="trend-head">
-                <div>
-                  <strong>Compute 趨勢</strong>
-                  <span>實際牆鐘運算耗時</span>
-                </div>
-                <span class="trend-key cyan-key">ms</span>
-              </div>
-              <svg class="micro-chart" viewBox="0 0 240 50" preserveAspectRatio="none" aria-label="近期神經運算耗時趨勢">
-                <path id="computeTrendPath" class="trend-path compute-path" d=""></path>
-              </svg>
-            </div>
-
-            <div class="trend-card">
-              <div class="trend-head">
-                <div>
-                  <strong>Motor Output</strong>
-                  <span>左右輸出頻率近期變化</span>
-                </div>
-                <div class="motor-legend">
-                  <span class="left-key">左</span>
-                  <span class="right-key">右</span>
-                </div>
-              </div>
-              <svg class="micro-chart" viewBox="0 0 240 50" preserveAspectRatio="none" aria-label="左右神經輸出頻率近期趨勢">
-                <path id="motorLeftTrendPath" class="trend-path motor-left-path" d=""></path>
-                <path id="motorRightTrendPath" class="trend-path motor-right-path" d=""></path>
-              </svg>
-            </div>
+          <div class="compute-trend">
+            <div class="compute-trend-head"><span>Compute 趨勢</span><strong>實際牆鐘耗時</strong></div>
+            <svg class="rail-chart" viewBox="0 0 240 50" preserveAspectRatio="none" aria-label="近期神經運算耗時趨勢">
+              <path id="computeTrendPath" class="trend-path compute-path" d=""></path>
+            </svg>
           </div>
 
-          <div class="neural-detail-grid">
+          <div class="telemetry-lines">
             <div><span>總脈衝</span><strong id="totalSpikes">—</strong></div>
             <div><span>閘門脈衝</span><strong id="gateSpikes">—</strong></div>
-            <div><span>左側輸出</span><strong id="leftHz">—</strong></div>
-            <div><span>右側輸出</span><strong id="rightHz">—</strong></div>
             <div><span>食物嗅覺</span><strong id="foodOdorSpikes">—</strong></div>
             <div><span>危險嗅覺</span><strong id="dangerOdorSpikes">—</strong></div>
           </div>
         </section>
 
-        <section class="brain-note" aria-label="觀察說明">
-          <span>LIVE LAB · GLANCE MODE</span>
-          <p>大數字先回答「現在怎麼樣」，細線趨勢再回答「剛才怎麼變」。趨勢只保存瀏覽器目前工作階段最近 <strong id="trendSampleCount">0 / 36</strong> 筆已驗證狀態。</p>
+        <section class="rail-section world-detail-section">
+          <div class="rail-heading compact-rail-heading">
+            <div><span>WORLD / RUN</span><h2>實驗摘要</h2></div>
+          </div>
+          <div class="world-lines">
+            <div><span>本局食物</span><strong id="episodeFood">—</strong></div>
+            <div><span>累積食物</span><strong id="totalFood">—</strong></div>
+            <div><span>被敵人抓到</span><strong id="totalDeaths">—</strong></div>
+            <div><span>決策步數</span><strong id="decisionTicks">—</strong></div>
+            <div><span>世界步數</span><strong id="worldTicks">—</strong></div>
+            <div><span>能量狀態</span><strong id="powerState">—</strong></div>
+          </div>
+
+          <div class="run-records">
+            <div class="record-primary"><span>總活動時間</span><strong id="totalTime">—</strong></div>
+            <div><span>破關</span><strong id="clearCount">0</strong></div>
+            <div><span>最佳</span><strong id="bestClear">—</strong></div>
+          </div>
+
+          <div class="hidden-detail-records" aria-label="完整破關紀錄">
+            <span id="firstClear">—</span>
+            <span id="latestClear">—</span>
+            <div id="clearHistory">尚未破關</div>
+            <div id="allClearHistory">尚未破關</div>
+          </div>
         </section>
       </aside>
     </section>
   </main>
-  <script src="app.js?v=balanced-console-2"></script>
-  <script src="glance.js?v=glance-monitor-1"></script>
+
+  <script src="app.js?v=hud-console-1"></script>
+  <script src="glance.js?v=hud-console-1"></script>
   <script src="all-clear-history.js?v=c60c108b"></script>
 </body>
 </html>
