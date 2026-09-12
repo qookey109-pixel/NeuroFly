@@ -8,6 +8,8 @@ from .olfaction import virtual_olfaction
 
 
 CURRICULUM_VERSION = "neurofly-curriculum-v2"
+ANTI_STALL_POLICY = "neurofly-curriculum-anti-stall-v1"
+ANTI_STALL_STATIONARY_LIMIT = 4
 
 
 @dataclass(frozen=True)
@@ -34,6 +36,11 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
     turns and visual geometry. Difficulty changes only through predator count and
     authoritative world-clock speed. Stage progression depends only on verified
     maze clears, never wall-clock runtime or hand-authored action labels.
+
+    A small, versioned anti-stall controller sits outside the MaleCNS decoder.
+    It never chooses a path or reads a target route. It only prevents indefinite
+    zero-displacement loops while preserving the raw MaleCNS action separately
+    from the action actually applied to the environment.
     """
 
     def __init__(self, *, seed: int = 109) -> None:
@@ -41,6 +48,12 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
         self.stage_clear_counts = {str(stage.number): 0 for stage in STAGES}
         self.stage_history: list[dict[str, Any]] = []
         self._advance_on_reset = False
+        self._stationary_agent_steps = 0
+        self._force_forward_next = False
+        self.last_raw_action = "HOLD"
+        self.last_applied_action = "HOLD"
+        self.last_action_overridden = False
+        self.last_override_reason: str | None = None
         super().__init__(seed=seed)
         self._apply_stage_layout()
 
@@ -55,6 +68,14 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
         if not self.enemies:
             return 1_000_000
         return super().threat_distance(x=x, y=y)
+
+    def _reset_anti_stall(self) -> None:
+        self._stationary_agent_steps = 0
+        self._force_forward_next = False
+        self.last_raw_action = "HOLD"
+        self.last_applied_action = "HOLD"
+        self.last_action_overridden = False
+        self.last_override_reason = None
 
     def _apply_stage_layout(self) -> None:
         """Rebuild the exact canonical maze and vary only predator pressure."""
@@ -81,8 +102,61 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
             self.curriculum_stage = min(len(STAGES), self.curriculum_stage + 1)
             self._advance_on_reset = False
         super().reset(reason)
+        self._reset_anti_stall()
         if hasattr(self, "curriculum_stage"):
             self._apply_stage_layout()
+
+    def agent_step(self, action: str, *, move_enemies: bool):
+        """Apply a raw MaleCNS action with a blind, transparent anti-stall floor."""
+        raw_action = action
+        applied_action = raw_action
+        override_reason: str | None = None
+
+        if self._force_forward_next:
+            applied_action = "FORWARD"
+            override_reason = "anti_stall_followup_forward"
+            self._force_forward_next = False
+        elif self._stationary_agent_steps >= ANTI_STALL_STATIONARY_LIMIT:
+            if raw_action == "HOLD":
+                # First try a forward locomotion pulse. If the previous forced
+                # forward was blocked, rotate blindly once and move next step.
+                if self.last_action_overridden and self.last_applied_action == "FORWARD":
+                    applied_action = "TURN_RIGHT"
+                    override_reason = "anti_stall_blocked_forward_turn"
+                    self._force_forward_next = True
+                else:
+                    applied_action = "FORWARD"
+                    override_reason = "anti_stall_hold_forward"
+            elif raw_action == "FORWARD":
+                # Repeated forward with no displacement means a wall is likely.
+                # Rotate without consulting maze topology, then move next step.
+                applied_action = "TURN_RIGHT"
+                override_reason = "anti_stall_blocked_forward_turn"
+                self._force_forward_next = True
+            else:
+                # Preserve the MaleCNS turn, but guarantee one forward attempt
+                # immediately after it if the fly is still stationary.
+                self._force_forward_next = True
+
+        before = (int(self.fly["x"]), int(self.fly["y"]))
+        result = super().agent_step(applied_action, move_enemies=move_enemies)
+        after = (int(self.fly["x"]), int(self.fly["y"]))
+
+        self.last_raw_action = raw_action
+        self.last_applied_action = applied_action
+        self.last_action_overridden = applied_action != raw_action
+        self.last_override_reason = override_reason
+
+        if result.terminal:
+            self._stationary_agent_steps = 0
+            self._force_forward_next = False
+        elif after == before:
+            self._stationary_agent_steps += 1
+        else:
+            self._stationary_agent_steps = 0
+            self._force_forward_next = False
+
+        return result
 
     def _record_clear(self) -> None:
         super()._record_clear()
@@ -142,6 +216,15 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
             if isinstance(history, list):
                 self.stage_history = [dict(item) for item in history if isinstance(item, dict)]
             self._advance_on_reset = bool(payload.get("advance_on_reset", False))
+            self._stationary_agent_steps = max(
+                0, int(payload.get("anti_stall_stationary_steps", 0))
+            )
+            self._force_forward_next = bool(payload.get("anti_stall_force_forward_next", False))
+            self.last_raw_action = str(payload.get("raw_brain_action", self.last_action))
+            self.last_applied_action = str(payload.get("applied_action", self.last_action))
+            self.last_action_overridden = bool(payload.get("action_overridden", False))
+            reason = payload.get("override_reason")
+            self.last_override_reason = None if reason is None else str(reason)
             # The superclass already restored exact grid/fly/RNG state.
             return
 
@@ -152,6 +235,7 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
         self.stage_clear_counts = {str(stage.number): 0 for stage in STAGES}
         self.stage_history = []
         self._advance_on_reset = False
+        self._reset_anti_stall()
         GoalMazeEnvironment.reset(self, "curriculum_v2_migration")
         self._apply_stage_layout()
 
@@ -169,6 +253,13 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
                 "curriculum_world_tick_seconds": stage.world_tick_seconds,
                 "curriculum_stage_history": [dict(item) for item in self.stage_history],
                 "curriculum_complete": stage.number == len(STAGES),
+                "anti_stall_policy": ANTI_STALL_POLICY,
+                "anti_stall_stationary_steps": self._stationary_agent_steps,
+                "anti_stall_force_forward_next": self._force_forward_next,
+                "raw_brain_action": self.last_raw_action,
+                "applied_action": self.last_applied_action,
+                "action_overridden": self.last_action_overridden,
+                "override_reason": self.last_override_reason,
                 "olfaction": virtual_olfaction(
                     grid=self.grid,
                     fly=self.fly,
@@ -187,6 +278,13 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
                 "stage_clear_counts": dict(self.stage_clear_counts),
                 "stage_history": [dict(item) for item in self.stage_history],
                 "advance_on_reset": self._advance_on_reset,
+                "anti_stall_policy": ANTI_STALL_POLICY,
+                "anti_stall_stationary_steps": self._stationary_agent_steps,
+                "anti_stall_force_forward_next": self._force_forward_next,
+                "raw_brain_action": self.last_raw_action,
+                "applied_action": self.last_applied_action,
+                "action_overridden": self.last_action_overridden,
+                "override_reason": self.last_override_reason,
             }
         )
         return data
