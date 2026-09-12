@@ -4,23 +4,36 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark" />
-  <meta name="description" content="NeuroFly MaleCNS 即時迷宮觀察站" />
-  <title>NeuroFly｜即時神經迷宮觀察站</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="description" content="NeuroFly MaleCNS 即時迷宮單螢幕觀察站" />
+  <title>NeuroFly｜MaleCNS 單螢幕實驗台</title>
+  <link rel="stylesheet" href="styles.css?v=single-screen-console-1" />
 </head>
 <body>
   <main class="stage">
     <header class="site-header">
-      <div>
+      <div class="brand-block">
         <div class="eyebrow">NeuroFly · MaleCNS 即時實驗</div>
-        <h1>果蠅神經迷宮觀察站</h1>
-        <p>觀察 MaleCNS 神經活動如何驅動果蠅在迷宮中尋找食物、避開敵人並持續學習。網站只呈現狀態，不控制大腦思考速度。</p>
+        <h1>果蠅神經迷宮 <span>單螢幕總覽</span></h1>
       </div>
-      <div class="connection-pill" id="connectionState" aria-live="polite">正在連線</div>
+
+      <div class="run-status" id="runStatus" aria-live="polite">等待已驗證的 MaleCNS 即時狀態…</div>
+
+      <div class="header-actions">
+        <div class="connection-pill" id="connectionState" aria-live="polite">正在連線</div>
+        <button id="reconnectLive" type="button" class="reconnect-button">重新連線</button>
+      </div>
     </header>
 
     <section class="lab-layout" aria-label="NeuroFly MaleCNS 自我訓練迷宮">
-      <div class="game-column">
+      <section class="game-column" aria-label="迷宮即時畫面">
+        <div class="game-heading">
+          <div>
+            <span class="section-kicker">MAZE CHASE</span>
+            <h2>即時遊戲畫面</h2>
+          </div>
+          <span class="game-note">網站只觀察，不改變神經運算速度</span>
+        </div>
+
         <div class="game-shell">
           <canvas id="mazeCanvas" width="950" height="700" aria-label="MaleCNS 即時迷宮畫面"></canvas>
         </div>
@@ -32,16 +45,21 @@
           <span><i class="legend-enemy">●</i> 敵人</span>
         </div>
 
-        <div class="display-controls" aria-label="連線控制">
-          <button id="reconnectLive" type="button" class="secondary">重新連線</button>
-          <p>重新連線只會重建網站與即時資料來源的連線，不會暫停或改變 MaleCNS 與迷宮世界。</p>
+        <div class="game-context">
+          <span>神經視窗 <strong id="neuralWindowMs">50 毫秒</strong></span>
+          <span>即時資料來自已驗證 MaleCNS 狀態</span>
         </div>
-      </div>
+      </section>
 
       <aside class="dashboard" aria-label="MaleCNS 即時監控資訊">
         <section class="panel status-panel">
-          <div class="brain-badge" id="brainBadge">MALECNS · 驗證中</div>
-          <h2>目前狀態</h2>
+          <div class="panel-heading compact-heading">
+            <div>
+              <span class="section-kicker">即時狀態</span>
+              <h2>核心狀態</h2>
+            </div>
+            <div class="brain-badge" id="brainBadge">MALECNS · 驗證中</div>
+          </div>
           <div class="primary-metrics">
             <div class="metric emphasis">
               <span>目前動作</span>
@@ -52,7 +70,7 @@
               <strong id="lastReward">—</strong>
             </div>
             <div class="metric">
-              <span>本局存活時間</span>
+              <span>本局存活</span>
               <strong id="survivalTime">—</strong>
             </div>
             <div class="metric">
@@ -60,74 +78,86 @@
               <strong id="episodeNumber">—</strong>
             </div>
           </div>
-          <div class="run-status" id="runStatus">等待已驗證的 MaleCNS 即時狀態…</div>
         </section>
 
-        <section class="panel">
-          <div class="section-heading">
+        <section class="panel neural-panel">
+          <div class="panel-heading">
             <div>
-              <span class="section-kicker">大腦輸入／輸出</span>
-              <h2>Brain I/O</h2>
+              <span class="section-kicker">神經活動</span>
+              <h2>MaleCNS 即時遙測</h2>
             </div>
             <span class="live-dot" aria-hidden="true"></span>
           </div>
-          <div class="io-row">
-            <span>大腦原始動作</span>
-            <strong id="rawAction">—</strong>
-          </div>
-          <div class="io-row">
-            <span>實際套用動作</span>
-            <strong id="appliedAction">—</strong>
-          </div>
-          <div class="io-row">
-            <span>強化訊號</span>
-            <strong id="reinforcement">—</strong>
-          </div>
-          <div class="io-description">
-            <span>感覺輸入</span>
-            <p id="brainInput">等待神經輸入資料…</p>
-          </div>
-          <div class="io-description">
-            <span>動作輸出</span>
-            <p id="brainOutput">等待神經輸出資料…</p>
-          </div>
-        </section>
-
-        <section class="panel">
-          <span class="section-kicker">神經活動</span>
-          <h2>MaleCNS 即時遙測</h2>
-          <div class="telemetry-grid">
-            <div><span>單次神經模擬（目前設定）</span><strong id="neuralWindowMs">50 毫秒</strong></div>
-            <div><span>累積神經模擬時間</span><strong id="brainMs">—</strong></div>
-            <div><span>本次實際運算耗時</span><strong id="computeSeconds">—</strong></div>
+          <div class="telemetry-grid neural-grid">
+            <div><span>累積神經時間</span><strong id="brainMs">—</strong></div>
+            <div><span>本次運算耗時</span><strong id="computeSeconds">—</strong></div>
             <div><span>總脈衝數</span><strong id="totalSpikes">—</strong></div>
             <div><span>閘門脈衝</span><strong id="gateSpikes">—</strong></div>
-            <div><span>左側輸出頻率</span><strong id="leftHz">—</strong></div>
-            <div><span>右側輸出頻率</span><strong id="rightHz">—</strong></div>
+            <div><span>左側輸出</span><strong id="leftHz">—</strong></div>
+            <div><span>右側輸出</span><strong id="rightHz">—</strong></div>
             <div><span>食物嗅覺脈衝</span><strong id="foodOdorSpikes">—</strong></div>
             <div><span>危險嗅覺脈衝</span><strong id="dangerOdorSpikes">—</strong></div>
           </div>
         </section>
 
-        <section class="panel">
-          <span class="section-kicker">迷宮狀態</span>
-          <h2>世界與生存資訊</h2>
-          <div class="telemetry-grid">
+        <section class="panel world-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="section-kicker">迷宮狀態</span>
+              <h2>世界與生存資訊</h2>
+            </div>
+          </div>
+          <div class="telemetry-grid world-grid">
             <div><span>剩餘食物</span><strong id="foodLeft">—</strong></div>
-            <div><span>本局吃到食物</span><strong id="episodeFood">—</strong></div>
-            <div><span>累積吃到食物</span><strong id="totalFood">—</strong></div>
+            <div><span>本局食物</span><strong id="episodeFood">—</strong></div>
+            <div><span>累積食物</span><strong id="totalFood">—</strong></div>
             <div><span>被敵人抓到</span><strong id="totalDeaths">—</strong></div>
-            <div><span>目前敵人</span><strong id="enemyCount">—</strong></div>
+            <div class="enemy-metric"><span>目前敵人</span><strong id="enemyCount">—</strong></div>
             <div><span>決策步數</span><strong id="decisionTicks">—</strong></div>
             <div><span>世界步數</span><strong id="worldTicks">—</strong></div>
             <div><span>能量狀態</span><strong id="powerState">—</strong></div>
-            <div><span>累積獎勵</span><strong id="cumulativeReward">—</strong></div>
+            <div class="reward-metric"><span>累積獎勵</span><strong id="cumulativeReward">—</strong></div>
+          </div>
+        </section>
+
+        <section class="panel io-panel">
+          <div class="panel-heading compact-heading">
+            <div>
+              <span class="section-kicker">大腦輸入／輸出</span>
+              <h2>Brain I/O</h2>
+            </div>
+          </div>
+          <div class="io-summary">
+            <div class="io-row">
+              <span>原始動作</span>
+              <strong id="rawAction">—</strong>
+            </div>
+            <div class="io-row">
+              <span>套用動作</span>
+              <strong id="appliedAction">—</strong>
+            </div>
+            <div class="io-row">
+              <span>強化訊號</span>
+              <strong id="reinforcement">—</strong>
+            </div>
+          </div>
+          <div class="io-description">
+            <span>感覺輸入</span>
+            <p id="brainInput">等待神經輸入資料…</p>
+          </div>
+          <div class="io-description output-description">
+            <span>動作輸出</span>
+            <p id="brainOutput">等待神經輸出資料…</p>
           </div>
         </section>
 
         <section class="panel clear-panel" aria-label="活動與破關紀錄">
-          <span class="section-kicker">實驗紀錄</span>
-          <h2>活動與破關紀錄</h2>
+          <div class="panel-heading compact-heading">
+            <div>
+              <span class="section-kicker">實驗紀錄</span>
+              <h2>活動與破關紀錄</h2>
+            </div>
+          </div>
           <div class="goal-hud">
             <div><span>總活動時間</span><strong id="totalTime">—</strong></div>
             <div><span>首次破關</span><strong id="firstClear">—</strong></div>
@@ -135,21 +165,21 @@
             <div><span>最佳破關</span><strong id="bestClear">—</strong></div>
             <div><span>破關次數</span><strong id="clearCount">0</strong></div>
           </div>
-
-          <div class="history-block">
-            <span class="history-label">最近破關紀錄</span>
-            <div class="clear-history" id="clearHistory">尚未破關</div>
-          </div>
-
-          <div class="history-block">
-            <span class="history-label">每一次破關時間</span>
-            <div class="clear-history all-history" id="allClearHistory">尚未破關</div>
+          <div class="history-grid">
+            <div class="history-block">
+              <span class="history-label">最近破關紀錄</span>
+              <div class="clear-history" id="clearHistory">尚未破關</div>
+            </div>
+            <div class="history-block">
+              <span class="history-label">每一次破關時間</span>
+              <div class="clear-history all-history" id="allClearHistory">尚未破關</div>
+            </div>
           </div>
         </section>
       </aside>
     </section>
   </main>
-  <script src="app.js?v=neural-timing-50ms-1"></script>
+  <script src="app.js?v=single-screen-console-1"></script>
   <script src="all-clear-history.js?v=c60c108b"></script>
 </body>
 </html>
