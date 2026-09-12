@@ -5,6 +5,7 @@
   const LIVE_RELAY = 'https://neurofly-curriculum-relay.onrender.com/events';
 
   function formatSeconds(value) {
+    if (value == null || value === '') return '—';
     const seconds = Number(value);
     if (!Number.isFinite(seconds) || seconds < 0) return '—';
     if (seconds < 60) return `${seconds.toFixed(1)} 秒`;
