@@ -1,0 +1,406 @@
+/* NeuroFly Glance visual layer — inspired by Lieflat's conclusion-first dashboard language. */
+
+:root {
+  --glance-rule: rgba(143, 242, 183, .18);
+  --glance-rule-strong: rgba(143, 242, 183, .34);
+  --glance-panel: rgba(7, 20, 16, .78);
+  --glance-quiet: rgba(143, 242, 183, .055);
+}
+
+.game-workspace,
+.panel,
+.brain-note {
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.game-workspace {
+  grid-template-rows: auto minmax(0, 1fr) minmax(224px, .54fr);
+}
+
+.panel {
+  background: var(--glance-panel);
+}
+
+.panel-heading,
+.game-topline {
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--glance-rule);
+}
+
+.glance-heading {
+  align-items: baseline;
+}
+
+.sample-label {
+  color: var(--lab-muted);
+  font-size: .48rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.status-panel {
+  padding: 10px;
+}
+
+.status-hero {
+  padding: 12px 2px 10px;
+  border-bottom: 1px dotted var(--glance-rule-strong);
+}
+
+.status-hero span,
+.status-mini-grid span,
+.glance-kpi span,
+.world-compact-grid span,
+.neural-hero-kpis span,
+.neural-detail-grid span {
+  display: block;
+  color: var(--lab-muted);
+  font-size: .49rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: .035em;
+}
+
+.status-hero strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--lab-lime);
+  font-size: clamp(1.35rem, 2.1vw, 2.05rem);
+  font-weight: 900;
+  line-height: .98;
+  letter-spacing: -.04em;
+}
+
+.status-mini-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.status-mini-grid > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 1px;
+  border-bottom: 1px solid rgba(143, 242, 183, .08);
+}
+
+.status-mini-grid strong {
+  color: var(--lab-text);
+  font-size: .68rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.compact-legend {
+  border-top: 1px solid rgba(143, 242, 183, .09);
+  border-radius: 0;
+  background: transparent;
+  padding: 8px 1px 2px;
+}
+
+.under-game-grid {
+  grid-template-columns: minmax(0, 1.35fr) minmax(290px, .65fr);
+}
+
+.world-panel,
+.clear-panel,
+.neural-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.glance-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 7px;
+}
+
+.glance-kpi {
+  min-width: 0;
+  padding: 7px 2px 5px;
+  border-top: 1px solid var(--glance-rule-strong);
+}
+
+.glance-kpi strong {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--lab-text);
+  font-size: clamp(1.02rem, 1.55vw, 1.48rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -.035em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.glance-kpi small {
+  display: block;
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--lab-muted);
+  font-size: .44rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.enemy-kpi { border-top-color: rgba(255, 114, 130, .55); }
+.enemy-kpi strong { color: #ffabb5; }
+.reward-kpi { border-top-color: rgba(216, 255, 115, .55); }
+.reward-kpi strong { color: var(--lab-lime); }
+.food-kpi { border-top-color: rgba(246, 217, 107, .5); }
+.food-kpi strong { color: var(--lab-food); }
+
+.trend-card {
+  min-width: 0;
+  margin-top: 6px;
+  padding: 5px 6px 4px;
+  border-top: 1px dotted rgba(143, 242, 183, .18);
+  background: linear-gradient(180deg, rgba(143, 242, 183, .025), transparent);
+}
+
+.reward-trend-card {
+  margin-top: 4px;
+}
+
+.trend-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.trend-head > div:first-child {
+  min-width: 0;
+}
+
+.trend-head strong {
+  display: block;
+  color: var(--lab-secondary);
+  font-size: .52rem;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.trend-head span {
+  color: var(--lab-muted);
+  font-size: .43rem;
+  line-height: 1.2;
+}
+
+.trend-key,
+.motor-legend span {
+  flex: 0 0 auto;
+  font-weight: 850;
+  letter-spacing: .04em;
+}
+
+.lime-key { color: var(--lab-lime) !important; }
+.cyan-key { color: var(--lab-cyan) !important; }
+.left-key { color: var(--lab-green) !important; }
+.right-key { color: #cb79ff !important; }
+
+.motor-legend {
+  display: flex;
+  gap: 7px;
+}
+
+.micro-chart {
+  display: block;
+  width: 100%;
+  height: 36px;
+  margin-top: 3px;
+  overflow: visible;
+}
+
+.trend-path {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.reward-path { stroke: var(--lab-lime); }
+.compute-path { stroke: var(--lab-cyan); }
+.motor-left-path { stroke: var(--lab-green); }
+.motor-right-path { stroke: #cb79ff; }
+.trend-zero {
+  stroke: rgba(181, 196, 190, .18);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.world-compact-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0;
+  margin-top: auto;
+  border-top: 1px solid rgba(143, 242, 183, .09);
+}
+
+.world-compact-grid > div {
+  min-width: 0;
+  padding: 6px 6px 2px;
+  border-right: 1px solid rgba(143, 242, 183, .07);
+}
+
+.world-compact-grid > div:last-child { border-right: 0; }
+
+.world-compact-grid strong,
+.neural-detail-grid strong {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--lab-text);
+  font-size: .61rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goal-hud {
+  grid-template-columns: 1.45fr repeat(4, minmax(0, 1fr));
+}
+
+.goal-hud > div {
+  padding: 6px 5px;
+  border-radius: 0;
+  border-top: 1px solid rgba(143, 242, 183, .13);
+  background: transparent;
+}
+
+.goal-hud .hero-record {
+  border-top-color: rgba(216, 255, 115, .45);
+}
+
+.goal-hud .hero-record strong {
+  color: var(--lab-lime);
+  font-size: .78rem;
+}
+
+.history-block {
+  border-radius: 0;
+  border-top: 1px dotted rgba(143, 242, 183, .18);
+  background: transparent;
+}
+
+.brain-console {
+  grid-template-rows: minmax(0, .67fr) minmax(0, 1.55fr) auto;
+}
+
+.neural-panel {
+  padding: 9px;
+}
+
+.neural-hero-kpis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 7px;
+}
+
+.neural-hero-kpis > div {
+  min-width: 0;
+  padding: 7px 2px 6px;
+  border-top: 1px solid var(--glance-rule-strong);
+}
+
+.neural-hero-kpis > div:first-child {
+  border-top-color: rgba(128, 212, 255, .55);
+}
+
+.neural-hero-kpis strong {
+  display: block;
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--lab-lime);
+  font-size: .9rem;
+  font-weight: 900;
+  letter-spacing: -.025em;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.neural-hero-kpis > div:first-child strong { color: var(--lab-cyan); }
+
+.trend-stack {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+  margin-top: 1px;
+}
+
+.neural-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: auto;
+  border-top: 1px solid rgba(143, 242, 183, .09);
+}
+
+.neural-detail-grid > div {
+  min-width: 0;
+  padding: 6px 5px 2px;
+  border-right: 1px solid rgba(143, 242, 183, .07);
+  border-bottom: 1px solid rgba(143, 242, 183, .05);
+}
+
+.neural-detail-grid > div:nth-child(3n) { border-right: 0; }
+
+.brain-note strong {
+  color: var(--lab-secondary);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1230px) and (min-width: 901px) {
+  .game-workspace { grid-template-rows: auto minmax(0, 1fr) minmax(210px, .55fr); }
+  .world-compact-grid span,
+  .neural-detail-grid span { font-size: .44rem; }
+  .world-compact-grid strong,
+  .neural-detail-grid strong { font-size: .56rem; }
+  .glance-kpi small { display: none; }
+  .micro-chart { height: 31px; }
+}
+
+@media (max-height: 740px) and (min-width: 901px) {
+  .game-workspace { grid-template-rows: auto minmax(0, 1fr) minmax(188px, .52fr); }
+  .glance-kpis { gap: 7px; margin-top: 5px; }
+  .glance-kpi { padding-top: 5px; }
+  .glance-kpi small { display: none; }
+  .trend-card { margin-top: 3px; padding-block: 3px; }
+  .micro-chart { height: 25px; }
+  .world-compact-grid > div,
+  .neural-detail-grid > div { padding-top: 4px; }
+  .history-grid { display: none; }
+  .brain-console { grid-template-rows: minmax(0, .62fr) minmax(0, 1.55fr); }
+  .brain-note { display: none; }
+}
+
+@media (max-width: 900px) {
+  .game-workspace { grid-template-rows: auto auto auto; }
+  .glance-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .world-compact-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .neural-detail-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .micro-chart { height: 54px; }
+}
+
+@media (max-width: 560px) {
+  .glance-kpis,
+  .neural-hero-kpis { grid-template-columns: 1fr; }
+  .world-compact-grid,
+  .neural-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .goal-hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .status-hero strong { font-size: 1.7rem; }
+}
