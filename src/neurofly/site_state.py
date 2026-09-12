@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .curriculum import CURRICULUM_VERSION, STAGES
+from .olfaction import DANGER_ORN_TYPE, FOOD_ORN_TYPE, OLFACTION_MODEL
 from .upstream import STONKFLY_COMMIT
 
 
@@ -28,6 +29,42 @@ SELF_TRAINING_SCHEMAS = {
 def _digest_json(value: Any) -> str:
     encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), default=str).encode()
     return hashlib.sha256(encoded).hexdigest()
+
+
+def _verify_v3_olfaction(receipt: dict[str, Any], trajectory: list[dict[str, Any]]) -> None:
+    if receipt.get("olfaction_model") != OLFACTION_MODEL:
+        raise ValueError("Self-training v3 does not certify the NeuroFly olfaction model")
+    report = receipt.get("olfaction") or {}
+    if report.get("model") != OLFACTION_MODEL or report.get("engineered_proxy") is not True:
+        raise ValueError("Self-training v3 lacks an olfaction mapping report")
+
+    food = report.get("food") or {}
+    danger = report.get("danger") or {}
+    if food.get("orn_type") != FOOD_ORN_TYPE or danger.get("orn_type") != DANGER_ORN_TYPE:
+        raise ValueError("Self-training v3 olfactory ORN types do not match the V0.6 contract")
+    for label, channel in (("food", food), ("danger", danger)):
+        try:
+            left = int(channel.get("left_neurons", 0))
+            right = int(channel.get("right_neurons", 0))
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError(f"Self-training v3 {label} ORN counts are invalid") from exc
+        if left <= 0 or right <= 0:
+            raise ValueError(f"Self-training v3 {label} ORNs are not bilateral")
+
+    for index, state in enumerate(trajectory, start=1):
+        odor = state.get("olfaction") or {}
+        telemetry = ((state.get("brain") or {}).get("telemetry") or {})
+        if odor.get("model") != OLFACTION_MODEL:
+            raise ValueError(f"Trajectory state {index} lacks the verified odor field")
+        if telemetry.get("olfaction_model") != OLFACTION_MODEL:
+            raise ValueError(f"Trajectory state {index} lacks MaleCNS olfactory telemetry")
+        try:
+            food_spikes = int(telemetry.get("food_odor_spikes", -1))
+            danger_spikes = int(telemetry.get("danger_odor_spikes", -1))
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError(f"Trajectory state {index} has invalid olfactory spike telemetry") from exc
+        if food_spikes < 0 or danger_spikes < 0:
+            raise ValueError(f"Trajectory state {index} lacks olfactory spike telemetry")
 
 
 def verify_receipt(receipt: dict[str, Any]) -> None:
@@ -105,6 +142,7 @@ def verify_receipt(receipt: dict[str, Any]) -> None:
             raise ValueError("Final state lacks a valid curriculum stage") from exc
         if not 1 <= stage <= len(STAGES):
             raise ValueError("Final state curriculum stage is out of range")
+        _verify_v3_olfaction(receipt, trajectory)
 
 
 def build_site_state(receipt: dict[str, Any]) -> dict[str, Any]:
@@ -124,6 +162,8 @@ def build_site_state(receipt: dict[str, Any]) -> dict[str, Any]:
         "world_states_seen": receipt.get("world_states_seen"),
         "curriculum": receipt.get("curriculum"),
         "curriculum_version": receipt.get("curriculum_version"),
+        "olfaction_model": receipt.get("olfaction_model"),
+        "olfaction": receipt.get("olfaction"),
         "steps": receipt["steps"],
         "trajectory": receipt["trajectory"],
         "final_state": receipt["final_state"],
