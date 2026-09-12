@@ -7,7 +7,7 @@ from .goal_training import GoalMazeEnvironment
 from .olfaction import virtual_olfaction
 
 
-CURRICULUM_VERSION = "neurofly-curriculum-v1"
+CURRICULUM_VERSION = "neurofly-curriculum-v2"
 
 
 @dataclass(frozen=True)
@@ -20,9 +20,9 @@ class CurriculumStage:
 
 
 STAGES: tuple[CurriculumStage, ...] = (
-    CurriculumStage(1, "food-corridor", 2, 1.0, 0),
-    CurriculumStage(2, "turning-food", 2, 1.0, 0),
-    CurriculumStage(3, "slow-predator", 3, 2.0, 1),
+    CurriculumStage(1, "full-maze-food-only", 2, 1.0, 0),
+    CurriculumStage(2, "full-maze-slow-predator", 2, 2.0, 1),
+    CurriculumStage(3, "full-maze-predator", 3, 1.0, 1),
     CurriculumStage(4, "full-live-maze", None, 0.5, 2),
 )
 
@@ -30,8 +30,9 @@ STAGES: tuple[CurriculumStage, ...] = (
 class CurriculumMazeEnvironment(GoalMazeEnvironment):
     """Versioned training curriculum that preserves the same MaleCNS controller.
 
-    Stages deliberately teach simpler behavioral primitives before restoring the
-    full V0.5 live-maze difficulty. Stage progression depends only on verified
+    Every stage uses the canonical V0.5 19x14 maze, start position, food layout,
+    turns and visual geometry. Difficulty changes only through predator count and
+    authoritative world-clock speed. Stage progression depends only on verified
     maze clears, never wall-clock runtime or hand-authored action labels.
     """
 
@@ -55,46 +56,25 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
             return 1_000_000
         return super().threat_distance(x=x, y=y)
 
-    def _blank_grid(self) -> list[list[str]]:
-        return [["#" for _ in range(self.cols)] for _ in range(self.rows)]
-
     def _apply_stage_layout(self) -> None:
-        stage = self.curriculum_stage
-        if stage == 1:
-            grid = self._blank_grid()
-            y = 7
-            for x in range(2, 17):
-                grid[y][x] = " "
-            for x in (4, 7, 10, 13, 16):
-                grid[y][x] = "."
-            self.grid = grid
-            self.fly = {"x": 2, "y": y, "dir": "RIGHT"}
-            self.enemies = []
-            return
+        """Rebuild the exact canonical maze and vary only predator pressure."""
+        self.grid = self._make_grid()
+        self.fly = {"x": 1, "y": 1, "dir": "RIGHT"}
 
-        if stage == 2:
-            grid = self._blank_grid()
-            y = 8
-            for x in range(2, 11):
-                grid[y][x] = " "
-            for yy in range(3, 9):
-                grid[yy][10] = " "
-            for x, yy in ((4, y), (7, y), (10, y), (10, 6), (10, 4), (10, 3)):
-                grid[yy][x] = "."
-            self.grid = grid
-            self.fly = {"x": 2, "y": y, "dir": "RIGHT"}
-            self.enemies = []
-            return
+        canonical_enemy_spawns = [
+            {"x": self.cols - 2, "y": self.rows - 2},
+            {"x": self.cols - 3, "y": 1},
+        ]
+        self.enemies = [dict(item) for item in canonical_enemy_spawns[: self.stage.enemy_count]]
 
-        # Stages 3 and 4 intentionally reuse the canonical V0.5 maze geometry.
-        # The difference is predator count/speed, so vision remains comparable.
-        if stage == 3:
-            self.enemies = [{"x": self.cols - 2, "y": self.rows - 2}]
-        else:
-            self.enemies = [
-                {"x": self.cols - 2, "y": self.rows - 2},
-                {"x": self.cols - 3, "y": 1},
-            ]
+        # Preserve the canonical V0.5 visual/food geometry even when a curriculum
+        # stage temporarily disables one or both predators.
+        self.grid[1][1] = " "
+        for enemy in canonical_enemy_spawns:
+            self.grid[enemy["y"]][enemy["x"]] = " "
+        for x, y in ((1, self.rows - 2), (self.cols - 2, 1), (8, 6), (15, 11)):
+            if self.grid[y][x] != "#":
+                self.grid[y][x] = "o"
 
     def reset(self, reason: str = "reset") -> None:
         if getattr(self, "_advance_on_reset", False):
@@ -137,11 +117,11 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
 
     def restore(self, payload: dict[str, Any]) -> None:
         same_curriculum = payload.get("curriculum_version") == CURRICULUM_VERSION
-        empty_enemies = same_curriculum and payload.get("enemies") == []
+        empty_enemies = payload.get("enemies") == []
         if empty_enemies:
-            # V0.5's generic persistence validator historically required at least
-            # one enemy. Feed it a temporary valid enemy, then restore the exact
-            # enemy-free curriculum state immediately afterwards.
+            # The generic V0.5 persistence validator requires at least one enemy.
+            # Feed it a temporary valid enemy so both v1 and v2 enemy-free
+            # checkpoints can migrate safely.
             compatible = dict(payload)
             compatible["enemies"] = [self._compat_enemy_for_empty_checkpoint(payload)]
             super().restore(compatible)
@@ -165,12 +145,14 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
             # The superclass already restored exact grid/fly/RNG state.
             return
 
-        # V0.5 migration: retain the trained brain and global counters, but start
-        # the new curriculum at Stage 1 instead of inheriting the hard live maze.
+        # Migration from V0.5 or curriculum v1: retain the trained brain and
+        # global behavior counters, but begin curriculum v2 on the full canonical
+        # maze instead of carrying forward a simplified training layout.
         self.curriculum_stage = 1
         self.stage_clear_counts = {str(stage.number): 0 for stage in STAGES}
         self.stage_history = []
         self._advance_on_reset = False
+        GoalMazeEnvironment.reset(self, "curriculum_v2_migration")
         self._apply_stage_layout()
 
     def snapshot(self, *, include_grid: bool = True) -> dict[str, Any]:
