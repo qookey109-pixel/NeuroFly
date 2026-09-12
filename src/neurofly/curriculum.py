@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .goal_training import GoalMazeEnvironment
+from .olfaction import virtual_olfaction
 
 
 CURRICULUM_VERSION = "neurofly-curriculum-v1"
@@ -186,6 +187,11 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
                 "curriculum_world_tick_seconds": stage.world_tick_seconds,
                 "curriculum_stage_history": [dict(item) for item in self.stage_history],
                 "curriculum_complete": stage.number == len(STAGES),
+                "olfaction": virtual_olfaction(
+                    grid=self.grid,
+                    fly=self.fly,
+                    enemies=self.enemies,
+                ),
             }
         )
         return data
