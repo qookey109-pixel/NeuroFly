@@ -74,7 +74,7 @@ jobs:
 
       - name: Let MaleCNS train through staged curriculum
         env:
-          INPUT_STEPS: ${{ github.event_name == 'workflow_dispatch' && inputs.steps || '12' }}
+          INPUT_STEPS: ${{ github.event_name == 'workflow_dispatch' && inputs.steps || '1200' }}
         run: |
           python -m neurofly.training \
             --curriculum \
