@@ -23,10 +23,6 @@
       <div class="game-column">
         <div class="game-shell">
           <canvas id="mazeCanvas" width="950" height="700" aria-label="MaleCNS 即時迷宮畫面"></canvas>
-          <div class="pause-notice" id="pauseNotice" hidden>
-            <strong>畫面已暫停</strong>
-            <span>MaleCNS 與迷宮仍在背景持續運作</span>
-          </div>
         </div>
 
         <div class="legend" aria-label="迷宮圖例">
@@ -36,10 +32,9 @@
           <span><i class="legend-enemy">●</i> 敵人</span>
         </div>
 
-        <div class="display-controls" aria-label="畫面控制">
-          <button id="pauseView" type="button" aria-pressed="false">暫停畫面</button>
+        <div class="display-controls" aria-label="連線控制">
           <button id="reconnectLive" type="button" class="secondary">重新連線</button>
-          <p>畫面控制不會暫停 MaleCNS，也不會改變神經模擬或遊戲世界的運作速度。</p>
+          <p>重新連線只會重建網站與即時資料來源的連線，不會暫停或改變 MaleCNS 與迷宮世界。</p>
         </div>
       </div>
 
@@ -102,8 +97,9 @@
           <span class="section-kicker">神經活動</span>
           <h2>MaleCNS 即時遙測</h2>
           <div class="telemetry-grid">
-            <div><span>神經模擬時間</span><strong id="brainMs">—</strong></div>
-            <div><span>本次運算耗時</span><strong id="computeSeconds">—</strong></div>
+            <div><span>單次神經模擬（目前設定）</span><strong id="neuralWindowMs">100 毫秒</strong></div>
+            <div><span>累積神經模擬時間</span><strong id="brainMs">—</strong></div>
+            <div><span>本次實際運算耗時</span><strong id="computeSeconds">—</strong></div>
             <div><span>總脈衝數</span><strong id="totalSpikes">—</strong></div>
             <div><span>閘門脈衝</span><strong id="gateSpikes">—</strong></div>
             <div><span>左側輸出頻率</span><strong id="leftHz">—</strong></div>
@@ -121,6 +117,7 @@
             <div><span>本局吃到食物</span><strong id="episodeFood">—</strong></div>
             <div><span>累積吃到食物</span><strong id="totalFood">—</strong></div>
             <div><span>被敵人抓到</span><strong id="totalDeaths">—</strong></div>
+            <div><span>目前敵人</span><strong id="enemyCount">—</strong></div>
             <div><span>決策步數</span><strong id="decisionTicks">—</strong></div>
             <div><span>世界步數</span><strong id="worldTicks">—</strong></div>
             <div><span>能量狀態</span><strong id="powerState">—</strong></div>
@@ -152,7 +149,7 @@
       </aside>
     </section>
   </main>
-  <script src="app.js?v=zh-tw-observatory-1"></script>
+  <script src="app.js?v=neural-timing-100ms-1"></script>
   <script src="all-clear-history.js?v=c60c108b"></script>
 </body>
 </html>

@@ -7,8 +7,6 @@
     badge: byId('brainBadge'),
     connection: byId('connectionState'),
     status: byId('runStatus'),
-    pauseView: byId('pauseView'),
-    pauseNotice: byId('pauseNotice'),
     reconnectLive: byId('reconnectLive'),
     total: byId('totalTime'),
     first: byId('firstClear'),
@@ -25,6 +23,7 @@
     reinforcement: byId('reinforcement'),
     brainInput: byId('brainInput'),
     brainOutput: byId('brainOutput'),
+    neuralWindowMs: byId('neuralWindowMs'),
     brainMs: byId('brainMs'),
     computeSeconds: byId('computeSeconds'),
     totalSpikes: byId('totalSpikes'),
@@ -37,6 +36,7 @@
     episodeFood: byId('episodeFood'),
     totalFood: byId('totalFood'),
     totalDeaths: byId('totalDeaths'),
+    enemyCount: byId('enemyCount'),
     decisionTicks: byId('decisionTicks'),
     worldTicks: byId('worldTicks'),
     powerState: byId('powerState'),
@@ -48,6 +48,7 @@
   const CELL_X = canvas.width / COLS;
   const CELL_Y = canvas.height / ROWS;
   const VALID_ACTIONS = new Set(['TURN_LEFT', 'TURN_RIGHT', 'FORWARD', 'HOLD']);
+  const NEURAL_WINDOW_MS = 100;
   const LIVE_RELAY = 'https://neurofly-curriculum-relay.onrender.com/events';
   const LIVE_SILENCE_MS = 3000;
   const LIVE_RECONNECT_MS = 15000;
@@ -55,7 +56,6 @@
 
   let currentView = null;
   let currentEvent = null;
-  let viewPaused = false;
   let liveSilenceTimer = null;
   let liveWatchdogTimer = null;
   let liveReconnectTimer = null;
@@ -99,14 +99,22 @@
     return `${hours} 小時 ${minutes % 60} 分 ${Math.floor(seconds % 60)} 秒`;
   }
 
+  function formatNeuralDurationMs(value) {
+    const milliseconds = finiteNumber(value);
+    if (milliseconds == null || milliseconds < 0) return '—';
+    return formatSeconds(milliseconds / 1000);
+  }
+
+  function formatComputeSeconds(value) {
+    const seconds = finiteNumber(value);
+    if (seconds == null || seconds < 0) return '—';
+    if (seconds < 1) return `${Math.round(seconds * 1000)} 毫秒`;
+    return `${seconds.toFixed(2)} 秒`;
+  }
+
   function formatCount(value) {
     const number = finiteNumber(value);
     return number == null ? '—' : Math.round(number).toLocaleString('zh-TW');
-  }
-
-  function formatDecimal(value, digits = 2) {
-    const number = finiteNumber(value);
-    return number == null ? '—' : number.toFixed(digits);
   }
 
   function formatReward(value) {
@@ -123,7 +131,7 @@
   function formatOdorLevel(value) {
     const number = finiteNumber(value);
     if (number == null) return '—';
-    return `${Math.max(0, Math.min(1, number)) * 100}%`;
+    return `${(Math.max(0, Math.min(1, number)) * 100).toFixed(1)}%`;
   }
 
   function neuralStateIsVerified(view) {
@@ -178,7 +186,6 @@
   }
 
   function renderTotalClock() {
-    if (viewPaused) return;
     let seconds = totalClockBase;
     if (
       liveSeen &&
@@ -340,8 +347,9 @@
     ui.episodeNumber.textContent = view.episode == null ? '—' : `第 ${formatCount(view.episode)} 局`;
     ui.reinforcement.textContent = reinforcementName(view.reinforcement || telemetry.reinforcement);
 
-    ui.brainMs.textContent = finiteNumber(telemetry.brain_ms) == null ? '—' : `${formatDecimal(telemetry.brain_ms, 1)} 毫秒`;
-    ui.computeSeconds.textContent = finiteNumber(telemetry.compute_seconds) == null ? '—' : `${formatDecimal(telemetry.compute_seconds, 2)} 秒`;
+    ui.neuralWindowMs.textContent = `${NEURAL_WINDOW_MS} 毫秒`;
+    ui.brainMs.textContent = formatNeuralDurationMs(telemetry.brain_ms);
+    ui.computeSeconds.textContent = formatComputeSeconds(telemetry.compute_seconds);
     ui.totalSpikes.textContent = formatCount(telemetry.total_spikes);
     ui.gateSpikes.textContent = formatCount(telemetry.gate_spikes);
     ui.leftHz.textContent = formatHz(telemetry.left_hz);
@@ -353,6 +361,7 @@
     ui.episodeFood.textContent = formatCount(view.episode_food);
     ui.totalFood.textContent = formatCount(view.total_food);
     ui.totalDeaths.textContent = formatCount(view.total_deaths);
+    ui.enemyCount.textContent = formatCount((view.enemies || []).length);
     ui.decisionTicks.textContent = formatCount(view.ticks);
     ui.worldTicks.textContent = formatCount(view.total_world_ticks);
     ui.powerState.textContent = Number(view.power_ticks) > 0 ? `啟動 · 剩餘 ${formatCount(view.power_ticks)} 步` : '未啟動';
@@ -439,7 +448,7 @@
         liveSource = null;
       }
       setConnection('waiting', '即時資料逾時');
-      if (!viewPaused) ui.status.textContent = '即時資料逾時 · 正在重新連線到 MaleCNS relay…';
+      ui.status.textContent = '即時資料逾時 · 正在重新連線到 MaleCNS relay…';
       scheduleLiveReconnect(250);
     }, LIVE_RECONNECT_MS);
   }
@@ -459,11 +468,9 @@
     armLiveWatchdog();
     clearTimeout(liveSilenceTimer);
     setConnection('live', 'MaleCNS 即時連線');
-
-    if (!viewPaused) renderState(view, event, { live: true });
+    renderState(view, event, { live: true });
 
     liveSilenceTimer = setTimeout(() => {
-      if (viewPaused) return;
       renderTotalClock();
       setConnection('waiting', '等待下一個神經狀態');
       ui.status.textContent = `等待下一個已驗證狀態 · MaleCNS 可能正在運算 · 第 ${currentView?.episode || '—'} 局`;
@@ -480,12 +487,12 @@
       const view = payload.final_state || trajectory[trajectory.length - 1];
       currentView = view;
       currentEvent = null;
-      if (!viewPaused) renderState(view, null, { live: false });
+      renderState(view, null, { live: false });
       setConnection('waiting', '最近驗證狀態');
     } catch (_) {
       if (!liveSeen) {
         setConnection('offline', '備援資料讀取失敗');
-        if (!viewPaused) ui.status.textContent = '目前無法讀取備援狀態 · 持續嘗試即時連線';
+        ui.status.textContent = '目前無法讀取備援狀態 · 持續嘗試即時連線';
       }
     }
   }
@@ -500,7 +507,7 @@
       liveSequence = -1;
       liveSeen = false;
       setConnection('waiting', '正在重新連線');
-      if (!viewPaused) ui.status.textContent = '正在重新建立 MaleCNS 即時連線…';
+      ui.status.textContent = '正在重新建立 MaleCNS 即時連線…';
     }
 
     const source = new EventSource(LIVE_RELAY);
@@ -511,7 +518,7 @@
       try {
         showLiveState(JSON.parse(event.data));
       } catch (_) {
-        if (!viewPaused) ui.status.textContent = '收到無法解析的即時資料 · 等待下一筆狀態';
+        ui.status.textContent = '收到無法解析的即時資料 · 等待下一筆狀態';
       }
     });
 
@@ -521,7 +528,7 @@
       if (!liveSeen) {
         ui.badge.textContent = 'MALECNS · 即時連線已建立';
         setConnection('waiting', '連線已建立');
-        if (!viewPaused) ui.status.textContent = '即時連線已建立 · 等待已驗證的 MaleCNS 狀態';
+        ui.status.textContent = '即時連線已建立 · 等待已驗證的 MaleCNS 狀態';
       }
     };
 
@@ -531,35 +538,14 @@
       liveSource = null;
       clearLiveWatchdog();
       setConnection('offline', '即時連線重連中');
-      if (!viewPaused) {
-        ui.status.textContent = liveSeen ? '即時連線中斷 · 正在重新連接…' : '尚未取得即時資料 · 正在重新連接…';
-      }
+      ui.status.textContent = liveSeen ? '即時連線中斷 · 正在重新連接…' : '尚未取得即時資料 · 正在重新連接…';
       scheduleLiveReconnect(1000);
     };
   }
 
-  function setPaused(paused) {
-    viewPaused = paused;
-    ui.pauseView.setAttribute('aria-pressed', String(paused));
-    ui.pauseView.textContent = paused ? '恢復畫面' : '暫停畫面';
-    ui.pauseNotice.hidden = !paused;
-
-    if (paused) {
-      ui.status.textContent = '畫面已暫停 · MaleCNS 與迷宮仍在背景持續運作';
-      return;
-    }
-
-    if (currentView) {
-      renderState(currentView, currentEvent, { live: liveSeen });
-      setConnection(liveSeen ? 'live' : 'waiting', liveSeen ? 'MaleCNS 即時連線' : '最近驗證狀態');
-    } else {
-      drawWaiting('正在等待已驗證的 MaleCNS 狀態…');
-    }
-  }
-
-  ui.pauseView.addEventListener('click', () => setPaused(!viewPaused));
   ui.reconnectLive.addEventListener('click', () => connectLive({ manual: true }));
 
+  ui.neuralWindowMs.textContent = `${NEURAL_WINDOW_MS} 毫秒`;
   drawWaiting('正在連接即時神經與世界狀態…');
   setConnection('waiting', '正在連線');
   loadFallback();
