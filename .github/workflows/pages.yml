@@ -1,11 +1,12 @@
-name: Deploy NeuroFly Visualizer
+name: NeuroFly GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches:
+      - feature/v0.6-curriculum-learning
     paths:
-      - "site/**"
-      - ".github/workflows/pages.yml"
+      - 'site/**'
+      - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 permissions:
@@ -14,21 +15,27 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: neurofly-github-pages
   cancel-in-progress: true
 
 jobs:
   deploy:
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - name: Checkout V0.6
+        uses: actions/checkout@v6
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload NeuroFly site
+        uses: actions/upload-pages-artifact@v4
         with:
           path: site
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
