@@ -2,7 +2,7 @@ name: NeuroFly Curriculum Training
 
 on:
   push:
-    branches: ["feature/v0.6-curriculum-learning"]
+    branches: ["main"]
     paths:
       - ".github/workflows/full-malecns-free.yml"
   workflow_dispatch:
@@ -34,7 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref_name }}
+          ref: main
 
       - uses: actions/setup-python@v5
         with:
@@ -150,20 +150,21 @@ jobs:
           )
           PY
 
-      - name: Publish latest verified curriculum trajectory
+      - name: Publish latest verified curriculum trajectory to main
         run: |
+          AUTHORITY_BRANCH=main
           cp site/malecns-state.json /tmp/neurofly-malecns-state.json
           git config user.name "neurofly-bot"
           git config user.email "neurofly-bot@users.noreply.github.com"
-          git fetch origin "$GITHUB_REF_NAME"
-          git checkout -B "$GITHUB_REF_NAME" "origin/$GITHUB_REF_NAME"
+          git fetch origin "$AUTHORITY_BRANCH"
+          git checkout -B "$AUTHORITY_BRANCH" "origin/$AUTHORITY_BRANCH"
           cp /tmp/neurofly-malecns-state.json site/malecns-state.json
           git add site/malecns-state.json
           if git diff --cached --quiet; then
             echo "Verified curriculum state is unchanged."
           else
-            git commit -m "state: publish verified MaleCNS curriculum trajectory [skip ci]"
-            git push origin "HEAD:${GITHUB_REF_NAME}"
+            git commit -m "state: publish verified MaleCNS curriculum trajectory"
+            git push origin "HEAD:${AUTHORITY_BRANCH}"
           fi
 
       - name: Check dataset cache size
