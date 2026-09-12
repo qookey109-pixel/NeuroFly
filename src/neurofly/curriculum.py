@@ -8,8 +8,10 @@ from .olfaction import virtual_olfaction
 
 
 CURRICULUM_VERSION = "neurofly-curriculum-v2"
-ANTI_STALL_POLICY = "neurofly-curriculum-anti-stall-v1"
+ANTI_STALL_POLICY = "neurofly-curriculum-anti-stall-v2"
 ANTI_STALL_STATIONARY_LIMIT = 4
+ANTI_STALL_LOOP_WINDOW = 8
+ANTI_STALL_LOOP_UNIQUE_LIMIT = 2
 
 
 @dataclass(frozen=True)
@@ -39,8 +41,8 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
 
     A small, versioned anti-stall controller sits outside the MaleCNS decoder.
     It never chooses a path or reads a target route. It only prevents indefinite
-    zero-displacement loops while preserving the raw MaleCNS action separately
-    from the action actually applied to the environment.
+    zero-displacement stalls and tiny local motion loops while preserving the raw
+    MaleCNS action separately from the action actually applied to the environment.
     """
 
     def __init__(self, *, seed: int = 109) -> None:
@@ -50,12 +52,15 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
         self._advance_on_reset = False
         self._stationary_agent_steps = 0
         self._force_forward_next = False
+        self._recent_positions: list[tuple[int, int]] = []
+        self._loop_turn_right = True
         self.last_raw_action = "HOLD"
         self.last_applied_action = "HOLD"
         self.last_action_overridden = False
         self.last_override_reason: str | None = None
         super().__init__(seed=seed)
         self._apply_stage_layout()
+        self._recent_positions = [self._current_position()]
 
     @property
     def stage(self) -> CurriculumStage:
@@ -69,9 +74,31 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
             return 1_000_000
         return super().threat_distance(x=x, y=y)
 
+    def _current_position(self) -> tuple[int, int]:
+        return (int(self.fly["x"]), int(self.fly["y"]))
+
+    def _remember_position(self, position: tuple[int, int]) -> None:
+        self._recent_positions.append(position)
+        if len(self._recent_positions) > ANTI_STALL_LOOP_WINDOW:
+            self._recent_positions = self._recent_positions[-ANTI_STALL_LOOP_WINDOW:]
+
+    def _local_loop_detected(self) -> bool:
+        if len(self._recent_positions) < ANTI_STALL_LOOP_WINDOW:
+            return False
+        window = self._recent_positions[-ANTI_STALL_LOOP_WINDOW:]
+        unique_positions = set(window)
+        # A one-cell history is the existing stationary case. V2 only adds a
+        # conservative detector for genuine movement trapped between two cells.
+        return 1 < len(unique_positions) <= ANTI_STALL_LOOP_UNIQUE_LIMIT
+
     def _reset_anti_stall(self) -> None:
         self._stationary_agent_steps = 0
         self._force_forward_next = False
+        self._recent_positions = []
+        self._loop_turn_right = True
+        fly = getattr(self, "fly", None)
+        if isinstance(fly, dict) and "x" in fly and "y" in fly:
+            self._recent_positions = [(int(fly["x"]), int(fly["y"]))]
         self.last_raw_action = "HOLD"
         self.last_applied_action = "HOLD"
         self.last_action_overridden = False
@@ -105,18 +132,39 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
         self._reset_anti_stall()
         if hasattr(self, "curriculum_stage"):
             self._apply_stage_layout()
+            self._recent_positions = [self._current_position()]
 
     def agent_step(self, action: str, *, move_enemies: bool):
         """Apply a raw MaleCNS action with a blind, transparent anti-stall floor."""
         raw_action = action
         applied_action = raw_action
         override_reason: str | None = None
+        anti_stall_intervention = False
+        before = self._current_position()
 
         if self._force_forward_next:
             applied_action = "FORWARD"
             override_reason = "anti_stall_followup_forward"
             self._force_forward_next = False
+            anti_stall_intervention = True
+        elif self._local_loop_detected():
+            # Escape a tiny two-cell loop without consulting walls, food, odor,
+            # enemies or a route. Alternate the blind turn direction between
+            # interventions; if MaleCNS already chose that turn, use the other
+            # turn so the intervention remains explicit in provenance.
+            applied_action = "TURN_RIGHT" if self._loop_turn_right else "TURN_LEFT"
+            if raw_action == applied_action:
+                applied_action = "TURN_LEFT" if applied_action == "TURN_RIGHT" else "TURN_RIGHT"
+            self._loop_turn_right = applied_action == "TURN_LEFT"
+            override_reason = (
+                "anti_stall_local_loop_turn_right"
+                if applied_action == "TURN_RIGHT"
+                else "anti_stall_local_loop_turn_left"
+            )
+            self._force_forward_next = True
+            anti_stall_intervention = True
         elif self._stationary_agent_steps >= ANTI_STALL_STATIONARY_LIMIT:
+            anti_stall_intervention = True
             if raw_action == "HOLD":
                 # First try a forward locomotion pulse. If the previous forced
                 # forward was blocked, rotate blindly once and move next step.
@@ -138,9 +186,8 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
                 # immediately after it if the fly is still stationary.
                 self._force_forward_next = True
 
-        before = (int(self.fly["x"]), int(self.fly["y"]))
         result = super().agent_step(applied_action, move_enemies=move_enemies)
-        after = (int(self.fly["x"]), int(self.fly["y"]))
+        after = self._current_position()
 
         self.last_raw_action = raw_action
         self.last_applied_action = applied_action
@@ -150,11 +197,21 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
         if result.terminal:
             self._stationary_agent_steps = 0
             self._force_forward_next = False
+            self._recent_positions = []
         elif after == before:
             self._stationary_agent_steps += 1
         else:
             self._stationary_agent_steps = 0
-            self._force_forward_next = False
+            if not anti_stall_intervention:
+                self._force_forward_next = False
+
+        # Start a fresh motion-history window after any engineered intervention.
+        # This prevents the detector from recursively reacting to its own moves.
+        if not result.terminal:
+            if anti_stall_intervention:
+                self._recent_positions = [after]
+            else:
+                self._remember_position(after)
 
         return result
 
@@ -225,6 +282,22 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
             self.last_action_overridden = bool(payload.get("action_overridden", False))
             reason = payload.get("override_reason")
             self.last_override_reason = None if reason is None else str(reason)
+
+            # Motion-loop state is new in anti-stall v2. Older v1 checkpoints
+            # resume safely from the current position instead of inheriting a
+            # synthetic history they never recorded.
+            if payload.get("anti_stall_policy") == ANTI_STALL_POLICY:
+                raw_positions = payload.get("anti_stall_recent_positions") or []
+                restored_positions: list[tuple[int, int]] = []
+                if isinstance(raw_positions, list):
+                    for item in raw_positions[-ANTI_STALL_LOOP_WINDOW:]:
+                        if isinstance(item, (list, tuple)) and len(item) == 2:
+                            restored_positions.append((int(item[0]), int(item[1])))
+                self._recent_positions = restored_positions or [self._current_position()]
+                self._loop_turn_right = bool(payload.get("anti_stall_loop_turn_right", True))
+            else:
+                self._recent_positions = [self._current_position()]
+                self._loop_turn_right = True
             # The superclass already restored exact grid/fly/RNG state.
             return
 
@@ -238,6 +311,7 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
         self._reset_anti_stall()
         GoalMazeEnvironment.reset(self, "curriculum_v2_migration")
         self._apply_stage_layout()
+        self._recent_positions = [self._current_position()]
 
     def snapshot(self, *, include_grid: bool = True) -> dict[str, Any]:
         data = super().snapshot(include_grid=include_grid)
@@ -256,6 +330,11 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
                 "anti_stall_policy": ANTI_STALL_POLICY,
                 "anti_stall_stationary_steps": self._stationary_agent_steps,
                 "anti_stall_force_forward_next": self._force_forward_next,
+                "anti_stall_loop_window": ANTI_STALL_LOOP_WINDOW,
+                "anti_stall_loop_unique_limit": ANTI_STALL_LOOP_UNIQUE_LIMIT,
+                "anti_stall_recent_positions": [list(item) for item in self._recent_positions],
+                "anti_stall_recent_unique_positions": len(set(self._recent_positions)),
+                "anti_stall_loop_turn_right": self._loop_turn_right,
                 "raw_brain_action": self.last_raw_action,
                 "applied_action": self.last_applied_action,
                 "action_overridden": self.last_action_overridden,
@@ -281,6 +360,8 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
                 "anti_stall_policy": ANTI_STALL_POLICY,
                 "anti_stall_stationary_steps": self._stationary_agent_steps,
                 "anti_stall_force_forward_next": self._force_forward_next,
+                "anti_stall_recent_positions": [list(item) for item in self._recent_positions],
+                "anti_stall_loop_turn_right": self._loop_turn_right,
                 "raw_brain_action": self.last_raw_action,
                 "applied_action": self.last_applied_action,
                 "action_overridden": self.last_action_overridden,
