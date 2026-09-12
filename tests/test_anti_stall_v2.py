@@ -13,8 +13,26 @@ def test_anti_stall_v2_breaks_two_cell_local_loop_transparently() -> None:
     second = (first[0] + 1, first[1])
     assert env.grid[second[1]][second[0]] != "#"
 
-    env._recent_positions = [first, second] * (ANTI_STALL_LOOP_WINDOW // 2)
-    env.fly["x"], env.fly["y"] = first
+    # Build a genuine two-cell A↔B loop using only legal maze actions. Each
+    # reversal uses two turns, so the older stationary detector never reaches
+    # its threshold; the v2 motion-loop detector must be what intervenes.
+    sequence = [
+        "FORWARD",
+        "TURN_RIGHT",
+        "TURN_RIGHT",
+        "FORWARD",
+        "TURN_RIGHT",
+        "TURN_RIGHT",
+        "FORWARD",
+    ]
+    for action in sequence:
+        env.agent_step(action, move_enemies=False)
+
+    before = env.snapshot()
+    assert len(before["anti_stall_recent_positions"]) == ANTI_STALL_LOOP_WINDOW
+    assert before["anti_stall_recent_unique_positions"] == 2
+    assert before["anti_stall_stationary_steps"] == 0
+    assert (int(env.fly["x"]), int(env.fly["y"])) == second
 
     env.agent_step("HOLD", move_enemies=False)
     state = env.snapshot()
