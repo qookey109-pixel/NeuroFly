@@ -196,6 +196,27 @@ class Handler(BaseHTTPRequestHandler):
             _latest = event
             _state_lock.notify_all()
 
+        # Compact live diagnostics: enough to distinguish transport problems
+        # from a fly that is genuinely turning/holding in place. Avoid logging
+        # the large neural payload or any credentials.
+        if sequence % 10 == 0:
+            fly = state.get("fly") or {}
+            print(
+                "LIVE_STATE"
+                f" run={claims.get('run_id')}"
+                f" source_seq={sequence}"
+                f" relay_seq={event['relay_sequence']}"
+                f" kind={state.get('state_kind')}"
+                f" action={state.get('last_action')}"
+                f" pos={fly.get('x')},{fly.get('y')}"
+                f" dir={fly.get('dir')}"
+                f" episode={state.get('episode')}"
+                f" ticks={state.get('ticks')}"
+                f" world_ticks={state.get('total_world_ticks')}"
+                f" total_active={state.get('total_active_seconds')}",
+                flush=True,
+            )
+
         _json_response(self, HTTPStatus.ACCEPTED, {"ok": True, "relay_sequence": _sequence})
 
 
