@@ -67,7 +67,7 @@ The same batch ate no food and did not clear Stage 1, so V0.6 does **not** yet c
 
 ## Controlled calibration protocol
 
-Before interpreting odor spike magnitude, NeuroFly should run a frozen-plasticity matched-state calibration from the same checkpoint and identical RGB frame. Each condition starts from the same restored checkpoint and receives no reward or aversive reinforcement.
+Before interpreting odor spike magnitude, NeuroFly runs a frozen-plasticity matched-state calibration. Every condition starts from the same restored checkpoint, uses the same fixed Stage 1 RGB frame, receives no reward or aversive reinforcement, and changes only the virtual odor input.
 
 Conditions:
 
@@ -80,9 +80,36 @@ Conditions:
 Primary evidence:
 
 - target ORN spike delta versus `odor_off`;
-- ipsilateral versus contralateral target ORN activity;
+- ipsilateral versus contralateral target ORN activity, normalized per resolved neuron;
 - off-target ORN change;
 - downstream DNp20/DNpe017 and total-spike changes;
-- exact checkpoint identity and Stonkfly pin.
+- exact checkpoint identity and Stonkfly pin;
+- unchanged plastic-memory SHA before/after each condition;
+- unchanged checkpoint file SHA before/after the workflow.
 
-Pass criteria must require a positive target-channel delta above baseline and the intended stimulated side to exceed the unstimulated side. This calibration validates the engineered sensory transduction only; it does not by itself demonstrate navigation learning.
+Pass criteria require a positive target-channel delta above baseline and the intended stimulated side to exceed the unstimulated side. This calibration validates the engineered sensory transduction only; it does not by itself demonstrate navigation learning.
+
+## Matched-state calibration result
+
+Workflow run `34666021865` completed successfully using the V0.6 state restored from `neurofly-v06-state-34665588617-1`.
+
+Checkpoint SHA-256 before and after calibration:
+
+`6742941f70507fddc0018c87d95a9a6c5ecbb5bec24fe3c5a4fae2f7c5a19a9b`
+
+Calibration receipt SHA-256:
+
+`c211d1c6857018c8c50f825b71a554b565f78304a7d700b91e0475ea377d9f76`
+
+All four unilateral target-channel gates passed:
+
+| Condition | Baseline target spikes/neuron | Stimulated target | Contralateral | Delta vs baseline | Gate |
+| --- | ---: | ---: | ---: | ---: | --- |
+| `food_left` | 11.942857 | 37.057143 | 28.487179 | +25.114286 | PASS |
+| `food_right` | 19.769231 | 44.923077 | 20.400000 | +25.153846 | PASS |
+| `danger_left` | 2.380952 | 22.428571 | 2.650000 | +20.047619 | PASS |
+| `danger_right` | 1.700000 | 20.800000 | 4.190476 | +19.100000 | PASS |
+
+Interpretation: under a matched checkpoint, fixed visual frame, frozen plasticity and no reinforcement, adding the engineered food or danger odor current causally increased activity in the intended ORN channel and the intended side exceeded the contralateral side in every tested condition. The V0.6 game-to-ORN sensory transduction is therefore validated for this experiment.
+
+This result does **not** show that MaleCNS has learned odor-guided navigation. Behavioral evidence still requires food acquisition and maze clears during self-training, followed by held-out controls.
