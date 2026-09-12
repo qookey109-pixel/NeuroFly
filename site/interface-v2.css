@@ -1,0 +1,312 @@
+/* NeuroFly Interface V2 — game-first observatory polish.
+   Goals: keep the maze visually dominant, make live entities easy to spot,
+   reduce HUD obstruction, and give the right telemetry rail clearer hierarchy. */
+
+:root {
+  --v2-panel: rgba(5, 15, 12, .82);
+  --v2-panel-soft: rgba(5, 15, 12, .58);
+  --v2-line: rgba(143, 242, 183, .16);
+  --v2-line-strong: rgba(143, 242, 183, .34);
+  --v2-text-soft: rgba(224, 239, 233, .72);
+  --v2-glow: 0 0 28px rgba(143, 242, 183, .08);
+}
+
+body {
+  background:
+    radial-gradient(circle at 18% 0%, rgba(80, 180, 132, .08), transparent 36%),
+    radial-gradient(circle at 90% 18%, rgba(216, 255, 115, .035), transparent 24%),
+    #020806;
+}
+
+.hud-stage {
+  width: min(1840px, 100%);
+  padding: 10px 14px 14px;
+  gap: 8px;
+}
+
+.hud-header {
+  min-height: 52px;
+  grid-template-columns: minmax(240px, .8fr) minmax(360px, 1.5fr) auto;
+  padding-bottom: 6px;
+  border-bottom-color: rgba(143, 242, 183, .12);
+}
+
+.hud-header .brand-block h1 {
+  font-size: clamp(1.15rem, 1.35vw, 1.5rem);
+  letter-spacing: -.02em;
+}
+
+.hud-header .eyebrow {
+  color: rgba(143, 242, 183, .86);
+  font-size: .65rem;
+  letter-spacing: .16em;
+}
+
+.hud-header .run-status {
+  color: var(--v2-text-soft);
+  font-size: .78rem;
+  text-align: center;
+}
+
+.hud-header .connection-pill {
+  box-shadow: 0 0 20px rgba(143, 242, 183, .07);
+}
+
+.hud-layout {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 370px);
+  gap: 12px;
+}
+
+.arena-column {
+  grid-template-rows: minmax(0, 1fr) 68px 138px;
+  gap: 8px;
+}
+
+.arena-card {
+  border-radius: 15px;
+  border-color: rgba(143, 242, 183, .26);
+  box-shadow:
+    0 18px 52px rgba(0, 0, 0, .34),
+    inset 0 0 0 1px rgba(255, 255, 255, .012),
+    var(--v2-glow);
+}
+
+.arena-card canvas {
+  filter: saturate(1.16) brightness(1.06) contrast(1.045);
+}
+
+.arena-vignette {
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.09), transparent 15%, transparent 83%, rgba(0,0,0,.13)),
+    linear-gradient(90deg, rgba(0,0,0,.06), transparent 9%, transparent 91%, rgba(0,0,0,.07));
+}
+
+.hud-overlay-top-left {
+  top: 8px;
+  left: 8px;
+  padding: 7px 9px;
+  border-left-width: 2px;
+  background: linear-gradient(90deg, rgba(2, 10, 8, .42), rgba(2, 10, 8, .06));
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.hud-system-row strong {
+  font-size: .68rem;
+  letter-spacing: .055em;
+}
+
+.hud-session-row {
+  gap: 14px;
+  margin-top: 5px;
+}
+
+.hud-session-row span { font-size: .57rem; }
+.hud-session-row strong { font-size: .86rem; }
+
+.hud-overlay-top-right {
+  top: 8px;
+  right: 8px;
+}
+
+.hud-action-block {
+  min-width: 150px;
+  padding: 7px 9px 8px;
+  border-right-width: 2px;
+  background: linear-gradient(270deg, rgba(2, 10, 8, .45), rgba(2, 10, 8, .05));
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.hud-action-block > span { font-size: .57rem; }
+
+.hud-action-block > strong {
+  margin-top: 1px;
+  font-size: clamp(1.65rem, 2.35vw, 2.45rem);
+  letter-spacing: -.045em;
+}
+
+.hud-action-block small {
+  margin-top: 3px;
+  font-size: .62rem;
+}
+
+.hud-action-block small b { font-size: .72rem; }
+
+/* Never let a legend cover the bottom-right predator spawn area. */
+.hud-overlay-bottom-right { display: none !important; }
+
+.arena-dock {
+  border: 1px solid rgba(143, 242, 183, .12);
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(7, 20, 16, .92), rgba(4, 13, 10, .72));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.01);
+}
+
+.arena-dock .hud-kpi,
+.arena-dock .hud-tech-item {
+  padding-top: 8px;
+  padding-bottom: 7px;
+}
+
+.arena-dock .hud-kpi span,
+.arena-dock .hud-tech-item span {
+  color: rgba(224, 239, 233, .55);
+  letter-spacing: .055em;
+}
+
+.arena-dock .hud-kpi strong { font-size: clamp(1.2rem, 1.6vw, 1.55rem); }
+.arena-dock .hud-tech-item strong { font-size: .86rem; }
+
+.trend-deck { gap: 8px; }
+
+.large-trend {
+  border: 1px solid rgba(143, 242, 183, .10);
+  border-top-width: 2px;
+  border-radius: 12px;
+  padding: 9px 12px 7px;
+  background: linear-gradient(180deg, rgba(8, 22, 18, .76), rgba(4, 12, 10, .48));
+}
+
+.large-trend header strong { font-size: .92rem; }
+.large-chart { height: 62px; }
+
+.brain-rail {
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 8px;
+  border-left: 0;
+  background: transparent;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(143, 242, 183, .18) transparent;
+}
+
+.rail-section {
+  padding: 13px 14px;
+  border: 1px solid var(--v2-line);
+  border-radius: 13px;
+  background: linear-gradient(180deg, rgba(7, 20, 16, .82), rgba(4, 12, 10, .66));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.012);
+}
+
+.rail-section:last-child { border-bottom: 1px solid var(--v2-line); }
+
+.rail-heading {
+  padding-bottom: 8px;
+  border-bottom-color: rgba(143, 242, 183, .14);
+}
+
+.rail-heading span:first-child {
+  font-size: .58rem;
+  letter-spacing: .14em;
+}
+
+.rail-heading h2 { font-size: 1rem; }
+
+.io-hero-row {
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.io-hero-row > div {
+  padding-top: 7px;
+  border-top-color: rgba(143, 242, 183, .24);
+}
+
+.io-hero-row span,
+.reinforcement-line span,
+.rail-big-number span,
+.telemetry-lines span,
+.world-lines span,
+.run-records span,
+.brain-sentence span { font-size: .65rem; }
+
+.io-hero-row strong { font-size: 1.25rem; }
+
+.reinforcement-line {
+  margin-top: 9px;
+  padding: 7px 0;
+}
+
+.brain-sentence { margin-top: 8px; }
+
+.brain-sentence p {
+  margin-top: 3px;
+  font-size: .75rem;
+  line-height: 1.38;
+}
+
+.rail-big-number { padding: 10px 0 9px; }
+.rail-big-number strong { font-size: clamp(1.45rem, 1.8vw, 1.9rem); }
+.compute-trend { margin-top: 8px; }
+
+.rail-chart {
+  height: 58px;
+  margin-top: 4px;
+}
+
+.telemetry-lines,
+.world-lines {
+  gap: 0 12px;
+  padding-top: 8px;
+}
+
+.telemetry-lines > div,
+.world-lines > div { padding: 5px 0; }
+
+.telemetry-lines strong,
+.world-lines strong { font-size: .76rem; }
+
+.world-detail-section {
+  padding-top: 11px;
+  padding-bottom: 10px;
+}
+
+.run-records { margin-top: 8px; }
+.run-records .record-primary strong { color: var(--lab-lime); }
+
+.hud-kpi-reward strong,
+.rail-big-number strong,
+.run-records .record-primary strong {
+  text-shadow: 0 0 18px rgba(216, 255, 115, .10);
+}
+
+.hud-kpi-enemy strong { text-shadow: 0 0 16px rgba(255, 111, 128, .14); }
+
+@media (max-width: 1180px) and (min-width: 901px) {
+  .hud-layout { grid-template-columns: minmax(0, 1fr) minmax(300px, 340px); }
+  .hud-header { grid-template-columns: minmax(220px, .9fr) minmax(280px, 1.1fr) auto; }
+  .arena-column { grid-template-rows: minmax(0, 1fr) 64px 124px; }
+}
+
+@media (max-width: 900px) {
+  body { overflow: auto; }
+
+  .hud-stage {
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  .hud-header {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .hud-header .run-status { text-align: left; }
+  .hud-layout { grid-template-columns: 1fr; overflow: visible; }
+  .brain-rail { overflow: visible; }
+}
+
+@media (max-width: 560px) {
+  .hud-stage { padding-inline: 8px; }
+
+  .hud-overlay-top-left,
+  .hud-overlay-top-right {
+    transform: scale(.92);
+    transform-origin: top left;
+  }
+
+  .hud-overlay-top-right { transform-origin: top right; }
+  .hud-action-block { min-width: 130px; }
+  .hud-action-block > strong { font-size: 1.5rem; }
+}
