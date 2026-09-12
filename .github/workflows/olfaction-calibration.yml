@@ -1,0 +1,105 @@
+name: NeuroFly Olfaction Calibration
+
+on:
+  push:
+    branches: ["feature/v0.6-curriculum-learning"]
+    paths:
+      - ".github/workflows/olfaction-calibration.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: neurofly-v06-olfaction-calibration
+  cancel-in-progress: true
+
+jobs:
+  calibrate-malecns-olfaction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      CHECKPOINT: runs/free-malecns/brain.npz
+      OUTPUT: runs/free-malecns/olfaction-calibration.json
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+
+      - name: Restore latest isolated V0.6 state
+        uses: actions/cache/restore@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-v06-calibration-${{ github.run_id }}
+          restore-keys: |
+            neurofly-v06-state-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare and verify MaleCNS
+        run: |
+          python -m stonkfly prepare
+          python -m neurofly host-preflight
+          test -f "$CHECKPOINT"
+
+      - name: Freeze checkpoint identity
+        id: before
+        run: echo "sha=$(sha256sum "$CHECKPOINT" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Run matched-state olfactory calibration
+        run: |
+          python -m neurofly.olfaction_calibration \
+            --checkpoint "$CHECKPOINT" \
+            --output "$OUTPUT" \
+            --neural-ms 500 \
+            --odor-current 8
+
+      - name: Verify calibration receipt and checkpoint immutability
+        env:
+          BEFORE_SHA: ${{ steps.before.outputs.sha }}
+        run: |
+          test "$BEFORE_SHA" = "$(sha256sum "$CHECKPOINT" | cut -d' ' -f1)"
+          python - <<'PY'
+          import json
+          receipt = json.load(open('runs/free-malecns/olfaction-calibration.json'))
+          assert receipt['schema'] == 'neurofly-olfaction-calibration-v1'
+          assert receipt['passed'] is True
+          assert receipt['stonkfly_commit'] == '78ef3e05ab0fa086032098558d893667068944a0'
+          assert receipt['olfaction_model'] == 'neurofly-virtual-olfaction-v1'
+          assert receipt['plasticity_frozen'] is True
+          assert receipt['matched_checkpoint_memory'] is True
+          assert len(receipt['gates']) == 4
+          assert all(gate['positive_delta'] for gate in receipt['gates'])
+          assert all(gate['ipsilateral_gt_contralateral'] for gate in receipt['gates'])
+          assert all(gate['passed'] for gate in receipt['gates'])
+          print('OLFACTION_CALIBRATION_PASS', receipt['receipt_sha256'])
+          for gate in receipt['gates']:
+              print(
+                  gate['condition'],
+                  'baseline=', gate['baseline_spikes_per_neuron'],
+                  'stim=', gate['stimulated_spikes_per_neuron'],
+                  'contra=', gate['contralateral_spikes_per_neuron'],
+                  'delta=', gate['delta_vs_baseline'],
+              )
+          PY
+
+      - name: Publish compact calibration evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-v06-olfaction-calibration-${{ github.run_id }}
+          path: runs/free-malecns/olfaction-calibration.json
+          retention-days: 1
