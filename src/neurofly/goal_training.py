@@ -29,6 +29,8 @@ class GoalMazeEnvironment(MazeEnvironment):
         self.total_ticks = 0
         self.total_world_ticks = 0
         self.clear_history: list[dict[str, Any]] = []
+        self._active_seconds_offset = 0.0
+        self._active_started_monotonic = time.monotonic()
         super().__init__(seed=seed)
 
     def reset(self, reason: str = "reset") -> None:
@@ -46,6 +48,9 @@ class GoalMazeEnvironment(MazeEnvironment):
             self.world_ticks,
             int(payload.get("total_world_ticks", self.world_ticks)),
         )
+        restored_active = payload.get("total_active_seconds", payload.get("survival_seconds", 0.0))
+        self._active_seconds_offset = max(0.0, float(restored_active))
+        self._active_started_monotonic = time.monotonic()
         history = payload.get("clear_history") or []
         if not isinstance(history, list):
             raise ValueError("Invalid clear history")
@@ -163,12 +168,16 @@ class GoalMazeEnvironment(MazeEnvironment):
         first = self.clear_history[0] if self.clear_history else None
         latest = self.clear_history[-1] if self.clear_history else None
         best = min(self.clear_history, key=lambda item: item["seconds"]) if self.clear_history else None
+        total_active_seconds = self._active_seconds_offset + (
+            time.monotonic() - self._active_started_monotonic
+        )
         data.update(
             {
                 "goal": "maze_cleared",
                 "total_ticks": self.total_ticks,
                 "world_ticks": self.world_ticks,
                 "total_world_ticks": self.total_world_ticks,
+                "total_active_seconds": round(max(0.0, total_active_seconds), 1),
                 "clear_history": [dict(item) for item in self.clear_history],
                 "first_clear_seconds": None if first is None else first["seconds"],
                 "latest_clear_seconds": None if latest is None else latest["seconds"],
@@ -182,12 +191,16 @@ class GoalMazeEnvironment(MazeEnvironment):
 
     def persistence_snapshot(self) -> dict[str, Any]:
         data = super().persistence_snapshot()
+        total_active_seconds = self._active_seconds_offset + (
+            time.monotonic() - self._active_started_monotonic
+        )
         data.update(
             {
                 "goal": "maze_cleared",
                 "total_ticks": self.total_ticks,
                 "world_ticks": self.world_ticks,
                 "total_world_ticks": self.total_world_ticks,
+                "total_active_seconds": round(max(0.0, total_active_seconds), 1),
                 "clear_history": [dict(item) for item in self.clear_history],
             }
         )
