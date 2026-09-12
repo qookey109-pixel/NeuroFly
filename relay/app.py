@@ -16,10 +16,11 @@ JWKS_URL = f"{ISSUER}/.well-known/jwks"
 EXPECTED_REPOSITORY = os.environ.get("NEUROFLY_EXPECTED_REPOSITORY", "qookey109-pixel/NeuroFly")
 EXPECTED_REF = os.environ.get(
     "NEUROFLY_EXPECTED_REF",
-    "refs/heads/feature/v0.5-self-training-goal",
+    "refs/heads/main",
 )
 EXPECTED_WORKFLOW_PATH = ".github/workflows/full-malecns-free.yml"
 VALID_ACTIONS = {"TURN_LEFT", "TURN_RIGHT", "FORWARD", "HOLD"}
+MAX_PUBLISH_BODY = 1_500_000
 
 _state_lock = threading.Condition()
 _latest: dict[str, Any] | None = None
@@ -142,6 +143,19 @@ class Handler(BaseHTTPRequestHandler):
             _json_response(self, HTTPStatus.NOT_FOUND, {"error": "not found"})
             return
 
+        # Always consume a bounded request body before returning an auth error.
+        # Otherwise HTTP/1.1 may interpret the unread JSON bytes as the next
+        # request line, producing misleading 400 "Bad request syntax" errors.
+        try:
+            size = int(self.headers.get("Content-Length", "0"))
+        except (TypeError, ValueError):
+            size = 0
+        if size <= 0 or size > MAX_PUBLISH_BODY:
+            self.close_connection = True
+            _json_response(self, HTTPStatus.BAD_REQUEST, {"error": "invalid body size"})
+            return
+        body = self.rfile.read(size)
+
         auth = self.headers.get("Authorization", "")
         if not auth.startswith("Bearer "):
             _json_response(self, HTTPStatus.UNAUTHORIZED, {"error": "missing bearer token"})
@@ -153,10 +167,7 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         try:
-            size = int(self.headers.get("Content-Length", "0"))
-            if size <= 0 or size > 1_500_000:
-                raise ValueError("invalid body size")
-            payload = json.loads(self.rfile.read(size))
+            payload = json.loads(body)
             state = payload.get("state")
             if not isinstance(state, dict) or not _verified_state(state):
                 raise ValueError("state is not verified MaleCNS telemetry")
