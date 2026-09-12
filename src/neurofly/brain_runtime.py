@@ -120,9 +120,9 @@ class MaleCNSBrain:
     def __init__(
         self,
         *,
-        neural_ms: float = 500.0,
+        neural_ms: float = 100.0,
         neural_bin_ms: float = 10.0,
-        pulse_ms: float = 200.0,
+        pulse_ms: float = 50.0,
         pulse_current: float = 20.0,
         odor_current: float = 8.0,
         decoder_threshold_hz: float = 2.0,
