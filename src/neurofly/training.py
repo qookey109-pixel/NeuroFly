@@ -14,6 +14,7 @@ from .brain_runtime import MaleCNSBrain
 from .curriculum import CURRICULUM_VERSION, CurriculumMazeEnvironment
 from .goal_training import GoalMazeSession
 from .live_relay import GitHubOIDCLivePublisher
+from .olfaction import OLFACTION_MODEL
 from .preflight import collect_preflight
 from .smoke import _digest_json, _neural_decision_verified, _public_maze_state
 from .upstream import STONKFLY_COMMIT
@@ -44,6 +45,15 @@ GOAL_FIELDS = (
     "curriculum_world_tick_seconds",
     "curriculum_stage_history",
     "curriculum_complete",
+    "olfaction",
+)
+
+ODOR_TELEMETRY_FIELDS = (
+    "olfaction_model",
+    "olfaction",
+    "food_odor_spikes",
+    "danger_odor_spikes",
+    "olfaction_report",
 )
 
 
@@ -52,6 +62,12 @@ def _public_goal_state(state: dict[str, Any]) -> dict[str, Any]:
     for key in GOAL_FIELDS:
         if key in state:
             public[key] = state.get(key)
+
+    source_telemetry = ((state.get("brain") or {}).get("telemetry") or {})
+    public_telemetry = ((public.get("brain") or {}).get("telemetry") or {})
+    for key in ODOR_TELEMETRY_FIELDS:
+        if key in source_telemetry:
+            public_telemetry[key] = source_telemetry.get(key)
     return public
 
 
@@ -185,6 +201,9 @@ def run_self_training(
 
             telemetry = state["brain"]["telemetry"]
             public_state = _public_goal_state(state)
+            odor = state.get("olfaction") or {}
+            food_odor = odor.get("food") or {}
+            danger_odor = odor.get("danger") or {}
             observations.append(
                 {
                     "step": index,
@@ -201,6 +220,12 @@ def run_self_training(
                     "total_world_ticks": state.get("total_world_ticks", 0),
                     "curriculum_stage": state.get("curriculum_stage"),
                     "curriculum_stage_name": state.get("curriculum_stage_name"),
+                    "food_odor_left": food_odor.get("left"),
+                    "food_odor_right": food_odor.get("right"),
+                    "danger_odor_left": danger_odor.get("left"),
+                    "danger_odor_right": danger_odor.get("right"),
+                    "food_odor_spikes": telemetry.get("food_odor_spikes"),
+                    "danger_odor_spikes": telemetry.get("danger_odor_spikes"),
                     "brain_ms": telemetry.get("brain_ms"),
                     "compute_seconds": telemetry.get("compute_seconds"),
                     "total_spikes": telemetry.get("total_spikes"),
@@ -216,6 +241,8 @@ def run_self_training(
                 "kind=", state.get("state_kind"),
                 "action=", state.get("decision_action") or state["last_action"],
                 "applied=", state.get("decision_applied", True),
+                "food_odor=", round(float(food_odor.get("intensity") or 0.0), 3),
+                "danger_odor=", round(float(danger_odor.get("intensity") or 0.0), 3),
                 "world_ticks=", state.get("total_world_ticks", 0),
                 flush=True,
             )
@@ -242,6 +269,8 @@ def run_self_training(
         "live_published": pump.published,
         "curriculum": curriculum,
         "curriculum_version": final_state.get("curriculum_version") if curriculum else None,
+        "olfaction_model": OLFACTION_MODEL if curriculum else None,
+        "olfaction": brain.olfaction_report if curriculum else None,
         "started_unix": started,
         "finished_unix": finished,
         "wall_seconds": round(finished - started, 6),
@@ -307,6 +336,7 @@ def main(argv: list[str] | None = None) -> int:
         "total_clears": result["clears_after"],
         "curriculum_stage": final_state.get("curriculum_stage"),
         "curriculum_stage_name": final_state.get("curriculum_stage_name"),
+        "olfaction_model": result.get("olfaction_model"),
         "world_states_seen": result["world_states_seen"],
         "live_published": result["live_published"],
         "receipt_sha256": result["receipt_sha256"],
