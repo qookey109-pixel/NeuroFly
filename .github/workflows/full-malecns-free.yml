@@ -96,7 +96,7 @@ jobs:
           assert state['source_receipt_schema'] == 'neurofly-self-training-v3'
           assert state['goal'] == 'maze_cleared'
           assert state['curriculum'] is True
-          assert state['curriculum_version'] == 'neurofly-curriculum-v1'
+          assert state['curriculum_version'] == 'neurofly-curriculum-v2'
           assert state['olfaction_model'] == 'neurofly-virtual-olfaction-v1'
           assert int(state['world_states_seen']) > 0
           assert state['trajectory']
