@@ -1,0 +1,141 @@
+name: NeuroFly CI
+
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install
+        run: python -m pip install -e '.[test]'
+      - name: CLI smoke test
+        run: |
+          python -m neurofly ideas
+          python -m neurofly upstream-status
+          python -m neurofly brain-status
+          python -m neurofly.training --help >/dev/null
+          python -m neurofly.olfaction_calibration --help >/dev/null
+          set +e
+          python -m neurofly host-preflight >/tmp/neurofly-preflight.json
+          rc=$?
+          set -e
+          test "$rc" -eq 2
+          grep -q '"ready": false' /tmp/neurofly-preflight.json
+      - name: Tests
+        run: pytest -q
+
+  site-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate game-only MaleCNS site
+        run: |
+          test -f site/index.html
+          test -f site/styles.css
+          test -f site/app.js
+          test -f site/malecns-state.json
+          node --check site/app.js
+          grep -q 'MALECNS · 驗證中' site/index.html
+          grep -q '總活動時間' site/index.html
+          grep -q '首次破關' site/index.html
+          grep -q 'id="totalTime"' site/index.html
+          grep -q 'source_receipt_sha256' site/malecns-state.json
+          grep -q '世界持續運作' site/app.js
+          grep -q 'neurofly-curriculum-relay.onrender.com/events' site/app.js
+          grep -q 'total_active_seconds' site/app.js
+          ! grep -q 'speedSelect' site/app.js
+          ! grep -q 'startDemo' site/app.js
+          ! grep -q 'startIdleEnemies' site/app.js
+          ! grep -q 'openNeighbors' site/app.js
+          ! grep -q 'IDLE_ENEMY_MS' site/app.js
+          ! grep -q 'toggleButton' site/index.html
+          ! grep -q 'architecture-card' site/index.html
+          python - <<'PY'
+          import json
+          state = json.load(open('site/malecns-state.json'))
+          if state.get('verified') is True:
+              assert state.get('backend') == 'malecns'
+              assert state.get('trajectory')
+              assert all(s.get('brain', {}).get('backend') == 'malecns' for s in state['trajectory'])
+          PY
+
+  free-runner-safety:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate zero-cost V0.6 curriculum profile
+        run: |
+          test ! -f render.yaml
+          test -f .github/workflows/full-malecns-free.yml
+          test -f .github/workflows/olfaction-calibration.yml
+          grep -q 'name: NeuroFly Curriculum Training' .github/workflows/full-malecns-free.yml
+          grep -q 'runs-on: ubuntu-latest' .github/workflows/full-malecns-free.yml
+          grep -q 'timeout-minutes: 330' .github/workflows/full-malecns-free.yml
+          grep -q 'default: "1200"' .github/workflows/full-malecns-free.yml
+          grep -q 'python -m neurofly.training' .github/workflows/full-malecns-free.yml
+          grep -q -- '--curriculum' .github/workflows/full-malecns-free.yml
+          grep -q 'actions/cache/restore@v4' .github/workflows/full-malecns-free.yml
+          grep -q 'actions/cache/save@v4' .github/workflows/full-malecns-free.yml
+          grep -q 'github.run_attempt' .github/workflows/full-malecns-free.yml
+          grep -q '9000000000' .github/workflows/full-malecns-free.yml
+          grep -q 'publish-site-state' .github/workflows/full-malecns-free.yml
+          grep -q 'contents: write' .github/workflows/full-malecns-free.yml
+          ! grep -q '2c-16g' .github/workflows/full-malecns-free.yml
+          grep -q 'name: NeuroFly Olfaction Calibration' .github/workflows/olfaction-calibration.yml
+          grep -q 'runs-on: ubuntu-latest' .github/workflows/olfaction-calibration.yml
+          grep -q 'contents: read' .github/workflows/olfaction-calibration.yml
+          grep -q 'python -m neurofly.olfaction_calibration' .github/workflows/olfaction-calibration.yml
+          ! grep -q 'actions/cache/save' .github/workflows/olfaction-calibration.yml
+          ! grep -q 'contents: write' .github/workflows/olfaction-calibration.yml
+          ! grep -q '2c-16g' .github/workflows/olfaction-calibration.yml
+
+  stonkfly-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[stonkfly]'
+      - name: Verify import contract without downloading MaleCNS data
+        run: |
+          python - <<'PY'
+          from stonkfly.neural.visual import VisualMemoryBrain
+          from neurofly.brain_runtime import MaleCNSBrain, brain_status
+          from neurofly.curriculum import CurriculumMazeEnvironment
+          from neurofly.goal_training import GoalMazeEnvironment
+          from neurofly.olfaction import DANGER_ORN_TYPE, FOOD_ORN_TYPE, OLFACTION_MODEL
+          from neurofly.olfaction_calibration import CONDITIONS, SCHEMA
+          from neurofly.preflight import collect_preflight
+          status = brain_status()
+          preflight = collect_preflight()
+          env = CurriculumMazeEnvironment(seed=109)
+          assert status["installed"] is True
+          assert status["prepared"] is False
+          assert preflight["ready"] is False
+          assert VisualMemoryBrain is not None
+          assert MaleCNSBrain is not None
+          assert GoalMazeEnvironment.clear_reward > GoalMazeEnvironment.food_reward
+          assert env.snapshot()["olfaction"]["model"] == OLFACTION_MODEL
+          assert FOOD_ORN_TYPE == "ORN_DM1"
+          assert DANGER_ORN_TYPE == "ORN_DA2"
+          assert SCHEMA == "neurofly-olfaction-calibration-v1"
+          assert set(CONDITIONS) == {"odor_off", "food_left", "food_right", "danger_left", "danger_right"}
+          print(status)
+          PY
