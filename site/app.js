@@ -19,10 +19,14 @@
   const VALID_ACTIONS = new Set(['TURN_LEFT', 'TURN_RIGHT', 'FORWARD', 'HOLD']);
   const LIVE_RELAY = 'https://neurofly-curriculum-relay.onrender.com/events';
   const LIVE_SILENCE_MS = 3000;
+  const LIVE_RECONNECT_MS = 15000;
   const FALLBACK_REFRESH_MS = 60000;
 
   let currentView = null;
   let liveSilenceTimer = null;
+  let liveWatchdogTimer = null;
+  let liveReconnectTimer = null;
+  let liveSource = null;
   let liveSequence = -1;
   let liveSeen = false;
   let flashUntil = 0;
@@ -254,10 +258,19 @@
     }
   }
 
+  function decisionLabel(view) {
+    const raw = view.raw_brain_action || view.decision_action || view.last_action;
+    const applied = view.applied_action || view.last_action;
+    if (view.action_overridden === true && raw !== applied) {
+      return `MaleCNS 原始：${actionName(raw)} → 防停滯套用：${actionName(applied)}`;
+    }
+    return `MaleCNS：${actionName(raw)}`;
+  }
+
   function stateStatus(event, view) {
     const kind = view.state_kind || 'neural_decision';
     if (kind === 'world_tick') {
-      return `世界持續運作 · 世界步 ${view.total_world_ticks ?? '—'} · MaleCNS 正在運算 · 第 ${view.episode} 局`;
+      return `世界持續運作 · 世界步 ${view.total_world_ticks ?? '—'} · ${decisionLabel(view)} · 第 ${view.episode} 局`;
     }
     if (kind === 'episode_reset') {
       return `新一局已開始 · 第 ${view.episode} 局`;
@@ -265,7 +278,33 @@
     if (kind === 'stale_decision') {
       return `MaleCNS 過期決策「${actionName(view.decision_action || view.last_action)}」已丟棄 · 第 ${view.episode} 局`;
     }
-    return `MaleCNS 即時運作 · 決策 ${event.sequence} · ${actionName(view.decision_action || view.last_action)} · 第 ${view.episode} 局`;
+    return `即時運作 · 決策 ${event.sequence} · ${decisionLabel(view)} · 第 ${view.episode} 局`;
+  }
+
+  function clearLiveWatchdog() {
+    clearTimeout(liveWatchdogTimer);
+    liveWatchdogTimer = null;
+  }
+
+  function scheduleLiveReconnect(delay = 500) {
+    clearTimeout(liveReconnectTimer);
+    liveReconnectTimer = setTimeout(() => {
+      liveReconnectTimer = null;
+      connectLive();
+    }, delay);
+  }
+
+  function armLiveWatchdog() {
+    clearLiveWatchdog();
+    liveWatchdogTimer = setTimeout(() => {
+      liveWatchdogTimer = null;
+      if (liveSource) {
+        liveSource.close();
+        liveSource = null;
+      }
+      ui.status.textContent = '即時資料逾時 · 正在切換到最新 relay…';
+      scheduleLiveReconnect(250);
+    }, LIVE_RECONNECT_MS);
   }
 
   function showLiveState(event) {
@@ -276,6 +315,7 @@
     if (Number.isFinite(seq) && seq <= liveSequence) return;
     liveSequence = seq;
     liveSeen = true;
+    armLiveWatchdog();
     clearTimeout(liveSilenceTimer);
     currentView = view;
     flashForState(view);
@@ -307,19 +347,34 @@
   }
 
   function connectLive() {
+    clearTimeout(liveReconnectTimer);
+    liveReconnectTimer = null;
+    clearLiveWatchdog();
+    if (liveSource) liveSource.close();
+
     const source = new EventSource(LIVE_RELAY);
+    liveSource = source;
+
     source.addEventListener('malecns', event => {
+      if (source !== liveSource) return;
       try { showLiveState(JSON.parse(event.data)); } catch (_) {}
     });
     source.onopen = () => {
+      if (source !== liveSource) return;
+      armLiveWatchdog();
       if (!liveSeen) {
         ui.badge.textContent = 'MALECNS · 即時連線已建立';
         ui.status.textContent = '即時連線已建立 · 等待已驗證的 MaleCNS 狀態';
       }
     };
     source.onerror = () => {
+      if (source !== liveSource) return;
+      source.close();
+      liveSource = null;
+      clearLiveWatchdog();
       if (liveSeen) ui.status.textContent = '即時連線重新連接中…';
       else ui.badge.textContent = 'MALECNS · 連線中';
+      scheduleLiveReconnect(1000);
     };
   }
 
