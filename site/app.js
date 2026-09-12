@@ -221,14 +221,27 @@
     const angle = ({ RIGHT: 0, DOWN: Math.PI / 2, LEFT: Math.PI, UP: -Math.PI / 2 })[fly.dir] || 0;
     ctx.save();
     ctx.translate(cx, cy);
+
+    ctx.fillStyle = 'rgba(216,255,115,.10)';
+    ctx.shadowColor = 'rgba(216,255,115,.52)';
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(0, 0, 22, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
     ctx.rotate(angle);
-    ctx.fillStyle = 'rgba(220,255,245,.72)';
-    ctx.strokeStyle = 'rgba(143,242,183,.95)';
+    ctx.scale(1.15, 1.15);
+    ctx.fillStyle = 'rgba(220,255,245,.78)';
+    ctx.strokeStyle = 'rgba(143,242,183,.98)';
     ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.ellipse(-4, -13, 13, 7, -.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     ctx.beginPath(); ctx.ellipse(-4, 13, 13, 7, .5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#d8ff73';
+    ctx.shadowColor = 'rgba(216,255,115,.35)';
+    ctx.shadowBlur = 8;
     ctx.beginPath(); ctx.ellipse(0, 0, 16, 9, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
     ctx.fillStyle = '#17231e';
     for (let x = -7; x <= 7; x += 6) ctx.fillRect(x, -8, 2, 16);
     ctx.fillStyle = '#91d65b';
@@ -242,9 +255,23 @@
   function drawEnemy(enemy, index) {
     const cx = enemy.x * CELL_X + CELL_X / 2;
     const cy = enemy.y * CELL_Y + CELL_Y / 2;
+    const color = index === 0 ? '#ff6678' : '#cb79ff';
+    const halo = index === 0 ? 'rgba(255,102,120,.20)' : 'rgba(203,121,255,.17)';
+
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.fillStyle = index === 0 ? '#ff6f80' : '#cb79ff';
+
+    ctx.fillStyle = halo;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 24;
+    ctx.beginPath();
+    ctx.arc(0, 1, 23, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.scale(1.25, 1.25);
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 16;
     ctx.beginPath();
     ctx.arc(0, -3, 14, Math.PI, 0);
     ctx.lineTo(14, 10);
@@ -253,9 +280,14 @@
     ctx.quadraticCurveTo(-11, 14, -14, 10);
     ctx.closePath();
     ctx.fill();
+    ctx.shadowBlur = 0;
+
     ctx.fillStyle = '#f8fbfa';
     ctx.beginPath(); ctx.arc(-5, -4, 4, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.arc(5, -4, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#17231e';
+    ctx.beginPath(); ctx.arc(-5, -4, 1.65, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(5, -4, 1.65, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 
