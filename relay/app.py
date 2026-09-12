@@ -188,7 +188,10 @@ class Handler(BaseHTTPRequestHandler):
         }
         global _latest, _sequence
         with _state_lock:
-            _sequence += 1
+            # Use wall-clock milliseconds as the floor so a fresh Render
+            # instance never restarts relay_sequence at 1. This keeps already
+            # open browsers accepting live events across relay redeploys.
+            _sequence = max(_sequence + 1, int(time.time() * 1000))
             event["relay_sequence"] = _sequence
             _latest = event
             _state_lock.notify_all()
