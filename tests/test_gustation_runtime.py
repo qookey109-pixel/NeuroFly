@@ -43,8 +43,15 @@ class RecordingBrain:
         Path(path).write_text("recording-brain\n")
 
 
-def _food_ahead_environment() -> CurriculumMazeEnvironment:
-    env = CurriculumMazeEnvironment(seed=109)
+class RecordingEnvironment(CurriculumMazeEnvironment):
+    """Exercise session semantics without optional NumPy/Pillow rendering deps."""
+
+    def render_rgb(self, *, width: int = 320, height: int = 180) -> Any:
+        return [[[0, 0, 0]]]
+
+
+def _food_ahead_environment() -> RecordingEnvironment:
+    env = RecordingEnvironment(seed=109)
     env.fly = {"x": 1, "y": 1, "dir": "RIGHT"}
     env.enemies = [{"x": env.cols - 2, "y": env.rows - 2}]
     env.grid[1][1] = " "
@@ -122,6 +129,26 @@ def test_food_contact_becomes_exactly_one_next_decision_taste_pulse() -> None:
     assert second["gustation"]["channels"]["sugar_water"] == 1.0
 
 
+def test_last_pellet_still_queues_taste_when_public_event_becomes_maze_cleared() -> None:
+    env = _food_ahead_environment()
+    for y, row in enumerate(env.grid):
+        for x, cell in enumerate(row):
+            if cell in {".", "o"}:
+                env.grid[y][x] = " "
+    env.grid[1][2] = "."
+
+    brain = RecordingBrain(["FORWARD", "HOLD"])
+    session = GoalMazeSession(brain, environment=env, world_tick_seconds=3600.0)
+
+    first_state = session.tick()
+    assert first_state["step_event"] == "maze_cleared"
+    assert session.pending_gustatory_event == "food"
+
+    session.tick()
+    assert brain.contexts[1]["gustation"]["contact"] is True
+    assert brain.contexts[1]["gustation"]["channels"]["sugar_water"] == 1.0
+
+
 def test_pending_taste_survives_checkpoint_and_is_consumed_once(tmp_path: Path) -> None:
     checkpoint = tmp_path / "brain.npz"
     env = _food_ahead_environment()
@@ -138,7 +165,7 @@ def test_pending_taste_survives_checkpoint_and_is_consumed_once(tmp_path: Path) 
     session.save()
 
     restored_brain = RecordingBrain(["HOLD", "HOLD"])
-    restored_env = CurriculumMazeEnvironment(seed=999)
+    restored_env = RecordingEnvironment(seed=999)
     restored = GoalMazeSession(
         restored_brain,
         environment=restored_env,
