@@ -46,6 +46,14 @@ Reward and aversive stimulation remain outcome signals delivered after events. T
 5. Bilateral aversive danger odor.
 6. Event-based reward / aversive reinforcement after outcomes.
 
+## Strict neural-input boundary
+
+`neurofly-sensory-contract-v0.1` separates fly-accessible neural input from human diagnostics.
+
+Exact coordinates, source locations, metric distances, bearings, targets, paths and other world-truth fields may exist in diagnostics for testing and visualization, but they are forbidden from the machine-readable neural-input payload. Vision continues to reach MaleCNS as an egocentric retinal RGB proxy; olfaction is reduced to bounded bilateral intensity channels before neural stimulation.
+
+See [`SENSORY_CONTRACT_V01.md`](SENSORY_CONTRACT_V01.md) and `src/neurofly/sensory_contract.py`.
+
 ## Not yet modeled
 
 The following are candidates for later versions, but NeuroFly should not invent biological neuron mappings without verifying MaleCNS annotations and a defensible transduction model:
