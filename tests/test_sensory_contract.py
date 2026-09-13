@@ -48,10 +48,17 @@ def test_contract_separates_agent_input_from_world_diagnostics() -> None:
     assert mech["left"] == {"jo_c": 0.0, "jo_e": 1.0}
     assert mech["right"] == {"jo_c": 0.0, "jo_e": 1.0}
 
+    taste = agent["gustation"]
+    assert taste["available"] is True
+    assert taste["contact"] is False
+    assert taste["channels"] == {"bitter": 0.0, "sugar_water": 0.0}
+    assert taste["stimulation_enabled"] is False
+
     # Human diagnostics may keep exact geometry, but neural input must not.
     assert diagnostics["olfaction"]["food"]["source"] is not None
     assert "nearest_enemy" in diagnostics["vision"]
     assert diagnostics["antennal_mechanosensation"]["diagnostics"]["airflow_world"]
+    assert diagnostics["gustation"]["contact"] is False
     assert "source" not in agent["olfaction"]["food"]
     assert "distance_cells" not in agent["olfaction"]["food"]
     assert "diagnostics" not in mech
@@ -69,6 +76,28 @@ def test_mechanosensation_is_unavailable_without_world_airflow() -> None:
     assert mech["status"] == "no-airflow-field"
 
 
+def test_gustation_requires_contact_event_not_visible_food() -> None:
+    grid, fly, enemies = _world()
+
+    without_contact = build_sensory_contract(
+        grid=grid,
+        fly=fly,
+        enemies=enemies,
+    )["agent_input"]["gustation"]
+    assert without_contact["contact"] is False
+    assert without_contact["channels"] == {"bitter": 0.0, "sugar_water": 0.0}
+
+    after_contact = build_sensory_contract(
+        grid=grid,
+        fly=fly,
+        enemies=enemies,
+        gustatory_event="food",
+    )["agent_input"]["gustation"]
+    assert after_contact["contact"] is True
+    assert after_contact["channels"] == {"bitter": 0.0, "sugar_water": 1.0}
+    assert after_contact["stimulation_enabled"] is False
+
+
 def test_future_modalities_are_reserved_not_invented() -> None:
     grid, fly, enemies = _world()
     agent = build_sensory_contract(grid=grid, fly=fly, enemies=enemies)["agent_input"]
@@ -76,7 +105,6 @@ def test_future_modalities_are_reserved_not_invented() -> None:
     for name in (
         "proprioception",
         "contact_mechanosensation",
-        "gustation",
         "thermo_hygrosensation",
         "polarized_light",
     ):
