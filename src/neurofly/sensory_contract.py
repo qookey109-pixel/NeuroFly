@@ -2,11 +2,15 @@ from __future__ import annotations
 
 from typing import Any
 
+from .mechanosensation import (
+    MECHANOSENSATION_MODEL,
+    virtual_antennal_mechanosensation,
+)
 from .olfaction import OLFACTION_MODEL, virtual_olfaction
 from .vision import VISION_MODEL, fly_vision_state
 
 
-SENSORY_CONTRACT = "neurofly-sensory-contract-v0.1"
+SENSORY_CONTRACT = "neurofly-sensory-contract-v0.2"
 SENSORY_POLICY = "egocentric-no-privileged-world-state"
 
 # These fields may be useful to human diagnostics, but they must never appear in
@@ -27,6 +31,9 @@ PRIVILEGED_AGENT_KEYS = frozenset(
         "enemies",
         "route",
         "path",
+        "airflow_world",
+        "body_relative",
+        "signed_deflection",
     }
 )
 
@@ -58,6 +65,32 @@ def _olfactory_agent_input(olfaction: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _mechanosensory_agent_input(mechanosensation: dict[str, Any]) -> dict[str, Any]:
+    """Expose only bounded Johnston's-organ-like channels to neural code."""
+
+    if not mechanosensation.get("available"):
+        return {
+            "model": MECHANOSENSATION_MODEL,
+            "available": False,
+            "status": str(mechanosensation.get("status") or "unavailable"),
+        }
+
+    def antenna(name: str) -> dict[str, float]:
+        payload = mechanosensation.get(name) or {}
+        return {
+            "jo_c": _bounded_unit(payload.get("jo_c", 0.0)),
+            "jo_e": _bounded_unit(payload.get("jo_e", 0.0)),
+        }
+
+    return {
+        "model": MECHANOSENSATION_MODEL,
+        "available": True,
+        "encoding": "bilateral-jon-c-e-deflection-proxy",
+        "left": antenna("left"),
+        "right": antenna("right"),
+    }
+
+
 def _reserved_modality(model: str) -> dict[str, Any]:
     return {
         "model": model,
@@ -84,6 +117,7 @@ def build_sensory_contract(
     grid: list[list[str]],
     fly: dict[str, Any],
     enemies: list[dict[str, int]],
+    airflow: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build a strict boundary between fly-accessible input and diagnostics.
 
@@ -97,6 +131,7 @@ def build_sensory_contract(
 
     olfaction = virtual_olfaction(grid=grid, fly=fly, enemies=enemies)
     vision = fly_vision_state(grid=grid, fly=fly, enemies=enemies)
+    mechanosensation = virtual_antennal_mechanosensation(fly=fly, airflow=airflow)
 
     agent_input = {
         "vision": {
@@ -107,9 +142,7 @@ def build_sensory_contract(
             "world_geometry_exposed": False,
         },
         "olfaction": _olfactory_agent_input(olfaction),
-        "antennal_mechanosensation": _reserved_modality(
-            "neurofly-antennal-mechanosensation-v0"
-        ),
+        "antennal_mechanosensation": _mechanosensory_agent_input(mechanosensation),
         "proprioception": _reserved_modality("neurofly-proprioception-v0"),
         "contact_mechanosensation": _reserved_modality(
             "neurofly-contact-mechanosensation-v0"
@@ -129,5 +162,6 @@ def build_sensory_contract(
         "diagnostics": {
             "vision": vision,
             "olfaction": olfaction,
+            "antennal_mechanosensation": mechanosensation,
         },
     }

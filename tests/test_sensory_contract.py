@@ -23,7 +23,12 @@ def _world() -> tuple[list[list[str]], dict[str, object], list[dict[str, int]]]:
 
 def test_contract_separates_agent_input_from_world_diagnostics() -> None:
     grid, fly, enemies = _world()
-    contract = build_sensory_contract(grid=grid, fly=fly, enemies=enemies)
+    contract = build_sensory_contract(
+        grid=grid,
+        fly=fly,
+        enemies=enemies,
+        airflow={"x": -1.0, "y": 0.0},
+    )
 
     assert contract["schema"] == SENSORY_CONTRACT
     assert contract["policy"] == SENSORY_POLICY
@@ -38,13 +43,30 @@ def test_contract_separates_agent_input_from_world_diagnostics() -> None:
     assert 0.0 <= agent["olfaction"]["danger"]["left"] <= 1.0
     assert 0.0 <= agent["olfaction"]["danger"]["right"] <= 1.0
 
+    mech = agent["antennal_mechanosensation"]
+    assert mech["available"] is True
+    assert mech["left"] == {"jo_c": 0.0, "jo_e": 1.0}
+    assert mech["right"] == {"jo_c": 0.0, "jo_e": 1.0}
+
     # Human diagnostics may keep exact geometry, but neural input must not.
     assert diagnostics["olfaction"]["food"]["source"] is not None
     assert "nearest_enemy" in diagnostics["vision"]
+    assert diagnostics["antennal_mechanosensation"]["diagnostics"]["airflow_world"]
     assert "source" not in agent["olfaction"]["food"]
     assert "distance_cells" not in agent["olfaction"]["food"]
+    assert "diagnostics" not in mech
+    assert "airflow_world" not in mech
 
     assert_unprivileged_agent_input(agent)
+
+
+def test_mechanosensation_is_unavailable_without_world_airflow() -> None:
+    grid, fly, enemies = _world()
+    agent = build_sensory_contract(grid=grid, fly=fly, enemies=enemies)["agent_input"]
+
+    mech = agent["antennal_mechanosensation"]
+    assert mech["available"] is False
+    assert mech["status"] == "no-airflow-field"
 
 
 def test_future_modalities_are_reserved_not_invented() -> None:
@@ -52,7 +74,6 @@ def test_future_modalities_are_reserved_not_invented() -> None:
     agent = build_sensory_contract(grid=grid, fly=fly, enemies=enemies)["agent_input"]
 
     for name in (
-        "antennal_mechanosensation",
         "proprioception",
         "contact_mechanosensation",
         "gustation",
@@ -73,6 +94,16 @@ def test_privileged_world_truth_is_rejected_recursively() -> None:
                         "right": 0.7,
                         "source": {"x": 9, "y": 4},
                     }
+                }
+            }
+        )
+
+    with pytest.raises(ValueError, match="Privileged field"):
+        assert_unprivileged_agent_input(
+            {
+                "antennal_mechanosensation": {
+                    "left": {"jo_c": 0.2, "jo_e": 0.0},
+                    "airflow_world": {"x": 1.0, "y": 0.0},
                 }
             }
         )

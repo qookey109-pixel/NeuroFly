@@ -7,6 +7,7 @@ import time
 from .brain_runtime import DemoBrain, MaleCNSBrain, brain_status
 from .experiments import list_experiments
 from .maze_runtime import MazeSession
+from .mechanosensation_audit import run_audit as run_mechanosensation_audit
 from .preflight import collect_preflight
 from .server import run_cloud_server, run_server
 from .site_state import publish_site_state
@@ -57,6 +58,12 @@ def _real_smoke(args: argparse.Namespace) -> int:
     )
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0
+
+
+def _mechanosensation_audit(args: argparse.Namespace) -> int:
+    result = run_mechanosensation_audit(output=args.output)
+    print(json.dumps(result, indent=2, sort_keys=True))
+    return 0 if result["passed"] else 1
 
 
 def _publish_site_state(args: argparse.Namespace) -> int:
@@ -154,6 +161,15 @@ def build_parser() -> argparse.ArgumentParser:
     smoke.add_argument("--seed", type=int, default=109)
     smoke.add_argument("--allow-low-memory", action="store_true")
 
+    mech_audit = subparsers.add_parser(
+        "mechanosensation-audit",
+        help="audit bilateral MaleCNS JO-C/JO-E annotations before enabling wind stimulation",
+    )
+    mech_audit.add_argument(
+        "--output",
+        default="runs/free-malecns/mechanosensation-annotation-audit.json",
+    )
+
     publish = subparsers.add_parser(
         "publish-site-state",
         help="publish a website state only from a verified MaleCNS real-smoke receipt",
@@ -201,6 +217,8 @@ def main(argv: list[str] | None = None) -> int:
         return _host_preflight(args)
     if args.command == "real-smoke":
         return _real_smoke(args)
+    if args.command == "mechanosensation-audit":
+        return _mechanosensation_audit(args)
     if args.command == "publish-site-state":
         return _publish_site_state(args)
     if args.command == "maze-run":
