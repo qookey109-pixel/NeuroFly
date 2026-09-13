@@ -5,7 +5,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
+from .mechanosensation import (
+    JO_C_TYPE_PREFIX,
+    JO_E_TYPE_PREFIX,
+    MECHANOSENSATION_CALIBRATED_CURRENT,
+    MECHANOSENSATION_CALIBRATION_RECEIPT_SHA256,
+    MECHANOSENSATION_MODEL,
+)
 from .olfaction import DANGER_ORN_TYPE, FOOD_ORN_TYPE, OLFACTION_MODEL
+from .sensory_contract import assert_unprivileged_agent_input
 from .vision import VISION_MODEL
 from .vision_adapter import retinalize_topdown_rgb
 
@@ -75,6 +83,110 @@ def _bilateral_type_indices(np: Any, annotations: Any, neuron_type: str) -> tupl
     return left, right, report
 
 
+def _bilateral_prefix_indices(
+    np: Any,
+    annotations: Any,
+    neuron_prefix: str,
+) -> tuple[Any, Any, dict[str, Any]]:
+    """Resolve a curated MaleCNS type family by prefix and bilateral annotation."""
+
+    types = annotations.type.fillna("").astype(str)
+    family = types.str.startswith(neuron_prefix)
+    sides = annotations.somaSide.fillna("").astype(str).str.upper()
+    if "instance" in annotations.columns:
+        instances = annotations["instance"].fillna("").astype(str)
+    else:
+        instances = types.map(lambda _: "")
+
+    left_by_soma = family & sides.eq("L")
+    right_by_soma = family & sides.eq("R")
+    left_by_instance = family & instances.str.endswith("_L")
+    right_by_instance = family & instances.str.endswith("_R")
+    left_mask = left_by_soma | left_by_instance
+    right_mask = right_by_soma | right_by_instance
+    unresolved = family & ~(left_mask | right_mask)
+
+    left = np.flatnonzero(left_mask.to_numpy())
+    right = np.flatnonzero(right_mask.to_numpy())
+    report = {
+        "prefix": neuron_prefix,
+        "type_neurons": int(family.sum()),
+        "left_neurons": int(len(left)),
+        "right_neurons": int(len(right)),
+        "unresolved_side": int(unresolved.sum()),
+        "types": sorted(set(types[family].tolist())),
+        "side_policy": "somaSide_then_curated_instance_suffix",
+    }
+    return left, right, report
+
+
+def validated_mechanosensation_current(value: Any) -> float:
+    """Accept only disabled runtime or the evidence-selected engineering current."""
+
+    try:
+        current = float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("mechanosensation_current must be finite") from exc
+    if not math.isfinite(current) or current < 0:
+        raise ValueError("mechanosensation_current must be finite and nonnegative")
+    if current == 0.0:
+        return 0.0
+    if not math.isclose(
+        current,
+        MECHANOSENSATION_CALIBRATED_CURRENT,
+        rel_tol=0.0,
+        abs_tol=1e-12,
+    ):
+        raise ValueError(
+            "mechanosensation_current must be 0.0 (disabled) or the calibrated "
+            f"engineering current {MECHANOSENSATION_CALIBRATED_CURRENT}"
+        )
+    return MECHANOSENSATION_CALIBRATED_CURRENT
+
+
+def mechanosensory_channel_levels(payload: dict[str, Any] | None) -> dict[str, Any]:
+    """Validate strict neural-eligible JO-C/E input and return bounded channels."""
+
+    empty = {
+        "available": False,
+        "jo_c_left": 0.0,
+        "jo_c_right": 0.0,
+        "jo_e_left": 0.0,
+        "jo_e_right": 0.0,
+    }
+    if not payload:
+        return empty
+
+    assert_unprivileged_agent_input({"antennal_mechanosensation": payload})
+    if payload.get("model") != MECHANOSENSATION_MODEL:
+        raise ValueError("Unsupported NeuroFly mechanosensation model")
+    if not payload.get("available"):
+        return {
+            **empty,
+            "status": str(payload.get("status") or "unavailable"),
+        }
+
+    def level(side: str, channel: str) -> float:
+        side_payload = payload.get(side) or {}
+        try:
+            number = float(side_payload.get(channel, 0.0))
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError(f"Invalid mechanosensation {side}.{channel}") from exc
+        if not math.isfinite(number) or not 0.0 <= number <= 1.0:
+            raise ValueError(
+                f"Mechanosensation {side}.{channel} intensity must be within [0, 1]"
+            )
+        return number
+
+    return {
+        "available": True,
+        "jo_c_left": level("left", "jo_c"),
+        "jo_c_right": level("right", "jo_c"),
+        "jo_e_left": level("left", "jo_e"),
+        "jo_e_right": level("right", "jo_e"),
+    }
+
+
 class DemoBrain:
     """Small deterministic baseline used by CI and UI smoke tests."""
 
@@ -113,11 +225,11 @@ class MaleCNSBrain:
     """Maze decoder on top of Stonkfly's pinned MaleCNS VisualMemoryBrain.
 
     The retained anatomy and visual dynamics come from the pinned Stonkfly
-    implementation. NeuroFly now converts the omniscient maze renderer into an
-    egocentric wide-field visual proxy before it reaches the retained visual
-    system, and separately transduces bilateral virtual odors. These adapters are
-    engineered interfaces inspired by fly sensory biology, not claims of exact
-    retinal/olfactory physiology or a conscious animal reconstruction.
+    implementation. NeuroFly converts the omniscient maze renderer into an
+    egocentric wide-field visual proxy, separately transduces bilateral virtual
+    odors, and can optionally route strict JO-C/JO-E mechanosensory channels.
+    Mechanosensation is disabled by default and accepts only the frozen-calibrated
+    engineering current; the live curriculum does not enable it implicitly.
     """
 
     name = "malecns"
@@ -130,10 +242,14 @@ class MaleCNSBrain:
         pulse_ms: float = 20.0,
         pulse_current: float = 20.0,
         odor_current: float = 8.0,
+        mechanosensation_current: float = 0.0,
         decoder_threshold_hz: float = 2.0,
         learning: bool = True,
         checkpoint: str | Path | None = None,
     ) -> None:
+        mechanosensation_current = validated_mechanosensation_current(
+            mechanosensation_current
+        )
         try:
             import numpy as np
             from stonkfly.neural.common import annotations
@@ -153,6 +269,7 @@ class MaleCNSBrain:
         self.pulse_ms = float(pulse_ms)
         self.pulse_current = float(pulse_current)
         self.odor_current = float(odor_current)
+        self.mechanosensation_current = mechanosensation_current
         self.decoder_threshold_hz = float(decoder_threshold_hz)
         self.learning = bool(learning)
         self.brain = VisualMemoryBrain()
@@ -190,6 +307,31 @@ class MaleCNSBrain:
                 f"{FOOD_ORN_TYPE}={food_side_report}; {DANGER_ORN_TYPE}={danger_side_report}"
             )
 
+        empty = np.asarray([], dtype=np.int64)
+        self.jo_c_left = empty
+        self.jo_c_right = empty
+        self.jo_e_left = empty
+        self.jo_e_right = empty
+        jo_c_report: dict[str, Any] | None = None
+        jo_e_report: dict[str, Any] | None = None
+        if self.mechanosensation_current > 0.0:
+            self.jo_c_left, self.jo_c_right, jo_c_report = _bilateral_prefix_indices(
+                np, a, JO_C_TYPE_PREFIX
+            )
+            self.jo_e_left, self.jo_e_right, jo_e_report = _bilateral_prefix_indices(
+                np, a, JO_E_TYPE_PREFIX
+            )
+            for report in (jo_c_report, jo_e_report):
+                if (
+                    report["left_neurons"] <= 0
+                    or report["right_neurons"] <= 0
+                    or report["unresolved_side"] != 0
+                ):
+                    raise RuntimeError(
+                        "Calibrated MaleCNS mechanosensation annotations are not "
+                        f"bilaterally resolvable: {report}"
+                    )
+
         self.identities = {
             "left": [str(self.brain.ids[i]) for i in self.left],
             "right": [str(self.brain.ids[i]) for i in self.right],
@@ -210,6 +352,19 @@ class MaleCNSBrain:
             },
             "max_external_current": self.odor_current,
             "validated": False,
+        }
+        self.mechanosensation_report = {
+            "model": MECHANOSENSATION_MODEL,
+            "engineered_proxy": True,
+            "enabled": self.mechanosensation_current > 0.0,
+            "external_current": self.mechanosensation_current,
+            "calibrated_current": MECHANOSENSATION_CALIBRATED_CURRENT,
+            "calibration_receipt_sha256": MECHANOSENSATION_CALIBRATION_RECEIPT_SHA256,
+            "input_policy": "strict-agent-input-jo-c-e-only",
+            "jo_c": jo_c_report,
+            "jo_e": jo_e_report,
+            "biological_validation": False,
+            "behavioral_benefit_validated": False,
         }
         self.vision_report = {
             "model": VISION_MODEL,
@@ -294,6 +449,35 @@ class MaleCNSBrain:
                 pulses.append((indices, self.odor_current * level))
         return pulses, levels
 
+    def _mechanosensory_stimulation(
+        self,
+        context: dict[str, Any] | None,
+    ) -> tuple[list[tuple[Any, float]], dict[str, Any]]:
+        payload = (
+            {}
+            if context is None
+            else (context.get("antennal_mechanosensation") or {})
+        )
+        levels = mechanosensory_channel_levels(payload)
+        levels = {
+            **levels,
+            "runtime_enabled": self.mechanosensation_current > 0.0,
+            "external_current": self.mechanosensation_current,
+        }
+        if not levels.get("available") or self.mechanosensation_current <= 0.0:
+            return [], levels
+
+        pulses: list[tuple[Any, float]] = []
+        for indices, level in (
+            (self.jo_c_left, levels["jo_c_left"]),
+            (self.jo_c_right, levels["jo_c_right"]),
+            (self.jo_e_left, levels["jo_e_left"]),
+            (self.jo_e_right, levels["jo_e_right"]),
+        ):
+            if level > 0.0:
+                pulses.append((indices, self.mechanosensation_current * level))
+        return pulses, levels
+
     def _visual_input(
         self,
         frame: Any,
@@ -349,6 +533,9 @@ class MaleCNSBrain:
 
         b = self.brain
         odor_pulses, odor_levels = self._olfactory_stimulation(context)
+        mechanosensation_pulses, mechanosensation_levels = (
+            self._mechanosensory_stimulation(context)
+        )
         counts = np.zeros(b.n, dtype=np.int32)
         compute_seconds = 0.0
         remaining = round(self.neural_ms / b.dt)
@@ -359,7 +546,7 @@ class MaleCNSBrain:
             n = min(remaining, round(self.neural_bin_ms / b.dt))
             if pulse:
                 n = min(n, pulse)
-            stimulation = list(odor_pulses)
+            stimulation = [*odor_pulses, *mechanosensation_pulses]
             if pulse:
                 stimulation.append((b.circuit[reinforcement], self.pulse_current))
             current, elapsed = b.rgb_step(
@@ -377,6 +564,12 @@ class MaleCNSBrain:
 
         b.counts[:] = counts
         action, decoder = self._decode(counts)
+        mechanosensation_spikes = {
+            "jo_c_left": int(counts[self.jo_c_left].sum()) if len(self.jo_c_left) else 0,
+            "jo_c_right": int(counts[self.jo_c_right].sum()) if len(self.jo_c_right) else 0,
+            "jo_e_left": int(counts[self.jo_e_left].sum()) if len(self.jo_e_left) else 0,
+            "jo_e_right": int(counts[self.jo_e_right].sum()) if len(self.jo_e_right) else 0,
+        }
         telemetry = {
             **decoder,
             "backend": self.name,
@@ -403,6 +596,10 @@ class MaleCNSBrain:
                 counts[self.danger_orn_left].sum() + counts[self.danger_orn_right].sum()
             ),
             "olfaction_report": self.olfaction_report,
+            "mechanosensation_model": MECHANOSENSATION_MODEL,
+            "antennal_mechanosensation": mechanosensation_levels,
+            "mechanosensation_spikes": mechanosensation_spikes,
+            "mechanosensation_report": self.mechanosensation_report,
             "memory": b.memory(),
         }
         return BrainDecision(action=action, backend=self.name, telemetry=telemetry)
