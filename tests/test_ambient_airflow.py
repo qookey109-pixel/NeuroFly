@@ -17,8 +17,8 @@ def test_curriculum_exposes_strict_default_ambient_mechanosensation() -> None:
     assert state["ambient_airflow_policy"] == AMBIENT_AIRFLOW_POLICY
     assert mech["model"] == MECHANOSENSATION_MODEL
     assert mech["available"] is True
-    assert mech["left"] == {"jo_c": 0.42, "jo_e": 0.0}
-    assert mech["right"] == {"jo_c": 0.0, "jo_e": 0.42}
+    assert mech["left"] == {"jo_c": 0.7, "jo_e": 0.0}
+    assert mech["right"] == {"jo_c": 0.0, "jo_e": 0.7}
 
     assert "diagnostics" not in mech
     assert "airflow_world" not in mech
@@ -37,10 +37,10 @@ def test_same_world_wind_changes_fly_relative_channels_with_heading() -> None:
     env.fly["dir"] = "UP"
     up_facing = env.snapshot(include_grid=False)["antennal_mechanosensation"]
 
-    assert right_facing["left"] == {"jo_c": 0.42, "jo_e": 0.0}
-    assert right_facing["right"] == {"jo_c": 0.0, "jo_e": 0.42}
-    assert up_facing["left"] == {"jo_c": 0.0, "jo_e": 0.6}
-    assert up_facing["right"] == {"jo_c": 0.0, "jo_e": 0.6}
+    assert right_facing["left"] == {"jo_c": 0.7, "jo_e": 0.0}
+    assert right_facing["right"] == {"jo_c": 0.0, "jo_e": 0.7}
+    assert up_facing["left"] == {"jo_c": 0.0, "jo_e": 1.0}
+    assert up_facing["right"] == {"jo_c": 0.0, "jo_e": 1.0}
 
 
 def test_ambient_airflow_is_independent_of_food_enemy_and_reward_truth() -> None:
