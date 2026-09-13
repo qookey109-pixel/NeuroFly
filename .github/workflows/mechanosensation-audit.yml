@@ -27,7 +27,9 @@ jobs:
     env:
       STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
       AUDIT_OUTPUT: runs/mechanosensation/mechanosensation-annotation-audit.json
+      CALIBRATION_DIR: runs/mechanosensation/current-sweep
       CALIBRATION_OUTPUT: runs/mechanosensation/mechanosensation-calibration.json
+      SWEEP_OUTPUT: runs/mechanosensation/mechanosensation-current-sweep.json
 
     steps:
       - uses: actions/checkout@v4
@@ -50,7 +52,7 @@ jobs:
 
       - name: Prepare or verify pinned MaleCNS
         run: |
-          mkdir -p "$STONKFLY_DATA" "$(dirname "$AUDIT_OUTPUT")"
+          mkdir -p "$STONKFLY_DATA" "$CALIBRATION_DIR"
           python -m stonkfly prepare
           python -m neurofly brain-status
 
@@ -79,28 +81,87 @@ jobs:
           )
           PY
 
-      - name: Calibrate frozen-weight JO-C and JO-E response
+      - name: Sweep frozen-weight JO-C and JO-E current
         run: |
-          python -m neurofly.mechanosensation_calibration \
-            --output "$CALIBRATION_OUTPUT" \
-            --neural-ms 200 \
-            --current 8
+          set +e
+          for current in 8 10 12 16; do
+            python -m neurofly.mechanosensation_calibration \
+              --output "$CALIBRATION_DIR/current-${current}.json" \
+              --neural-ms 200 \
+              --current "$current"
+            echo "current=$current exit=$?"
+          done
+          set -e
+
+          python - <<'PY'
+          import glob
+          import json
+          import os
+          import shutil
+
+          candidates = []
+          for path in sorted(glob.glob(os.path.join(os.environ['CALIBRATION_DIR'], 'current-*.json'))):
+              report = json.load(open(path))
+              assert report['schema'] == 'neurofly-mechanosensation-calibration-v1'
+              assert report['mechanosensation_model'] == 'neurofly-antennal-mechanosensation-v0.1'
+              assert report['runtime_stimulation_enabled'] is False
+              assert report['plasticity_frozen'] is True
+              assert report['matched_baseline_memory'] is True
+              assert len(report['gates']) == 8
+              candidates.append({
+                  'current': float(report['mechanosensation_current']),
+                  'passed': bool(report['passed']),
+                  'receipt_sha256': report['receipt_sha256'],
+                  'gates_passed': sum(bool(gate['passed']) for gate in report['gates']),
+                  'path': path,
+              })
+
+          candidates.sort(key=lambda item: item['current'])
+          passing = [item for item in candidates if item['passed']]
+          assert len(candidates) == 4, candidates
+          assert passing, candidates
+          selected = passing[0]
+          assert all(item['current'] >= selected['current'] for item in passing)
+
+          shutil.copyfile(selected['path'], os.environ['CALIBRATION_OUTPUT'])
+          summary = {
+              'schema': 'neurofly-mechanosensation-current-sweep-v1',
+              'predeclared_currents': [8.0, 10.0, 12.0, 16.0],
+              'selection_policy': 'lowest_predeclared_current_with_all_8_response_gates_pass',
+              'selected_current': selected['current'],
+              'selected_receipt_sha256': selected['receipt_sha256'],
+              'runtime_stimulation_enabled': False,
+              'candidates': [
+                  {key: value for key, value in item.items() if key != 'path'}
+                  for item in candidates
+              ],
+          }
+          with open(os.environ['SWEEP_OUTPUT'], 'w') as handle:
+              json.dump(summary, handle, indent=2, sort_keys=True)
+              handle.write('\n')
+
+          print('MECHANOSENSATION_CURRENT_SWEEP_PASS', json.dumps(summary, sort_keys=True))
+          PY
+
+      - name: Verify selected frozen calibration
+        run: |
           python - <<'PY'
           import json
           import os
 
           report = json.load(open(os.environ['CALIBRATION_OUTPUT']))
-          assert report['schema'] == 'neurofly-mechanosensation-calibration-v1'
-          assert report['mechanosensation_model'] == 'neurofly-antennal-mechanosensation-v0.1'
+          sweep = json.load(open(os.environ['SWEEP_OUTPUT']))
+          assert report['passed'] is True
           assert report['runtime_stimulation_enabled'] is False
           assert report['plasticity_frozen'] is True
           assert report['matched_baseline_memory'] is True
-          assert report['passed'] is True
-          assert len(report['gates']) == 8
           assert all(gate['passed'] for gate in report['gates'])
+          assert float(report['mechanosensation_current']) == float(sweep['selected_current'])
+          assert report['receipt_sha256'] == sweep['selected_receipt_sha256']
           print(
               'MECHANOSENSATION_FROZEN_CALIBRATION_PASS',
-              report['receipt_sha256'],
+              'current=', sweep['selected_current'],
+              'receipt=', report['receipt_sha256'],
           )
           PY
 
@@ -110,7 +171,7 @@ jobs:
         with:
           name: neurofly-mechanosensation-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            runs/mechanosensation/mechanosensation-annotation-audit.json
-            runs/mechanosensation/mechanosensation-calibration.json
+            runs/mechanosensation/*.json
+            runs/mechanosensation/current-sweep/*.json
           if-no-files-found: warn
           retention-days: 3
