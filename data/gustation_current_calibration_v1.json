@@ -1,0 +1,90 @@
+{
+  "schema": "neurofly-gustation-current-calibration-v1",
+  "release": "MaleCNS v1.0",
+  "stonkfly_commit": "78ef3e05ab0fa086032098558d893667068944a0",
+  "gustation_model": "neurofly-contact-gustation-v1",
+  "crosswalk_schema": "neurofly-gustation-functional-crosswalk-v0.1",
+  "crosswalk_sha256": "e3232acc0a8148f3ebf06d86fa176a8a37285c16f9d5d8901baf64248a4ddc61",
+  "baseline_checkpoint_sha256": "7a35fd223407fdd7e9e319f60864d4524a0668544c1fb006dbcac543cd22a2cd",
+  "workflow_run_id": 34767612210,
+  "artifact_id": 10321083455,
+  "artifact_zip_sha256": "64c22f4a4ef6f7a0aed7afa4df7d774b374f980ea9cd1d46d3ec24926d7e2e02",
+  "seed": 109,
+  "neural_ms": 200.0,
+  "runtime_stimulation_enabled": false,
+  "selection_policy": "lowest_predeclared_positive_target_response_independently_per_functional_class",
+  "predeclared_currents": [6.0, 8.0, 10.0, 12.0, 16.0, 20.0],
+  "population_counts": {
+    "bitter": 6,
+    "sugar_water": 77
+  },
+  "selected": {
+    "bitter": {
+      "current": 8.0,
+      "receipt_sha256": "595054789f40c1039b8393d32f797db299dad93b4153eecb5547fb9e7fc62610",
+      "baseline_spikes": 0,
+      "stimulated_spikes": 107,
+      "stimulated_active_neurons": 6,
+      "stimulated_spikes_per_neuron": 17.833333333333332
+    },
+    "sugar_water": {
+      "current": 8.0,
+      "receipt_sha256": "595054789f40c1039b8393d32f797db299dad93b4153eecb5547fb9e7fc62610",
+      "baseline_spikes": 0,
+      "stimulated_spikes": 195,
+      "stimulated_active_neurons": 77,
+      "stimulated_spikes_per_neuron": 2.5324675324675323
+    }
+  },
+  "candidates": [
+    {
+      "current": 6.0,
+      "receipt_sha256": "f351a2e9d83e46f355073d6f188f9e8ce8fd6e5e782f30dccd8c5611db75aa8a",
+      "bitter_spikes": 0,
+      "sugar_water_spikes": 0,
+      "bitter_passed": false,
+      "sugar_water_passed": false
+    },
+    {
+      "current": 8.0,
+      "receipt_sha256": "595054789f40c1039b8393d32f797db299dad93b4153eecb5547fb9e7fc62610",
+      "bitter_spikes": 107,
+      "sugar_water_spikes": 195,
+      "bitter_passed": true,
+      "sugar_water_passed": true
+    },
+    {
+      "current": 10.0,
+      "receipt_sha256": "bd5531a4221060c992d4fb52b6c88318f3bbe411e7b86c0fa72906f4747b5d86",
+      "bitter_spikes": 123,
+      "sugar_water_spikes": 346,
+      "bitter_passed": true,
+      "sugar_water_passed": true
+    },
+    {
+      "current": 12.0,
+      "receipt_sha256": "35aaf7fcccffd44d187d18e87c4fa6a01f192794c28138aca738b9162ed691c0",
+      "bitter_spikes": 135,
+      "sugar_water_spikes": 504,
+      "bitter_passed": true,
+      "sugar_water_passed": true
+    },
+    {
+      "current": 16.0,
+      "receipt_sha256": "623cdbd0069e9d51c4c165066847ad91f3af12c7e6f1109a024ac33608a03523",
+      "bitter_spikes": 152,
+      "sugar_water_spikes": 786,
+      "bitter_passed": true,
+      "sugar_water_passed": true
+    },
+    {
+      "current": 20.0,
+      "receipt_sha256": "0520e41c637df974e7b019e5ad5a5d562e4af322374b4f066233c3d9bcc10e01",
+      "bitter_spikes": 171,
+      "sugar_water_spikes": 1070,
+      "bitter_passed": true,
+      "sugar_water_passed": true
+    }
+  ],
+  "scientific_boundary": "This calibration validates frozen-weight engineered current routing into the evidence-backed MaleCNS gustatory populations. It does not establish natural receptor physiology, taste valence, feeding preference, reinforcement value, or behavioral benefit."
+}
