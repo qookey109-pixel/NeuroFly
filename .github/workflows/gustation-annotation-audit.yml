@@ -1,0 +1,82 @@
+name: NeuroFly Gustation Annotation Audit
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/gustation-annotation-audit.yml"
+      - "src/neurofly/gustation_audit.py"
+      - "tests/test_gustation_audit.py"
+      - "pyproject.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: neurofly-gustation-annotation-audit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  malecns-gustation-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      AUDIT_OUTPUT: runs/gustation/gustation-annotation-audit.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache read-only
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            malecns-v1-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare or verify pinned MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$(dirname "$AUDIT_OUTPUT")"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+
+      - name: Audit curated gustatory sensory annotations
+        run: |
+          python -m neurofly.gustation_audit --output "$AUDIT_OUTPUT"
+          python - <<'PY'
+          import json
+          import os
+
+          report = json.load(open(os.environ["AUDIT_OUTPUT"]))
+          assert report["schema"] == "neurofly-gustation-annotation-audit-v1"
+          assert report["membership_policy"] == "curated-class-exact-match-only"
+          assert report["stimulation_enabled"] is False
+          assert report["passed"] is True
+          assert int(report["gustatory_neurons"]) > 0
+          print(
+              "GUSTATION_ANNOTATION_AUDIT_PASS",
+              "gustatory_neurons=", report["gustatory_neurons"],
+              "subclasses=", report["subclass_counts"],
+              "nerves=", report["nerve_counts"],
+              "types=", report["type_counts"],
+          )
+          PY
+
+      - name: Publish compact gustation annotation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-gustation-annotation-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runs/gustation/gustation-annotation-audit.json
+          if-no-files-found: warn
+          retention-days: 3
