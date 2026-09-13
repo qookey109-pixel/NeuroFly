@@ -1,0 +1,169 @@
+name: NeuroFly Ambient Airflow Runtime Smoke
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/ambient-airflow-runtime-smoke.yml"
+      - "src/neurofly/curriculum.py"
+      - "src/neurofly/brain_runtime.py"
+      - "src/neurofly/mechanosensation.py"
+      - "src/neurofly/sensory_contract.py"
+      - "tests/test_ambient_airflow.py"
+      - "pyproject.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: neurofly-ambient-airflow-runtime-smoke-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ambient-airflow-runtime-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      RECEIPT: runs/mechanosensation/ambient-airflow-runtime-smoke.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache read-only
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            malecns-v1-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare or verify pinned MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$(dirname "$RECEIPT")"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+
+      - name: Execute normal-curriculum ambient airflow smoke
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+
+          from neurofly.brain_runtime import MaleCNSBrain
+          from neurofly.curriculum import (
+              AMBIENT_AIRFLOW_POLICY,
+              AMBIENT_AIRFLOW_WORLD,
+              CurriculumMazeEnvironment,
+          )
+          from neurofly.mechanosensation import (
+              MECHANOSENSATION_CALIBRATED_CURRENT,
+              MECHANOSENSATION_CALIBRATION_RECEIPT_SHA256,
+              MECHANOSENSATION_MODEL,
+          )
+          from neurofly.sensory_contract import assert_unprivileged_agent_input
+
+          env = CurriculumMazeEnvironment(seed=109)
+          context = env.snapshot(include_grid=False)
+          mech = context["antennal_mechanosensation"]
+
+          assert context["ambient_airflow_policy"] == AMBIENT_AIRFLOW_POLICY
+          assert "ambient_airflow_world" not in context
+          assert mech["model"] == MECHANOSENSATION_MODEL
+          assert mech["available"] is True
+          assert mech["left"] == {"jo_c": 0.7, "jo_e": 0.0}
+          assert mech["right"] == {"jo_c": 0.0, "jo_e": 0.7}
+          assert "diagnostics" not in mech
+          assert "airflow_world" not in mech
+          assert_unprivileged_agent_input({"antennal_mechanosensation": mech})
+
+          # Normal constructor, normal curriculum snapshot: no synthetic smoke-only
+          # mechanosensation payload and no current override.
+          brain = MaleCNSBrain(learning=False, neural_ms=200.0)
+          memory_before = brain.brain.memory()["sha256"]
+          decision = brain.decide(
+              env.render_rgb(),
+              reinforcement="none",
+              context=context,
+          )
+          memory_after = brain.brain.memory()["sha256"]
+
+          report = decision.telemetry["mechanosensation_report"]
+          levels = decision.telemetry["antennal_mechanosensation"]
+          spikes = decision.telemetry["mechanosensation_spikes"]
+
+          assert report["enabled"] is True
+          assert report["default_policy"] == "calibrated-on-when-sensory-payload-available"
+          assert report["switch_exposed"] is False
+          assert float(report["external_current"]) == MECHANOSENSATION_CALIBRATED_CURRENT
+          assert report["calibration_receipt_sha256"] == MECHANOSENSATION_CALIBRATION_RECEIPT_SHA256
+          assert levels["available"] is True
+          assert levels["jo_c_left"] == 0.7
+          assert levels["jo_c_right"] == 0.0
+          assert levels["jo_e_left"] == 0.0
+          assert levels["jo_e_right"] == 0.7
+          assert int(spikes["jo_c_left"]) > 0
+          assert int(spikes["jo_e_right"]) > 0
+          assert memory_before == memory_after
+
+          persisted = env.persistence_snapshot()
+          assert persisted["ambient_airflow_policy"] == AMBIENT_AIRFLOW_POLICY
+          assert persisted["ambient_airflow_world"] == {
+              "x": AMBIENT_AIRFLOW_WORLD[0],
+              "y": AMBIENT_AIRFLOW_WORLD[1],
+          }
+
+          receipt = {
+              "schema": "neurofly-ambient-airflow-runtime-smoke-v1",
+              "passed": True,
+              "seed": 109,
+              "ambient_airflow_policy": AMBIENT_AIRFLOW_POLICY,
+              "ambient_airflow_world": persisted["ambient_airflow_world"],
+              "world_vector_exposed_to_brain_context": False,
+              "mechanosensation_model": MECHANOSENSATION_MODEL,
+              "mechanosensation_current": MECHANOSENSATION_CALIBRATED_CURRENT,
+              "calibration_receipt_sha256": MECHANOSENSATION_CALIBRATION_RECEIPT_SHA256,
+              "strict_agent_input": mech,
+              "mechanosensation_spikes": spikes,
+              "action": decision.action,
+              "memory_sha256_before": memory_before,
+              "memory_sha256_after": memory_after,
+              "memory_unchanged": memory_before == memory_after,
+              "food_enemy_reward_independent_policy": True,
+              "biological_validation": False,
+              "behavioral_benefit_validated": False,
+          }
+          digest = hashlib.sha256(
+              json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
+          ).hexdigest()
+          receipt["receipt_sha256"] = digest
+          with open(os.environ["RECEIPT"], "w") as handle:
+              json.dump(receipt, handle, indent=2, sort_keys=True)
+              handle.write("\n")
+
+          print(
+              "AMBIENT_AIRFLOW_RUNTIME_SMOKE_PASS",
+              "action=", decision.action,
+              "spikes=", spikes,
+              "receipt=", digest,
+          )
+          PY
+
+      - name: Publish compact ambient airflow receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-ambient-airflow-runtime-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runs/mechanosensation/ambient-airflow-runtime-smoke.json
+          if-no-files-found: warn
+          retention-days: 3
