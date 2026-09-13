@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from .gustation import GUSTATION_MODEL, contact_gustation
 from .mechanosensation import (
     MECHANOSENSATION_MODEL,
     virtual_antennal_mechanosensation,
@@ -10,7 +11,7 @@ from .olfaction import OLFACTION_MODEL, virtual_olfaction
 from .vision import VISION_MODEL, fly_vision_state
 
 
-SENSORY_CONTRACT = "neurofly-sensory-contract-v0.2"
+SENSORY_CONTRACT = "neurofly-sensory-contract-v0.3"
 SENSORY_POLICY = "egocentric-no-privileged-world-state"
 
 # These fields may be useful to human diagnostics, but they must never appear in
@@ -91,6 +92,23 @@ def _mechanosensory_agent_input(mechanosensation: dict[str, Any]) -> dict[str, A
     }
 
 
+def _gustatory_agent_input(gustation: dict[str, Any]) -> dict[str, Any]:
+    """Expose only contact-gated functional taste channels."""
+
+    channels = gustation.get("channels") or {}
+    return {
+        "model": GUSTATION_MODEL,
+        "available": bool(gustation.get("available", True)),
+        "encoding": "contact-only-functional-class-proxy",
+        "contact": bool(gustation.get("contact", False)),
+        "channels": {
+            "bitter": _bounded_unit(channels.get("bitter", 0.0)),
+            "sugar_water": _bounded_unit(channels.get("sugar_water", 0.0)),
+        },
+        "stimulation_enabled": False,
+    }
+
+
 def _reserved_modality(model: str) -> dict[str, Any]:
     return {
         "model": model,
@@ -118,6 +136,7 @@ def build_sensory_contract(
     fly: dict[str, Any],
     enemies: list[dict[str, int]],
     airflow: dict[str, Any] | None = None,
+    gustatory_event: str | None = None,
 ) -> dict[str, Any]:
     """Build a strict boundary between fly-accessible input and diagnostics.
 
@@ -126,12 +145,16 @@ def build_sensory_contract(
     must never be passed into the connectome as sensory evidence.
 
     Vision pixels themselves travel separately through the retinal RGB adapter;
-    the JSON contract only declares that transport and its policy.
+    the JSON contract only declares that transport and its policy. Gustation is
+    contact-gated: a distant visible or smellable food does not create a taste
+    channel. The current maze emits a sugar/water proxy only after a food-contact
+    event, and no gustatory current is enabled by this contract.
     """
 
     olfaction = virtual_olfaction(grid=grid, fly=fly, enemies=enemies)
     vision = fly_vision_state(grid=grid, fly=fly, enemies=enemies)
     mechanosensation = virtual_antennal_mechanosensation(fly=fly, airflow=airflow)
+    gustation = contact_gustation(event=gustatory_event)
 
     agent_input = {
         "vision": {
@@ -147,7 +170,7 @@ def build_sensory_contract(
         "contact_mechanosensation": _reserved_modality(
             "neurofly-contact-mechanosensation-v0"
         ),
-        "gustation": _reserved_modality("neurofly-gustation-v0"),
+        "gustation": _gustatory_agent_input(gustation),
         "thermo_hygrosensation": _reserved_modality(
             "neurofly-thermo-hygrosensation-v0"
         ),
@@ -163,5 +186,6 @@ def build_sensory_contract(
             "vision": vision,
             "olfaction": olfaction,
             "antennal_mechanosensation": mechanosensation,
+            "gustation": gustation,
         },
     }
