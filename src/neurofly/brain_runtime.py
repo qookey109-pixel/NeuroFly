@@ -121,7 +121,7 @@ def _bilateral_prefix_indices(
 
 
 def validated_mechanosensation_current(value: Any) -> float:
-    """Accept only disabled runtime or the evidence-selected engineering current."""
+    """Accept the calibrated runtime current; keep zero as an internal compatibility path."""
 
     try:
         current = float(value)
@@ -138,7 +138,7 @@ def validated_mechanosensation_current(value: Any) -> float:
         abs_tol=1e-12,
     ):
         raise ValueError(
-            "mechanosensation_current must be 0.0 (disabled) or the calibrated "
+            "mechanosensation_current must be 0.0 (internal compatibility) or the calibrated "
             f"engineering current {MECHANOSENSATION_CALIBRATED_CURRENT}"
         )
     return MECHANOSENSATION_CALIBRATED_CURRENT
@@ -227,9 +227,11 @@ class MaleCNSBrain:
     The retained anatomy and visual dynamics come from the pinned Stonkfly
     implementation. NeuroFly converts the omniscient maze renderer into an
     egocentric wide-field visual proxy, separately transduces bilateral virtual
-    odors, and can optionally route strict JO-C/JO-E mechanosensory channels.
-    Mechanosensation is disabled by default and accepts only the frozen-calibrated
-    engineering current; the live curriculum does not enable it implicitly.
+    odors, and routes strict JO-C/JO-E mechanosensory channels at the frozen-
+    calibrated engineering current by default. A missing airflow field produces
+    an unavailable sensory observation rather than fabricating a zero-wind cue.
+    The low-level 0.0 current remains only as an internal compatibility hook for
+    future switching/ablation work; it is not the standard runtime mode.
     """
 
     name = "malecns"
@@ -242,7 +244,7 @@ class MaleCNSBrain:
         pulse_ms: float = 20.0,
         pulse_current: float = 20.0,
         odor_current: float = 8.0,
-        mechanosensation_current: float = 0.0,
+        mechanosensation_current: float = MECHANOSENSATION_CALIBRATED_CURRENT,
         decoder_threshold_hz: float = 2.0,
         learning: bool = True,
         checkpoint: str | Path | None = None,
@@ -357,6 +359,8 @@ class MaleCNSBrain:
             "model": MECHANOSENSATION_MODEL,
             "engineered_proxy": True,
             "enabled": self.mechanosensation_current > 0.0,
+            "default_policy": "calibrated-on-when-sensory-payload-available",
+            "switch_exposed": False,
             "external_current": self.mechanosensation_current,
             "calibrated_current": MECHANOSENSATION_CALIBRATED_CURRENT,
             "calibration_receipt_sha256": MECHANOSENSATION_CALIBRATION_RECEIPT_SHA256,
