@@ -5,6 +5,16 @@ from typing import Any
 
 GUSTATION_MODEL = "neurofly-contact-gustation-v1"
 GUSTATION_CROSSWALK_SCHEMA = "neurofly-gustation-functional-crosswalk-v0.1"
+GUSTATION_CALIBRATION_SCHEMA = "neurofly-gustation-current-calibration-v1"
+GUSTATION_CALIBRATION_RECEIPT_SHA256 = (
+    "595054789f40c1039b8393d32f797db299dad93b4153eecb5547fb9e7fc62610"
+)
+GUSTATION_CALIBRATED_BITTER_CURRENT = 8.0
+GUSTATION_CALIBRATED_SUGAR_WATER_CURRENT = 8.0
+BITTER_GRN_TYPES = ("LB1b",)
+SUGAR_WATER_GRN_TYPES = ("LB3a", "LB3b", "LB3c", "LB3d")
+EXPECTED_BITTER_GRNS = 6
+EXPECTED_SUGAR_WATER_GRNS = 77
 
 # Current maze foods are represented only as a conservative sugar/water contact
 # channel. This is deliberately not called pure sugar because the evidence-backed
@@ -37,8 +47,9 @@ def contact_gustation(
     explicitly by a future physical-contact renderer; when omitted, the current
     maze's ``food``/``energy_food`` contact events map to a unit sugar/water pulse.
 
-    This module defines sensory transduction only. It does not authorize or apply
-    MaleCNS stimulation current.
+    This function only creates the sensory payload. ``stimulation_enabled`` stays
+    false here because the transducer itself never injects current; the calibrated
+    MaleCNS runtime validates this payload separately and owns neural stimulation.
     """
 
     event_name = "" if event is None else str(event)
