@@ -1,3 +1,5 @@
+import inspect
+
 import pytest
 
 from neurofly.brain_runtime import (
@@ -21,7 +23,14 @@ def _strict_payload() -> dict[str, object]:
     }
 
 
-def test_runtime_current_is_disabled_by_zero_or_exact_calibrated_value() -> None:
+def test_runtime_defaults_to_exact_calibrated_current() -> None:
+    default = inspect.signature(MaleCNSBrain.__init__).parameters[
+        "mechanosensation_current"
+    ].default
+    assert default == MECHANOSENSATION_CALIBRATED_CURRENT
+
+
+def test_runtime_current_accepts_calibrated_value_and_reserves_zero_for_internal_use() -> None:
     assert validated_mechanosensation_current(0) == 0.0
     assert (
         validated_mechanosensation_current(MECHANOSENSATION_CALIBRATED_CURRENT)
@@ -65,7 +74,7 @@ def test_runtime_levels_reject_wrong_model_and_out_of_bounds_channels() -> None:
         mechanosensory_channel_levels(payload)
 
 
-def test_unavailable_modality_is_zero_input() -> None:
+def test_unavailable_modality_is_zero_input_without_disabling_runtime() -> None:
     levels = mechanosensory_channel_levels(
         {
             "model": MECHANOSENSATION_MODEL,
@@ -80,7 +89,7 @@ def test_unavailable_modality_is_zero_input() -> None:
     assert levels["jo_e_right"] == 0.0
 
 
-def test_disabled_runtime_never_builds_pulses() -> None:
+def test_explicit_zero_remains_an_internal_compatibility_path() -> None:
     brain = object.__new__(MaleCNSBrain)
     brain.mechanosensation_current = 0.0
     brain.jo_c_left = [101]
@@ -97,7 +106,7 @@ def test_disabled_runtime_never_builds_pulses() -> None:
     assert levels["available"] is True
 
 
-def test_calibrated_runtime_routes_four_channels_to_candidate_groups() -> None:
+def test_default_calibrated_policy_routes_four_channels_to_candidate_groups() -> None:
     brain = object.__new__(MaleCNSBrain)
     brain.mechanosensation_current = MECHANOSENSATION_CALIBRATED_CURRENT
     brain.jo_c_left = [101]
