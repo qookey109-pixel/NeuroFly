@@ -1,0 +1,189 @@
+name: NeuroFly Gustation Current Calibration
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/gustation-calibration.yml"
+      - "data/gustation_functional_crosswalk_v01.json"
+      - "src/neurofly/gustation.py"
+      - "src/neurofly/gustation_calibration.py"
+      - "src/neurofly/brain_runtime.py"
+      - "tests/test_gustation*.py"
+      - "pyproject.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: neurofly-gustation-calibration-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  malecns-gustation-current-sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      SWEEP_DIR: runs/gustation/current-sweep
+      SWEEP_OUTPUT: runs/gustation/gustation-current-sweep.json
+      SELECTED_BITTER: runs/gustation/selected-bitter-calibration.json
+      SELECTED_SUGAR_WATER: runs/gustation/selected-sugar-water-calibration.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache read-only
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            malecns-v1-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare or verify pinned MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$SWEEP_DIR"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+
+      - name: Sweep frozen gustatory current
+        run: |
+          set +e
+          for current in 6 8 10 12 16 20; do
+            python -m neurofly.gustation_calibration \
+              --output "$SWEEP_DIR/current-${current}.json" \
+              --neural-ms 200 \
+              --current "$current"
+            echo "current=$current exit=$?"
+          done
+          set -e
+
+      - name: Select lowest passing current independently per functional class
+        run: |
+          python - <<'PY'
+          import glob
+          import json
+          import os
+          import shutil
+
+          declared = [6.0, 8.0, 10.0, 12.0, 16.0, 20.0]
+          expected_counts = {"bitter": 6, "sugar_water": 77}
+          candidates = []
+          baseline_shas = set()
+          crosswalk_shas = set()
+
+          for path in sorted(glob.glob(os.path.join(os.environ["SWEEP_DIR"], "current-*.json"))):
+              report = json.load(open(path))
+              assert report["schema"] == "neurofly-gustation-calibration-v1"
+              assert report["gustation_model"] == "neurofly-contact-gustation-v1"
+              assert report["crosswalk_schema"] == "neurofly-gustation-functional-crosswalk-v0.1"
+              assert report["runtime_stimulation_enabled"] is False
+              assert report["plasticity_frozen"] is True
+              assert report["matched_baseline_memory"] is True
+              assert report["population_counts_match_audit"] is True
+              for name, count in expected_counts.items():
+                  assert int(report["annotation_report"][name]["neurons"]) == count
+              baseline_shas.add(report["baseline_checkpoint_sha256"])
+              crosswalk_shas.add(report["crosswalk_sha256"])
+              candidates.append({
+                  "current": float(report["gustation_current"]),
+                  "receipt_sha256": report["receipt_sha256"],
+                  "bitter_passed": bool(report["class_gates"]["bitter"]["passed"]),
+                  "sugar_water_passed": bool(report["class_gates"]["sugar_water"]["passed"]),
+                  "bitter_gate": report["class_gates"]["bitter"],
+                  "sugar_water_gate": report["class_gates"]["sugar_water"],
+                  "path": path,
+              })
+
+          candidates.sort(key=lambda item: item["current"])
+          assert [item["current"] for item in candidates] == declared, candidates
+          assert len(baseline_shas) == 1, baseline_shas
+          assert len(crosswalk_shas) == 1, crosswalk_shas
+
+          selected = {}
+          for functional_class in ("bitter", "sugar_water"):
+              passing = [
+                  item for item in candidates
+                  if item[f"{functional_class}_passed"]
+              ]
+              assert passing, {"functional_class": functional_class, "candidates": candidates}
+              selected[functional_class] = passing[0]
+
+          shutil.copyfile(selected["bitter"]["path"], os.environ["SELECTED_BITTER"])
+          shutil.copyfile(selected["sugar_water"]["path"], os.environ["SELECTED_SUGAR_WATER"])
+
+          summary = {
+              "schema": "neurofly-gustation-current-sweep-v1",
+              "predeclared_currents": declared,
+              "selection_policy": "lowest_predeclared_positive_target_response_independently_per_functional_class",
+              "runtime_stimulation_enabled": False,
+              "population_counts": expected_counts,
+              "baseline_checkpoint_sha256": next(iter(baseline_shas)),
+              "crosswalk_sha256": next(iter(crosswalk_shas)),
+              "selected": {
+                  name: {
+                      "current": selected[name]["current"],
+                      "receipt_sha256": selected[name]["receipt_sha256"],
+                      "gate": selected[name][f"{name}_gate"],
+                  }
+                  for name in ("bitter", "sugar_water")
+              },
+              "candidates": [
+                  {key: value for key, value in item.items() if key != "path"}
+                  for item in candidates
+              ],
+          }
+          with open(os.environ["SWEEP_OUTPUT"], "w") as handle:
+              json.dump(summary, handle, indent=2, sort_keys=True)
+              handle.write("\n")
+
+          print("GUSTATION_CURRENT_SWEEP_PASS", json.dumps(summary, sort_keys=True))
+          PY
+
+      - name: Verify selected frozen calibrations
+        run: |
+          python - <<'PY'
+          import json
+          import os
+
+          sweep = json.load(open(os.environ["SWEEP_OUTPUT"]))
+          for functional_class, env_name in (
+              ("bitter", "SELECTED_BITTER"),
+              ("sugar_water", "SELECTED_SUGAR_WATER"),
+          ):
+              report = json.load(open(os.environ[env_name]))
+              selection = sweep["selected"][functional_class]
+              assert report["runtime_stimulation_enabled"] is False
+              assert report["plasticity_frozen"] is True
+              assert report["matched_baseline_memory"] is True
+              assert report["class_gates"][functional_class]["passed"] is True
+              assert float(report["gustation_current"]) == float(selection["current"])
+              assert report["receipt_sha256"] == selection["receipt_sha256"]
+              print(
+                  "GUSTATION_CLASS_CALIBRATION_PASS",
+                  functional_class,
+                  "current=", selection["current"],
+                  "receipt=", selection["receipt_sha256"],
+              )
+          PY
+
+      - name: Publish compact gustation calibration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-gustation-calibration-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            runs/gustation/*.json
+            runs/gustation/current-sweep/*.json
+          if-no-files-found: warn
+          retention-days: 3
