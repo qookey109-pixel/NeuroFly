@@ -4,12 +4,16 @@ from dataclasses import dataclass
 from typing import Any
 
 from .goal_training import GoalMazeEnvironment
+from .mechanosensation import MECHANOSENSATION_MODEL, virtual_antennal_mechanosensation
 from .olfaction import virtual_olfaction
+from .sensory_contract import assert_unprivileged_agent_input
 
 
 CURRICULUM_VERSION = "neurofly-curriculum-v2"
 ANTI_STALL_POLICY = "neurofly-curriculum-anti-stall-v1"
 ANTI_STALL_STATIONARY_LIMIT = 4
+AMBIENT_AIRFLOW_POLICY = "neurofly-curriculum-ambient-airflow-v1"
+AMBIENT_AIRFLOW_WORLD = (0.0, 1.0)
 
 
 @dataclass(frozen=True)
@@ -41,6 +45,11 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
     It never chooses a path or reads a target route. It only prevents indefinite
     zero-displacement loops while preserving the raw MaleCNS action separately
     from the action actually applied to the environment.
+
+    V0.7 also provides a fixed, versioned ambient world airflow. The airflow is
+    independent of food, enemies, routes and rewards. Only the fly-relative
+    JO-C/JO-E transduction enters the normal brain context; the world vector is
+    retained only in persistence metadata for reproducibility.
     """
 
     def __init__(self, *, seed: int = 109) -> None:
@@ -68,6 +77,32 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
         if not self.enemies:
             return 1_000_000
         return super().threat_distance(x=x, y=y)
+
+    @staticmethod
+    def ambient_airflow_world() -> dict[str, float]:
+        """Return the fixed world airflow without consulting game targets or state."""
+        return {
+            "x": AMBIENT_AIRFLOW_WORLD[0],
+            "y": AMBIENT_AIRFLOW_WORLD[1],
+        }
+
+    def _ambient_mechanosensation(self) -> dict[str, Any]:
+        """Return only neural-eligible JO-C/E channels for the current fly heading."""
+        raw = virtual_antennal_mechanosensation(
+            fly=self.fly,
+            airflow=self.ambient_airflow_world(),
+        )
+        payload = {
+            "model": raw["model"],
+            "engineered_proxy": bool(raw.get("engineered_proxy", True)),
+            "available": bool(raw["available"]),
+            "encoding": raw.get("encoding"),
+            "left": dict(raw["left"]),
+            "right": dict(raw["right"]),
+        }
+        assert payload["model"] == MECHANOSENSATION_MODEL
+        assert_unprivileged_agent_input({"antennal_mechanosensation": payload})
+        return payload
 
     def _reset_anti_stall(self) -> None:
         self._stationary_agent_steps = 0
@@ -286,6 +321,8 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
                     fly=self.fly,
                     enemies=self.enemies,
                 ),
+                "ambient_airflow_policy": AMBIENT_AIRFLOW_POLICY,
+                "antennal_mechanosensation": self._ambient_mechanosensation(),
             }
         )
         return data
@@ -306,6 +343,8 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
                 "applied_action": self.last_applied_action,
                 "action_overridden": self.last_action_overridden,
                 "override_reason": self.last_override_reason,
+                "ambient_airflow_policy": AMBIENT_AIRFLOW_POLICY,
+                "ambient_airflow_world": self.ambient_airflow_world(),
             }
         )
         return data
