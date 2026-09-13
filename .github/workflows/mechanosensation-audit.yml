@@ -1,0 +1,87 @@
+name: NeuroFly Mechanosensation Annotation Audit
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/mechanosensation-audit.yml"
+      - "src/neurofly/mechanosensation.py"
+      - "src/neurofly/mechanosensation_audit.py"
+      - "src/neurofly/sensory_contract.py"
+      - "tests/test_mechanosensation*.py"
+      - "pyproject.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: neurofly-mechanosensation-audit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  malecns-jon-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      AUDIT_OUTPUT: runs/mechanosensation/mechanosensation-annotation-audit.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache read-only
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            malecns-v1-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare or verify pinned MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$(dirname "$AUDIT_OUTPUT")"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+
+      - name: Audit JO-C and JO-E candidate annotations
+        run: |
+          python -m neurofly mechanosensation-audit --output "$AUDIT_OUTPUT"
+          python - <<'PY'
+          import json
+          import os
+
+          report = json.load(open(os.environ['AUDIT_OUTPUT']))
+          assert report['schema'] == 'neurofly-mechanosensation-annotation-audit-v1'
+          assert report['mechanosensation_model'] == 'neurofly-antennal-mechanosensation-v0.1'
+          assert report['stimulation_enabled'] is False
+          assert report['passed'] is True
+          for family in ('JO-C', 'JO-E'):
+              group = report['families'][family]
+              assert int(group['total']) > 0
+              assert int(group['left']) > 0
+              assert int(group['right']) > 0
+              assert int(group['unresolved']) == 0
+          print(
+              'MECHANOSENSATION_ANNOTATION_AUDIT_PASS',
+              'JO-C=', report['families']['JO-C'],
+              'JO-E=', report['families']['JO-E'],
+          )
+          PY
+
+      - name: Publish compact audit receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-mechanosensation-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runs/mechanosensation/mechanosensation-annotation-audit.json
+          if-no-files-found: warn
+          retention-days: 3
