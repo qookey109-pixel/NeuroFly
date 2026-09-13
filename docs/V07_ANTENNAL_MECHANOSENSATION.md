@@ -1,6 +1,6 @@
 # V0.7 — Antennal mechanosensation / airflow
 
-Status: **engineering proxy + annotation-gated integration; live MaleCNS stimulation not yet enabled**
+Status: **engineering proxy; annotation gate + frozen current-routing calibration verified; live MaleCNS stimulation still disabled**
 
 NeuroFly's sensory policy is that the agent receives fly-accessible transduction rather than privileged world truth. V0.7 extends that rule from vision and olfaction to antennal mechanosensation.
 
@@ -57,9 +57,9 @@ V0.1 uses a deliberately simple mapping:
 
 This is a testable engineering approximation. It is **not** a validated biomechanical model of the arista/pedicel/Johnston's-organ system.
 
-## MaleCNS annotation gate
+## MaleCNS annotation gate — verified
 
-Before any mechanosensory current is injected into MaleCNS, run:
+Run:
 
 ```bash
 python -m neurofly mechanosensation-audit \
@@ -74,34 +74,56 @@ Laterality policy:
 2. otherwise use only a curated `_L` / `_R` instance suffix;
 3. never infer side from body ID, coordinates or morphology.
 
-The audit passes only when:
+The prepared MaleCNS v1.0 evidence run verified:
 
-- JO-C candidates exist on both left and right;
-- JO-E candidates exist on both left and right;
-- every candidate used by the broad family query has resolvable laterality.
+- JO-C: 68 total = 46 left + 22 right, 0 unresolved;
+- JO-E: 267 total = 157 left + 110 right, 0 unresolved;
+- retained graph: 166,700 neurons / 25,582,938 directed edges.
 
-A PASS still reports `stimulation_enabled: false`. It validates annotation availability only.
+This establishes candidate annotation availability only.
+
+## Frozen current-routing calibration — verified
+
+The first full calibration at engineering current `8.0` was intentionally preserved as a FAIL because all four crosswind gates were subthreshold. See [`experiments/V07_MECHANOSENSATION_CALIBRATION_ATTEMPT_1.md`](experiments/V07_MECHANOSENSATION_CALIBRATION_ATTEMPT_1.md).
+
+A subsequent predeclared current sweep tested `8.0`, `10.0`, `12.0`, and `16.0` with a fixed policy: select the **lowest** current at which all eight frozen-weight response gates pass.
+
+Result:
+
+- 8.0 → 4/8 gates, FAIL;
+- **10.0 → 8/8 gates, PASS and selected**;
+- 12.0 → 8/8 gates, PASS;
+- 16.0 → 8/8 gates, PASS.
+
+At selected current `10.0`, the expected headwind/tailwind bilateral populations were active above baseline and both left/right crosswind conditions produced the predeclared opponent side selectivity. The selected calibration receipt is:
+
+`b3a84b5c46e97a461d4dea0673a7db216f1c810486a8d7044020c7d4d85b52cd`
+
+Full frozen evidence is recorded in [`experiments/V07_MECHANOSENSATION_CURRENT_SWEEP.md`](experiments/V07_MECHANOSENSATION_CURRENT_SWEEP.md).
+
+This verifies the **engineering current-routing behavior** under matched frozen weights. It does not biologically calibrate the current or validate natural antennal biomechanics.
 
 ## Deliberate integration sequence
 
 The required order is:
 
-1. **Transduction contract** — world airflow becomes bounded bilateral JO-C/E proxy channels.
-2. **Annotation audit** — verify exact MaleCNS candidate populations and laterality.
-3. **Frozen-weight calibration** — after the audit passes, add matched conditions such as airflow-off, headwind, tailwind, left/right crosswind and measure the targeted population response without plasticity.
-4. **Opt-in runtime integration** — only after calibration passes may a versioned experiment inject mechanosensory current into MaleCNS.
-5. **Training comparison** — compare wind-on versus wind-off under controlled seeds and held-out evaluation before claiming behavioral benefit.
+1. ✅ **Transduction contract** — world airflow becomes bounded bilateral JO-C/E proxy channels.
+2. ✅ **Annotation audit** — exact MaleCNS JO-C/JO-E candidate populations are bilaterally resolvable.
+3. ✅ **Frozen-weight calibration** — matched airflow-off/headwind/tailwind/crosswind routing passes at the selected engineering current 10.0.
+4. **Opt-in runtime integration** — next step; disabled by default and allowed to consume only strict sensory-contract JO-C/E channels.
+5. **Controlled behavioral comparison** — wind-on versus wind-off with fixed seeds and held-out evaluation before any behavioral-benefit claim.
+6. **Live curriculum consideration** — only after controlled evidence; not part of current V0.7 evidence.
 
-Current V0.7 work stops before step 3. Existing live curriculum semantics therefore remain unchanged.
+Existing live curriculum semantics remain unchanged.
 
 ## Scientific boundary
 
-NeuroFly should say:
+NeuroFly may now say:
 
-> `JO-C*` / `JO-E*` are anatomically present candidate MaleCNS pathways, and an engineered airflow-to-antennal-deflection adapter is being tested against them.
+> `JO-C*` / `JO-E*` are anatomically present candidate MaleCNS pathways, and the current engineered airflow-to-antennal-deflection adapter has a reproducible frozen-weight current-routing calibration in the pinned MaleCNS runtime.
 
-It should **not** yet say:
+It should **not** say:
 
 > NeuroFly has a biologically validated fruit-fly wind sense.
 
-That stronger statement would require validated transduction, neural response calibration and behavioral controls.
+That stronger statement would still require better antennal transduction validation plus controlled behavioral evidence.
