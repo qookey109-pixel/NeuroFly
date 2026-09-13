@@ -1,0 +1,87 @@
+name: NeuroFly Gustation Functional Crosswalk Audit
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/gustation-functional-crosswalk-audit.yml"
+      - "data/gustation_functional_crosswalk_v01.json"
+      - "src/neurofly/gustation_crosswalk_audit.py"
+      - "tests/test_gustation_crosswalk_audit.py"
+      - "pyproject.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: neurofly-gustation-functional-crosswalk-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  malecns-gustation-crosswalk-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      AUDIT_OUTPUT: runs/gustation/gustation-functional-crosswalk-audit.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache read-only
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            malecns-v1-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare or verify pinned MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$(dirname "$AUDIT_OUTPUT")"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+
+      - name: Audit conservative functional crosswalk
+        run: |
+          python -m neurofly.gustation_crosswalk_audit --output "$AUDIT_OUTPUT"
+          python - <<'PY'
+          import json
+          import os
+
+          report = json.load(open(os.environ["AUDIT_OUTPUT"]))
+          assert report["schema"] == "neurofly-gustation-functional-crosswalk-audit-v1"
+          assert report["crosswalk_schema"] == "neurofly-gustation-functional-crosswalk-v0.1"
+          assert report["stimulation_enabled"] is False
+          assert report["passed"] is True
+          assert report["missing_crosswalk_types"] == []
+          assert report["non_gustatory_mapped_rows"] == {}
+          assert int(report["mapped_neurons"]) > 0
+          assert int(report["unresolved_gustatory_neurons"]) > 0
+          assert set(report["functional_class_counts"]) == {"bitter", "sugar_water"}
+          print(
+              "GUSTATION_FUNCTIONAL_CROSSWALK_AUDIT_PASS",
+              "mapped_types=", report["mapped_type_counts"],
+              "functional_classes=", report["functional_class_counts"],
+              "mapped=", report["mapped_neurons"],
+              "unresolved=", report["unresolved_gustatory_neurons"],
+          )
+          PY
+
+      - name: Publish compact crosswalk evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-gustation-functional-crosswalk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runs/gustation/gustation-functional-crosswalk-audit.json
+          if-no-files-found: warn
+          retention-days: 3
