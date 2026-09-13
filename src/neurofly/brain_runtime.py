@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from .olfaction import DANGER_ORN_TYPE, FOOD_ORN_TYPE, OLFACTION_MODEL
+from .vision import VISION_MODEL
+from .vision_adapter import retinalize_topdown_rgb
 
 
 @dataclass(slots=True)
@@ -111,8 +113,11 @@ class MaleCNSBrain:
     """Maze decoder on top of Stonkfly's pinned MaleCNS VisualMemoryBrain.
 
     The retained anatomy and visual dynamics come from the pinned Stonkfly
-    implementation. The maze action mapping and virtual odor transduction below
-    are NeuroFly-specific engineered interfaces rather than biological claims.
+    implementation. NeuroFly now converts the omniscient maze renderer into an
+    egocentric wide-field visual proxy before it reaches the retained visual
+    system, and separately transduces bilateral virtual odors. These adapters are
+    engineered interfaces inspired by fly sensory biology, not claims of exact
+    retinal/olfactory physiology or a conscious animal reconstruction.
     """
 
     name = "malecns"
@@ -152,6 +157,7 @@ class MaleCNSBrain:
         self.learning = bool(learning)
         self.brain = VisualMemoryBrain()
         self.brain.weights_frozen = not self.learning
+        self._last_visual_rgb: Any | None = None
 
         a = annotations(self.brain.ids)
         types = a.type.fillna("")
@@ -203,6 +209,17 @@ class MaleCNSBrain:
                 **danger_side_report,
             },
             "max_external_current": self.odor_current,
+            "validated": False,
+        }
+        self.vision_report = {
+            "model": VISION_MODEL,
+            "engineered_proxy": True,
+            "input_policy": "egocentric-wide-panorama-not-topdown-map",
+            "retained_visual_backend": "stonkfly.VisualMemoryBrain",
+            "luminance_path": "mapped R1-R6 brightness inputs",
+            "color_path": "mapped R8 blue-green proxy inputs",
+            "motion_policy": "successive retinal frames drive retained temporal visual dynamics",
+            "looming_policy": "near objects occupy increasing retinal area",
             "validated": False,
         }
         self.checkpoint_path = Path(checkpoint) if checkpoint else None
@@ -277,6 +294,46 @@ class MaleCNSBrain:
                 pulses.append((indices, self.odor_current * level))
         return pulses, levels
 
+    def _visual_input(
+        self,
+        frame: Any,
+        context: dict[str, Any] | None,
+    ) -> tuple[Any, dict[str, Any]]:
+        np = self.np
+        raw_rgb = np.asarray(frame, dtype=np.uint8)
+        if raw_rgb.ndim != 3 or raw_rgb.shape[2] != 3:
+            raise ValueError("MaleCNSBrain requires an HxWx3 RGB frame")
+
+        fly = None if context is None else context.get("fly")
+        enemies = [] if context is None else (context.get("enemies") or [])
+        rgb, vision = retinalize_topdown_rgb(
+            raw_rgb,
+            fly=fly if isinstance(fly, dict) else None,
+            enemies=[dict(item) for item in enemies if isinstance(item, dict)],
+        )
+
+        visual_change = 0.0
+        visual_left_change = 0.0
+        visual_right_change = 0.0
+        if self._last_visual_rgb is not None and self._last_visual_rgb.shape == rgb.shape:
+            delta = np.abs(rgb.astype(np.int16) - self._last_visual_rgb.astype(np.int16))
+            delta = delta.mean(axis=2) / 255.0
+            visual_change = float(delta.mean())
+            half = max(1, delta.shape[1] // 2)
+            visual_left_change = float(delta[:, :half].mean())
+            visual_right_change = float(delta[:, half:].mean())
+        self._last_visual_rgb = rgb.copy()
+
+        vision = dict(vision)
+        vision.update(
+            {
+                "change": round(visual_change, 8),
+                "left_change": round(visual_left_change, 8),
+                "right_change": round(visual_right_change, 8),
+            }
+        )
+        return rgb, vision
+
     def decide(
         self,
         frame: Any,
@@ -288,9 +345,7 @@ class MaleCNSBrain:
             raise ValueError(f"Unknown reinforcement: {reinforcement}")
 
         np = self.np
-        rgb = np.asarray(frame, dtype=np.uint8)
-        if rgb.ndim != 3 or rgb.shape[2] != 3:
-            raise ValueError("MaleCNSBrain requires an HxWx3 RGB frame")
+        rgb, vision = self._visual_input(frame, context)
 
         b = self.brain
         odor_pulses, odor_levels = self._olfactory_stimulation(context)
@@ -333,6 +388,12 @@ class MaleCNSBrain:
             "aversive_spikes": int(counts[b.circuit["aversive"]].sum()),
             "kc_spikes": int(counts[b.circuit["kc"]].sum()),
             "total_spikes": int(counts.sum()),
+            "vision_model": VISION_MODEL,
+            "vision": vision,
+            "visual_change": vision.get("change", 0.0),
+            "visual_left_change": vision.get("left_change", 0.0),
+            "visual_right_change": vision.get("right_change", 0.0),
+            "vision_report": self.vision_report,
             "olfaction_model": OLFACTION_MODEL,
             "olfaction": odor_levels,
             "food_odor_spikes": int(
