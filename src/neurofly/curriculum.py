@@ -13,7 +13,7 @@ CURRICULUM_VERSION = "neurofly-curriculum-v2"
 ANTI_STALL_POLICY = "neurofly-curriculum-anti-stall-v1"
 ANTI_STALL_STATIONARY_LIMIT = 4
 AMBIENT_AIRFLOW_POLICY = "neurofly-curriculum-ambient-airflow-v1"
-AMBIENT_AIRFLOW_WORLD = (0.0, 0.6)
+AMBIENT_AIRFLOW_WORLD = (0.0, 1.0)
 
 
 @dataclass(frozen=True)
