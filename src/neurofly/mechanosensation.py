@@ -5,6 +5,10 @@ from typing import Any
 
 
 MECHANOSENSATION_MODEL = "neurofly-antennal-mechanosensation-v0.1"
+MECHANOSENSATION_CALIBRATED_CURRENT = 10.0
+MECHANOSENSATION_CALIBRATION_RECEIPT_SHA256 = (
+    "b3a84b5c46e97a461d4dea0673a7db216f1c810486a8d7044020c7d4d85b52cd"
+)
 
 # MaleCNS v1.0 uses JO-* cell-type names for Johnston's-organ neurons. Published
 # Drosophila physiology broadly associates JO-C / JO-E with tonic antennal
