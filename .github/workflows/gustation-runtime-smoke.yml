@@ -1,0 +1,183 @@
+name: NeuroFly Gustation Runtime Smoke
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/gustation-runtime-smoke.yml"
+      - "data/gustation_current_calibration_v1.json"
+      - "src/neurofly/brain_runtime.py"
+      - "src/neurofly/goal_training.py"
+      - "src/neurofly/gustation.py"
+      - "src/neurofly/curriculum.py"
+      - "tests/test_gustation_runtime.py"
+      - "pyproject.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: neurofly-gustation-runtime-smoke-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  malecns-gustation-runtime-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      RECEIPT: runs/gustation/gustation-runtime-smoke.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache read-only
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            malecns-v1-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare or verify pinned MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$(dirname "$RECEIPT")"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+
+      - name: Execute strict gustation plus ambient-airflow runtime smoke
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+
+          from neurofly.brain_runtime import MaleCNSBrain
+          from neurofly.curriculum import CurriculumMazeEnvironment
+          from neurofly.gustation import (
+              EXPECTED_BITTER_GRNS,
+              EXPECTED_SUGAR_WATER_GRNS,
+              GUSTATION_CALIBRATED_BITTER_CURRENT,
+              GUSTATION_CALIBRATED_SUGAR_WATER_CURRENT,
+              GUSTATION_CALIBRATION_RECEIPT_SHA256,
+              GUSTATION_MODEL,
+              contact_gustation,
+          )
+          from neurofly.mechanosensation import MECHANOSENSATION_MODEL
+          from neurofly.sensory_contract import assert_unprivileged_agent_input
+
+          env = CurriculumMazeEnvironment(seed=109)
+          frame = env.render_rgb()
+          base_context = env.snapshot(include_grid=False)
+          mech = base_context["antennal_mechanosensation"]
+          assert mech["model"] == MECHANOSENSATION_MODEL
+          assert mech["available"] is True
+
+          no_contact = dict(base_context)
+          no_contact["gustation"] = contact_gustation()
+          assert_unprivileged_agent_input({"gustation": no_contact["gustation"]})
+
+          probe = MaleCNSBrain(learning=False, neural_ms=200.0)
+          no_pulses, no_levels = probe._gustatory_stimulation(no_contact)
+          assert no_levels["contact"] is False
+          assert no_pulses == []
+
+          conditions = {}
+          for name, taste in (
+              ("sugar_water", contact_gustation(event="food")),
+              ("bitter", contact_gustation(bitter=1.0)),
+          ):
+              context = dict(base_context)
+              context["gustation"] = taste
+              assert_unprivileged_agent_input({"gustation": taste})
+
+              brain = MaleCNSBrain(learning=False, neural_ms=200.0)
+              memory_before = brain.brain.memory()["sha256"]
+              decision = brain.decide(frame, reinforcement="none", context=context)
+              memory_after = brain.brain.memory()["sha256"]
+
+              levels = decision.telemetry["gustation"]
+              spikes = decision.telemetry["gustation_spikes"]
+              gustation_report = decision.telemetry["gustation_report"]
+              mech_levels = decision.telemetry["antennal_mechanosensation"]
+              mech_spikes = decision.telemetry["mechanosensation_spikes"]
+
+              assert levels["available"] is True
+              assert levels["contact"] is True
+              assert levels[name] == 1.0
+              assert int(spikes[name]) > 0
+              assert gustation_report["calibration_receipt_sha256"] == GUSTATION_CALIBRATION_RECEIPT_SHA256
+              assert gustation_report["taste_is_reinforcement"] is False
+              assert gustation_report["unresolved_gustatory_neurons_used"] == 0
+              assert gustation_report["bitter"]["neurons"] == EXPECTED_BITTER_GRNS
+              assert gustation_report["sugar_water"]["neurons"] == EXPECTED_SUGAR_WATER_GRNS
+              assert float(gustation_report["bitter"]["external_current"]) == GUSTATION_CALIBRATED_BITTER_CURRENT
+              assert float(gustation_report["sugar_water"]["external_current"]) == GUSTATION_CALIBRATED_SUGAR_WATER_CURRENT
+
+              # User decision: airflow remains active while gustation is routed.
+              assert mech_levels["available"] is True
+              assert int(mech_spikes["jo_c_left"]) > 0
+              assert int(mech_spikes["jo_e_right"]) > 0
+              assert memory_before == memory_after
+
+              conditions[name] = {
+                  "gustation_levels": levels,
+                  "gustation_spikes": spikes,
+                  "mechanosensation_levels": mech_levels,
+                  "mechanosensation_spikes": mech_spikes,
+                  "action": decision.action,
+                  "memory_sha256_before": memory_before,
+                  "memory_sha256_after": memory_after,
+              }
+
+          receipt = {
+              "schema": "neurofly-gustation-runtime-smoke-v1",
+              "passed": True,
+              "seed": 109,
+              "gustation_model": GUSTATION_MODEL,
+              "calibration_receipt_sha256": GUSTATION_CALIBRATION_RECEIPT_SHA256,
+              "bitter_current": GUSTATION_CALIBRATED_BITTER_CURRENT,
+              "sugar_water_current": GUSTATION_CALIBRATED_SUGAR_WATER_CURRENT,
+              "bitter_neurons": EXPECTED_BITTER_GRNS,
+              "sugar_water_neurons": EXPECTED_SUGAR_WATER_GRNS,
+              "no_contact_direct_pulses": 0,
+              "ambient_airflow_active_during_taste": True,
+              "taste_is_reinforcement": False,
+              "unresolved_gustatory_neurons_used": 0,
+              "conditions": conditions,
+              "biological_validation": False,
+              "behavioral_benefit_validated": False,
+          }
+          digest = hashlib.sha256(
+              json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
+          ).hexdigest()
+          receipt["receipt_sha256"] = digest
+          with open(os.environ["RECEIPT"], "w") as handle:
+              json.dump(receipt, handle, indent=2, sort_keys=True)
+              handle.write("\n")
+
+          print(
+              "GUSTATION_RUNTIME_SMOKE_PASS",
+              "sugar_water_spikes=", conditions["sugar_water"]["gustation_spikes"],
+              "bitter_spikes=", conditions["bitter"]["gustation_spikes"],
+              "receipt=", digest,
+          )
+          PY
+
+      - name: Publish compact gustation runtime receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-gustation-runtime-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runs/gustation/gustation-runtime-smoke.json
+          if-no-files-found: warn
+          retention-days: 3
