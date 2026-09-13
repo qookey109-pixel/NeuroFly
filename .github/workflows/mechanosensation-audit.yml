@@ -1,4 +1,4 @@
-name: NeuroFly Mechanosensation Annotation Audit
+name: NeuroFly Mechanosensation Evidence
 
 on:
   pull_request:
@@ -7,6 +7,7 @@ on:
       - ".github/workflows/mechanosensation-audit.yml"
       - "src/neurofly/mechanosensation.py"
       - "src/neurofly/mechanosensation_audit.py"
+      - "src/neurofly/mechanosensation_calibration.py"
       - "src/neurofly/sensory_contract.py"
       - "tests/test_mechanosensation*.py"
       - "pyproject.toml"
@@ -16,16 +17,17 @@ permissions:
   contents: read
 
 concurrency:
-  group: neurofly-mechanosensation-audit-${{ github.event.pull_request.number || github.ref }}
+  group: neurofly-mechanosensation-evidence-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  malecns-jon-audit:
+  malecns-jon-evidence:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
       STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
       AUDIT_OUTPUT: runs/mechanosensation/mechanosensation-annotation-audit.json
+      CALIBRATION_OUTPUT: runs/mechanosensation/mechanosensation-calibration.json
 
     steps:
       - uses: actions/checkout@v4
@@ -77,11 +79,38 @@ jobs:
           )
           PY
 
-      - name: Publish compact audit receipt
+      - name: Calibrate frozen-weight JO-C and JO-E response
+        run: |
+          python -m neurofly.mechanosensation_calibration \
+            --output "$CALIBRATION_OUTPUT" \
+            --neural-ms 200 \
+            --current 8
+          python - <<'PY'
+          import json
+          import os
+
+          report = json.load(open(os.environ['CALIBRATION_OUTPUT']))
+          assert report['schema'] == 'neurofly-mechanosensation-calibration-v1'
+          assert report['mechanosensation_model'] == 'neurofly-antennal-mechanosensation-v0.1'
+          assert report['runtime_stimulation_enabled'] is False
+          assert report['plasticity_frozen'] is True
+          assert report['matched_baseline_memory'] is True
+          assert report['passed'] is True
+          assert len(report['gates']) == 8
+          assert all(gate['passed'] for gate in report['gates'])
+          print(
+              'MECHANOSENSATION_FROZEN_CALIBRATION_PASS',
+              report['receipt_sha256'],
+          )
+          PY
+
+      - name: Publish compact mechanosensation evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: neurofly-mechanosensation-audit-${{ github.run_id }}-${{ github.run_attempt }}
-          path: runs/mechanosensation/mechanosensation-annotation-audit.json
+          name: neurofly-mechanosensation-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            runs/mechanosensation/mechanosensation-annotation-audit.json
+            runs/mechanosensation/mechanosensation-calibration.json
           if-no-files-found: warn
           retention-days: 3
