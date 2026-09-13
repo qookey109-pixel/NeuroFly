@@ -120,6 +120,19 @@ jobs:
           assert state['curriculum_version'] == 'neurofly-curriculum-v2'
           assert state['olfaction_model'] == 'neurofly-virtual-olfaction-v1'
           assert int(state['world_states_seen']) > 0
+
+          behavior = state.get('behavior_summary') or {}
+          assert behavior.get('schema') == 'neurofly-behavior-evidence-v1'
+          assert int(behavior['decisions']) == int(state['steps'])
+          assert int(behavior['navigable_cells']) > 0
+          assert 0 <= int(behavior['unique_cells']) <= int(behavior['navigable_cells'])
+          assert 0.0 <= float(behavior['coverage_ratio']) <= 1.0
+          assert 0.0 <= float(behavior['override_rate']) <= 1.0
+          assert float(behavior['food_per_100_decisions']) >= 0.0
+          assert sum(int(v) for v in behavior['raw_action_histogram'].values()) == int(state['steps'])
+          assert sum(int(v) for v in behavior['applied_action_histogram'].values()) == int(state['steps'])
+          assert sum(int(v) for v in behavior['override_reasons'].values()) == int(behavior['overrides'])
+
           assert state['trajectory']
           assert all(s['brain']['backend'] == 'malecns' for s in state['trajectory'])
           assert all(int(s['brain']['telemetry']['total_spikes']) > 0 for s in state['trajectory'])
@@ -159,7 +172,7 @@ jobs:
           assert final.get('olfaction', {}).get('model') == 'neurofly-virtual-olfaction-v1'
           assert len(final.get('enemies', [])) >= 1
           print(
-              'CURRICULUM_V3_OLFACTION_GATE_PASS',
+              'CURRICULUM_V3_OLFACTION_BEHAVIOR_GATE_PASS',
               state['source_receipt_sha256'],
               'stage=', stage,
               'stage_name=', final['curriculum_stage_name'],
@@ -168,6 +181,11 @@ jobs:
               'deaths=', final.get('total_deaths', 0),
               'enemies=', len(final.get('enemies', [])),
               'world_states=', state['world_states_seen'],
+              'batch_food=', behavior['batch_food'],
+              'food_per_100=', behavior['food_per_100_decisions'],
+              'coverage=', behavior['coverage_ratio'],
+              'overrides=', behavior['overrides'],
+              'override_rate=', behavior['override_rate'],
               'food_orn=', odor_report['food'],
               'danger_orn=', odor_report['danger'],
           )
