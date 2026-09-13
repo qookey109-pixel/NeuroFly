@@ -5,6 +5,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
+from .gustation import (
+    BITTER_GRN_TYPES,
+    EXPECTED_BITTER_GRNS,
+    EXPECTED_SUGAR_WATER_GRNS,
+    GUSTATION_CALIBRATED_BITTER_CURRENT,
+    GUSTATION_CALIBRATED_SUGAR_WATER_CURRENT,
+    GUSTATION_CALIBRATION_RECEIPT_SHA256,
+    GUSTATION_CROSSWALK_SCHEMA,
+    GUSTATION_MODEL,
+    SUGAR_WATER_GRN_TYPES,
+)
 from .mechanosensation import (
     JO_C_TYPE_PREFIX,
     JO_E_TYPE_PREFIX,
@@ -120,6 +131,44 @@ def _bilateral_prefix_indices(
     return left, right, report
 
 
+def _exact_gustatory_indices(
+    np: Any,
+    annotations: Any,
+    neuron_types: tuple[str, ...],
+    *,
+    expected_count: int,
+    label: str,
+) -> tuple[Any, dict[str, Any]]:
+    """Resolve exact evidence-backed GRN types and reject annotation drift."""
+
+    types = annotations.type.fillna("").astype(str)
+    if "class" not in annotations.columns:
+        raise RuntimeError("MaleCNS gustation routing requires curator class annotations")
+    classes = annotations["class"].fillna("").astype(str).str.lower()
+    type_mask = types.isin(neuron_types)
+    non_gustatory = type_mask & ~classes.eq("gustatory")
+    if int(non_gustatory.sum()) != 0:
+        raise RuntimeError(
+            f"Mapped {label} GRN types include non-gustatory rows: {int(non_gustatory.sum())}"
+        )
+    mask = type_mask & classes.eq("gustatory")
+    indices = np.flatnonzero(mask.to_numpy())
+    found_types = sorted(set(types[mask].tolist()))
+    missing_types = sorted(set(neuron_types) - set(found_types))
+    if missing_types:
+        raise RuntimeError(f"Mapped {label} GRN types missing from MaleCNS: {missing_types}")
+    if len(indices) != expected_count:
+        raise RuntimeError(
+            f"Mapped {label} GRN count drifted: expected={expected_count} actual={len(indices)}"
+        )
+    return indices, {
+        "functional_class": label,
+        "types": list(neuron_types),
+        "neurons": int(len(indices)),
+        "membership_policy": "exact-type-and-curated-gustatory-class",
+    }
+
+
 def validated_mechanosensation_current(value: Any) -> float:
     """Accept the calibrated runtime current; keep zero as an internal compatibility path."""
 
@@ -142,6 +191,24 @@ def validated_mechanosensation_current(value: Any) -> float:
             f"engineering current {MECHANOSENSATION_CALIBRATED_CURRENT}"
         )
     return MECHANOSENSATION_CALIBRATED_CURRENT
+
+
+def _validated_gustation_current(value: Any, *, expected: float, name: str) -> float:
+    """Accept only zero or the frozen calibrated gustatory engineering current."""
+
+    try:
+        current = float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be finite") from exc
+    if not math.isfinite(current) or current < 0:
+        raise ValueError(f"{name} must be finite and nonnegative")
+    if current == 0.0:
+        return 0.0
+    if not math.isclose(current, expected, rel_tol=0.0, abs_tol=1e-12):
+        raise ValueError(
+            f"{name} must be 0.0 (internal compatibility) or calibrated current {expected}"
+        )
+    return expected
 
 
 def mechanosensory_channel_levels(payload: dict[str, Any] | None) -> dict[str, Any]:
@@ -187,6 +254,51 @@ def mechanosensory_channel_levels(payload: dict[str, Any] | None) -> dict[str, A
     }
 
 
+def gustatory_channel_levels(payload: dict[str, Any] | None) -> dict[str, Any]:
+    """Validate strict contact-only functional gustatory input."""
+
+    empty = {
+        "available": False,
+        "contact": False,
+        "bitter": 0.0,
+        "sugar_water": 0.0,
+    }
+    if not payload:
+        return empty
+
+    assert_unprivileged_agent_input({"gustation": payload})
+    if payload.get("model") != GUSTATION_MODEL:
+        raise ValueError("Unsupported NeuroFly gustation model")
+    if payload.get("crosswalk_schema") != GUSTATION_CROSSWALK_SCHEMA:
+        raise ValueError("Unsupported NeuroFly gustation crosswalk schema")
+    if not payload.get("available", True):
+        return {**empty, "status": str(payload.get("status") or "unavailable")}
+
+    channels = payload.get("channels") or {}
+
+    def level(name: str) -> float:
+        try:
+            number = float(channels.get(name, 0.0))
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError(f"Invalid gustation {name} intensity") from exc
+        if not math.isfinite(number) or not 0.0 <= number <= 1.0:
+            raise ValueError(f"Gustation {name} intensity must be within [0, 1]")
+        return number
+
+    bitter = level("bitter")
+    sugar_water = level("sugar_water")
+    contact = bool(payload.get("contact", False))
+    has_signal = bitter > 0.0 or sugar_water > 0.0
+    if contact != has_signal:
+        raise ValueError("Gustation contact flag must exactly match nonzero taste channels")
+    return {
+        "available": True,
+        "contact": contact,
+        "bitter": bitter,
+        "sugar_water": sugar_water,
+    }
+
+
 class DemoBrain:
     """Small deterministic baseline used by CI and UI smoke tests."""
 
@@ -224,14 +336,11 @@ class DemoBrain:
 class MaleCNSBrain:
     """Maze decoder on top of Stonkfly's pinned MaleCNS VisualMemoryBrain.
 
-    The retained anatomy and visual dynamics come from the pinned Stonkfly
-    implementation. NeuroFly converts the omniscient maze renderer into an
-    egocentric wide-field visual proxy, separately transduces bilateral virtual
-    odors, and routes strict JO-C/JO-E mechanosensory channels at the frozen-
-    calibrated engineering current by default. A missing airflow field produces
-    an unavailable sensory observation rather than fabricating a zero-wind cue.
-    The low-level 0.0 current remains only as an internal compatibility hook for
-    future switching/ablation work; it is not the standard runtime mode.
+    NeuroFly routes visual, olfactory, default-on antennal mechanosensory and
+    contact-only gustatory signals into the pinned MaleCNS runtime. Gustation is
+    strictly separated from reinforcement: calibrated taste current never implies
+    reward or aversion and is present only when the context carries a physical
+    contact payload.
     """
 
     name = "malecns"
@@ -245,12 +354,24 @@ class MaleCNSBrain:
         pulse_current: float = 20.0,
         odor_current: float = 8.0,
         mechanosensation_current: float = MECHANOSENSATION_CALIBRATED_CURRENT,
+        bitter_current: float = GUSTATION_CALIBRATED_BITTER_CURRENT,
+        sugar_water_current: float = GUSTATION_CALIBRATED_SUGAR_WATER_CURRENT,
         decoder_threshold_hz: float = 2.0,
         learning: bool = True,
         checkpoint: str | Path | None = None,
     ) -> None:
         mechanosensation_current = validated_mechanosensation_current(
             mechanosensation_current
+        )
+        bitter_current = _validated_gustation_current(
+            bitter_current,
+            expected=GUSTATION_CALIBRATED_BITTER_CURRENT,
+            name="bitter_current",
+        )
+        sugar_water_current = _validated_gustation_current(
+            sugar_water_current,
+            expected=GUSTATION_CALIBRATED_SUGAR_WATER_CURRENT,
+            name="sugar_water_current",
         )
         try:
             import numpy as np
@@ -272,6 +393,8 @@ class MaleCNSBrain:
         self.pulse_current = float(pulse_current)
         self.odor_current = float(odor_current)
         self.mechanosensation_current = mechanosensation_current
+        self.bitter_current = bitter_current
+        self.sugar_water_current = sugar_water_current
         self.decoder_threshold_hz = float(decoder_threshold_hz)
         self.learning = bool(learning)
         self.brain = VisualMemoryBrain()
@@ -334,6 +457,21 @@ class MaleCNSBrain:
                         f"bilaterally resolvable: {report}"
                     )
 
+        self.bitter_grns, bitter_report = _exact_gustatory_indices(
+            np,
+            a,
+            BITTER_GRN_TYPES,
+            expected_count=EXPECTED_BITTER_GRNS,
+            label="bitter",
+        )
+        self.sugar_water_grns, sugar_water_report = _exact_gustatory_indices(
+            np,
+            a,
+            SUGAR_WATER_GRN_TYPES,
+            expected_count=EXPECTED_SUGAR_WATER_GRNS,
+            label="sugar_water",
+        )
+
         self.identities = {
             "left": [str(self.brain.ids[i]) for i in self.left],
             "right": [str(self.brain.ids[i]) for i in self.right],
@@ -367,6 +505,28 @@ class MaleCNSBrain:
             "input_policy": "strict-agent-input-jo-c-e-only",
             "jo_c": jo_c_report,
             "jo_e": jo_e_report,
+            "biological_validation": False,
+            "behavioral_benefit_validated": False,
+        }
+        self.gustation_report = {
+            "model": GUSTATION_MODEL,
+            "engineered_proxy": True,
+            "enabled": self.bitter_current > 0.0 or self.sugar_water_current > 0.0,
+            "input_policy": "strict-contact-only-functional-channels",
+            "crosswalk_schema": GUSTATION_CROSSWALK_SCHEMA,
+            "calibration_receipt_sha256": GUSTATION_CALIBRATION_RECEIPT_SHA256,
+            "bitter": {
+                **bitter_report,
+                "external_current": self.bitter_current,
+                "calibrated_current": GUSTATION_CALIBRATED_BITTER_CURRENT,
+            },
+            "sugar_water": {
+                **sugar_water_report,
+                "external_current": self.sugar_water_current,
+                "calibrated_current": GUSTATION_CALIBRATED_SUGAR_WATER_CURRENT,
+            },
+            "unresolved_gustatory_neurons_used": 0,
+            "taste_is_reinforcement": False,
             "biological_validation": False,
             "behavioral_benefit_validated": False,
         }
@@ -482,6 +642,30 @@ class MaleCNSBrain:
                 pulses.append((indices, self.mechanosensation_current * level))
         return pulses, levels
 
+    def _gustatory_stimulation(
+        self,
+        context: dict[str, Any] | None,
+    ) -> tuple[list[tuple[Any, float]], dict[str, Any]]:
+        payload = {} if context is None else (context.get("gustation") or {})
+        levels = gustatory_channel_levels(payload)
+        levels = {
+            **levels,
+            "runtime_enabled": self.bitter_current > 0.0 or self.sugar_water_current > 0.0,
+            "bitter_current": self.bitter_current,
+            "sugar_water_current": self.sugar_water_current,
+        }
+        if not levels.get("available") or not levels.get("contact"):
+            return [], levels
+
+        pulses: list[tuple[Any, float]] = []
+        if levels["bitter"] > 0.0 and self.bitter_current > 0.0:
+            pulses.append((self.bitter_grns, self.bitter_current * levels["bitter"]))
+        if levels["sugar_water"] > 0.0 and self.sugar_water_current > 0.0:
+            pulses.append(
+                (self.sugar_water_grns, self.sugar_water_current * levels["sugar_water"])
+            )
+        return pulses, levels
+
     def _visual_input(
         self,
         frame: Any,
@@ -540,6 +724,7 @@ class MaleCNSBrain:
         mechanosensation_pulses, mechanosensation_levels = (
             self._mechanosensory_stimulation(context)
         )
+        gustation_pulses, gustation_levels = self._gustatory_stimulation(context)
         counts = np.zeros(b.n, dtype=np.int32)
         compute_seconds = 0.0
         remaining = round(self.neural_ms / b.dt)
@@ -550,7 +735,11 @@ class MaleCNSBrain:
             n = min(remaining, round(self.neural_bin_ms / b.dt))
             if pulse:
                 n = min(n, pulse)
-            stimulation = [*odor_pulses, *mechanosensation_pulses]
+            stimulation = [
+                *odor_pulses,
+                *mechanosensation_pulses,
+                *gustation_pulses,
+            ]
             if pulse:
                 stimulation.append((b.circuit[reinforcement], self.pulse_current))
             current, elapsed = b.rgb_step(
@@ -573,6 +762,10 @@ class MaleCNSBrain:
             "jo_c_right": int(counts[self.jo_c_right].sum()) if len(self.jo_c_right) else 0,
             "jo_e_left": int(counts[self.jo_e_left].sum()) if len(self.jo_e_left) else 0,
             "jo_e_right": int(counts[self.jo_e_right].sum()) if len(self.jo_e_right) else 0,
+        }
+        gustation_spikes = {
+            "bitter": int(counts[self.bitter_grns].sum()),
+            "sugar_water": int(counts[self.sugar_water_grns].sum()),
         }
         telemetry = {
             **decoder,
@@ -604,6 +797,10 @@ class MaleCNSBrain:
             "antennal_mechanosensation": mechanosensation_levels,
             "mechanosensation_spikes": mechanosensation_spikes,
             "mechanosensation_report": self.mechanosensation_report,
+            "gustation_model": GUSTATION_MODEL,
+            "gustation": gustation_levels,
+            "gustation_spikes": gustation_spikes,
+            "gustation_report": self.gustation_report,
             "memory": b.memory(),
         }
         return BrainDecision(action=action, backend=self.name, telemetry=telemetry)
