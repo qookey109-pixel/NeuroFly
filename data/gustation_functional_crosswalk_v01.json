@@ -1,0 +1,112 @@
+{
+  "schema": "neurofly-gustation-functional-crosswalk-v0.1",
+  "stimulation_enabled": false,
+  "policy": "explicit-curated-cross-dataset-evidence-only",
+  "scientific_boundary": "Functional labels are accepted only where Virtual Fly Brain exposes a deterministic MaleCNS type cross-match and an explicit functional ontology/class in MaleCNS or FlyWire. Ambiguous or unsupported MaleCNS types remain unresolved.",
+  "mappings": [
+    {
+      "male_cns_type": "LB1b",
+      "functional_class": "bitter",
+      "confidence": "high",
+      "stimulation_authorized": false,
+      "evidence": [
+        {
+          "kind": "direct-male-vfb-functional-classification",
+          "label": "LB1b_R (MaleCNS:522752) classified as bitter-sensing neuron",
+          "url": "https://www.virtualflybrain.org/term/lb1b_r-malecns522752-vfb_jrmc2d40/"
+        },
+        {
+          "kind": "flywire-vfb-functional-subclass",
+          "label": "FlyWire LB1b curated subclass bitter",
+          "url": "https://www.virtualflybrain.org/blog/2022/01/01/gng.1982-flywire720575940610483162-vfb_fw044517/"
+        }
+      ]
+    },
+    {
+      "male_cns_type": "LB3a",
+      "functional_class": "sugar_water",
+      "confidence": "high-for-combined-class-not-sugar-vs-water",
+      "stimulation_authorized": false,
+      "evidence": [
+        {
+          "kind": "male-to-flywire-type-crossmatch",
+          "label": "MaleCNS LB3a cross-matched by VFB to FlyWire type LB3",
+          "url": "https://www.virtualflybrain.org/term/lb3a_r-malecns199308-vfb_jrmc25fz/"
+        },
+        {
+          "kind": "flywire-vfb-functional-subclass",
+          "label": "FlyWire LB3 curated subclass sugar/water",
+          "url": "https://www.virtualflybrain.org/blog/2022/01/01/prw.443-flywire720575940618706811-vfb_fw047420/"
+        }
+      ]
+    },
+    {
+      "male_cns_type": "LB3b",
+      "functional_class": "sugar_water",
+      "confidence": "high-for-combined-class-not-sugar-vs-water",
+      "stimulation_authorized": false,
+      "evidence": [
+        {
+          "kind": "male-to-flywire-type-crossmatch",
+          "label": "MaleCNS LB3b cross-matched by VFB to FlyWire type LB3",
+          "url": "https://www.virtualflybrain.org/term/lb3b_l-malecns71254-vfb_jrmc25g6/"
+        },
+        {
+          "kind": "flywire-vfb-functional-subclass",
+          "label": "FlyWire LB3 curated subclass sugar/water",
+          "url": "https://www.virtualflybrain.org/blog/2022/01/01/prw.443-flywire720575940618706811-vfb_fw047420/"
+        }
+      ]
+    },
+    {
+      "male_cns_type": "LB3c",
+      "functional_class": "sugar_water",
+      "confidence": "high-for-combined-class-not-sugar-vs-water",
+      "stimulation_authorized": false,
+      "evidence": [
+        {
+          "kind": "male-to-flywire-type-crossmatch",
+          "label": "MaleCNS LB3c cross-matched by VFB to FlyWire type LB3",
+          "url": "https://www.virtualflybrain.org/term/lb3c_l-malecns261450-vfb_jrmc25gn/"
+        },
+        {
+          "kind": "flywire-vfb-functional-subclass",
+          "label": "FlyWire LB3 curated subclass sugar/water",
+          "url": "https://www.virtualflybrain.org/blog/2022/01/01/prw.443-flywire720575940618706811-vfb_fw047420/"
+        }
+      ]
+    },
+    {
+      "male_cns_type": "LB3d",
+      "functional_class": "sugar_water",
+      "confidence": "high-for-combined-class-not-sugar-vs-water",
+      "stimulation_authorized": false,
+      "evidence": [
+        {
+          "kind": "male-to-flywire-type-crossmatch",
+          "label": "MaleCNS LB3d cross-matched by VFB to FlyWire type LB3",
+          "url": "https://www.virtualflybrain.org/term/lb3d_l-malecns512552-vfb_jrmc25hk/"
+        },
+        {
+          "kind": "flywire-vfb-functional-subclass",
+          "label": "FlyWire LB3 curated subclass sugar/water",
+          "url": "https://www.virtualflybrain.org/blog/2022/01/01/prw.443-flywire720575940618706811-vfb_fw047420/"
+        }
+      ]
+    }
+  ],
+  "explicitly_unresolved_examples": [
+    {
+      "male_cns_type": "LB1a",
+      "reason": "VFB MaleCNS cross-match is ambiguous (flywireType LB1a,LB1d); do not promote FlyWire LB1a bitter subclass to MaleCNS LB1a without a deterministic mapping."
+    },
+    {
+      "male_cns_type": "LB1c",
+      "reason": "No explicit functional subclass was verified in the current evidence pass."
+    },
+    {
+      "male_cns_type": "LB1d",
+      "reason": "VFB MaleCNS cross-match is shared with LB1a; unresolved for functional stimulation."
+    }
+  ]
+}
