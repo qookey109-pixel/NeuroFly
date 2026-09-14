@@ -16,8 +16,10 @@ STATUS_REVIEW = "REVIEW_REQUIRED"
 TARGET_BODY_ID = "905407"
 TARGET_TYPE = "SNpp41"
 VFB_API = "https://v3-cached.virtualflybrain.org"
-EXPECTED_VFB_ID: str | None = None
-EXPECTED_SOURCE_SHA256: str | None = None
+EXPECTED_VFB_ID: str | None = "VFB_jrmc173b"
+EXPECTED_SOURCE_SHA256: str | None = (
+    "f1ff278a2c40691987f2de473302fcc259df3ad854f0b8c942eb05c7127067da"
+)
 
 
 def _get_json(path: str, params: dict[str, str | int]) -> Any:
