@@ -47,6 +47,10 @@ PRIVILEGED_AGENT_KEYS = frozenset(
         "wall_coordinates",
         "joint_delta",
         "joint_position",
+        "motor_execution",
+        "joint_phase",
+        "gait_phase",
+        "mechanical_vibration",
     }
 )
 
