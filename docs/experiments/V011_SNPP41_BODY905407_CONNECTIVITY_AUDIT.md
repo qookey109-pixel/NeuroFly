@@ -1,6 +1,6 @@
 # V0.11 SNpp41 Body 905407 Connectivity Audit
 
-Status: discovery/review evidence gate only. No proprioceptive stimulation, current calibration, tuning identity, or promotion.
+Status: review evidence gate only. No proprioceptive stimulation, current calibration, tuning identity, or promotion.
 
 ## Question
 
@@ -58,18 +58,47 @@ Incoming and outgoing contact-count profiles remain separate. The audit records:
 
 The percentile is descriptive evidence only. There is deliberately no promotion threshold such as `>0.8` or `top 10%`.
 
-## Discovery-first receipt
+## Prepared discovery result
 
-The first prepared run intentionally starts with no expected connectivity digest. If the population structure is correct, it:
+Prepared run `34809806467` completed the structural audit and intentionally exited non-zero with `DISCOVERY_REQUIRED` after publishing the first receipt.
 
-1. computes the complete deterministic connectivity receipt;
-2. hashes the canonical JSON payload with SHA256;
-3. writes and uploads the receipt artifact;
-4. reports `DISCOVERY_REQUIRED` and exits non-zero.
+Pinned prepared dataset receipt:
 
-A later evidence commit may freeze that exact SHA256 only after reviewing the observed result. This prevents post-hoc threshold selection and prevents the gate from silently accepting a changed dataset/profile.
+- retained neurons: `166700`
+- directed retained edge rows: `25582938`
+- retained synaptic contacts: `124177617`
+- target body: `905407`
+- peer count: `21`
+- canonical connectivity SHA256: `353e2771de973ad638878eac9fb1f76e742f928d2cc638c45f1b50775fce2e0e`
 
-After freezing, a green prepared run may report only `REVIEW_REQUIRED`. It must still keep:
+Body `905407` contact summary:
+
+- incoming: `56` contacts across `5` partner taxonomy groups
+- outgoing: `87` contacts across `35` partner taxonomy groups
+
+Descriptive comparison:
+
+- target median combined cosine to the 21 peers: `0.770609350`
+- peer leave-one-out median-of-medians: `0.871593249`
+- peer median range: `0.237632620` to `0.899014118`
+- target percentile among the 21 peer median values: `23.80952381`
+- highest target-to-peer combined similarity: body `817154`, `0.827068065`
+
+The target's incoming partner-type profile is broadly similar to many peers: for the majority of peers, incoming cosine similarity is roughly `0.88–0.97`. Its outgoing similarity is lower, generally around `0.21–0.46`. Three peers (`816362`, `826386`, `936031`) have zero incoming cosine to the target and also have unusually low leave-one-out peer similarity, showing that the annotated peer population itself is heterogeneous.
+
+The conservative interpretation is therefore:
+
+> Body `905407` shares substantial incoming connectivity structure with many SNpp41 chordotonal peers, while its outgoing partner distribution is more divergent. Its combined fingerprint falls in the lower part of the observed SNpp41 peer heterogeneity, but is not isolated enough to justify reclassification from connectivity alone.
+
+This is descriptive connectivity evidence only. It does not resolve why the row is annotated `leg`, and it does not establish extension/flexion tuning.
+
+## Frozen receipt verification
+
+The exact prepared discovery digest is frozen in `proprioception_connectivity_receipt.py`. The discovery module itself remains threshold-free and does not contain a guessed expected digest.
+
+The frozen SHA is a reproducibility receipt, not a biological decision threshold. A verification run succeeds only if the exact canonical connectivity payload reproduces. Any change in the target/peer population, partner taxonomy, or contact counts changes the digest and fails closed.
+
+A green frozen verification may report only `REVIEW_REQUIRED`. It must still keep:
 
 - `promotion_ready=false`
 - `stimulation_enabled=false`
