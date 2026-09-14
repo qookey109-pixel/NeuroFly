@@ -1,0 +1,55 @@
+{
+  "schema": "neurofly-proprioception-feco-functional-crosswalk-v0.2",
+  "source_population_class": "mechanosensory_proprioceptive",
+  "accepted_curator_subclasses": ["chordotonal organ"],
+  "policy": "exact-type-plus-curated-class-subclass-plus-vfb-feco-classification-fail-closed-v2",
+  "stimulation_enabled": false,
+  "runtime_transduction_enabled": false,
+  "rejected_candidate": {
+    "schema": "neurofly-proprioception-feco-functional-crosswalk-v0.1",
+    "prepared_run": 34800856439,
+    "reason": "SNpp40/SNpp50/SNpp51 also occur in subclass=leg; SNpp51 additionally has a same-name unknown_sensory/leg row. Class/subclass gates were not relaxed."
+  },
+  "mappings": [
+    {
+      "male_cns_type": "SNpp39",
+      "functional_class": "feco_hook_motion_direction_candidate",
+      "stimulation_authorized": false,
+      "evidence": [{
+        "kind": "Virtual Fly Brain MaleCNS classification",
+        "url": "https://www.virtualflybrain.org/term/none-malecns810445-vfb_jrmc1721/",
+        "claim": "MaleCNS SNpp39 is curated as mechanosensory_proprioceptive / chordotonal organ and classified as a femoral chordotonal hook neuron."
+      }]
+    },
+    {
+      "male_cns_type": "SNpp58",
+      "functional_class": "feco_club_bidirectional_motion_vibration_candidate",
+      "stimulation_authorized": false,
+      "evidence": [{
+        "kind": "Virtual Fly Brain MaleCNS classification",
+        "url": "https://www.virtualflybrain.org/term/none-malecns811808-vfb_jrmc17da/",
+        "claim": "MaleCNS SNpp58 is curated as mechanosensory_proprioceptive / chordotonal organ and classified as a femoral chordotonal club neuron."
+      }]
+    },
+    {
+      "male_cns_type": "SNpp59",
+      "functional_class": "feco_club_bidirectional_motion_vibration_candidate",
+      "stimulation_authorized": false,
+      "evidence": [{
+        "kind": "Virtual Fly Brain MaleCNS classification",
+        "url": "https://www.virtualflybrain.org/term/none-malecns908146-vfb_jrmc17dq/",
+        "claim": "MaleCNS SNpp59 is curated as mechanosensory_proprioceptive / chordotonal organ and classified as a femoral chordotonal club neuron."
+      }]
+    },
+    {
+      "male_cns_type": "SNpp60",
+      "functional_class": "feco_club_bidirectional_motion_vibration_candidate",
+      "stimulation_authorized": false,
+      "evidence": [{
+        "kind": "Virtual Fly Brain MaleCNS classification",
+        "url": "https://www.virtualflybrain.org/term/none-malecns812705-vfb_jrmc17dv/",
+        "claim": "MaleCNS SNpp60 is curated as mechanosensory_proprioceptive / chordotonal organ and classified as a femoral chordotonal club neuron."
+      }]
+    }
+  ]
+}
