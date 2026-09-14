@@ -1,0 +1,80 @@
+{
+  "schema": "neurofly-proprioception-feco-functional-crosswalk-v0.1",
+  "source_population_class": "mechanosensory_proprioceptive",
+  "accepted_curator_subclasses": ["chordotonal organ"],
+  "policy": "exact-type-plus-curated-class-subclass-plus-vfb-feco-classification",
+  "stimulation_enabled": false,
+  "runtime_transduction_enabled": false,
+  "mappings": [
+    {
+      "male_cns_type": "SNpp39",
+      "functional_class": "feco_hook_motion_direction_candidate",
+      "stimulation_authorized": false,
+      "evidence": [{
+        "kind": "Virtual Fly Brain MaleCNS classification",
+        "url": "https://www.virtualflybrain.org/term/none-malecns810445-vfb_jrmc1721/",
+        "claim": "MaleCNS SNpp39 is curated as mechanosensory_proprioceptive / chordotonal organ and classified as a femoral chordotonal hook neuron; the record fasciculates with an adult mesothoracic leg nerve."
+      }]
+    },
+    {
+      "male_cns_type": "SNpp40",
+      "functional_class": "feco_club_bidirectional_motion_vibration_candidate",
+      "stimulation_authorized": false,
+      "evidence": [{
+        "kind": "Virtual Fly Brain MaleCNS classification",
+        "url": "https://www.virtualflybrain.org/term/none-malecns811516-vfb_jrmc172x/",
+        "claim": "MaleCNS SNpp40 is curated as mechanosensory_proprioceptive / chordotonal organ, carries the FeCO club synonym, and is classified as a femoral chordotonal club neuron."
+      }]
+    },
+    {
+      "male_cns_type": "SNpp50",
+      "functional_class": "feco_claw_tibia_position_candidate",
+      "stimulation_authorized": false,
+      "evidence": [{
+        "kind": "Virtual Fly Brain MaleCNS classification",
+        "url": "https://www.virtualflybrain.org/term/none-malecns818478-vfb_jrmc179e/",
+        "claim": "MaleCNS SNpp50 is curated as mechanosensory_proprioceptive / chordotonal organ, carries the FeCO claw synonym, and is classified as a femoral chordotonal claw neuron."
+      }]
+    },
+    {
+      "male_cns_type": "SNpp51",
+      "functional_class": "feco_claw_tibia_position_candidate",
+      "stimulation_authorized": false,
+      "evidence": [{
+        "kind": "Virtual Fly Brain MaleCNS classification",
+        "url": "https://www.virtualflybrain.org/term/none-malecns806491-vfb_jrmc17ae/",
+        "claim": "MaleCNS SNpp51 is curated as mechanosensory_proprioceptive / chordotonal organ and classified as a femoral chordotonal claw neuron."
+      }]
+    },
+    {
+      "male_cns_type": "SNpp58",
+      "functional_class": "feco_club_bidirectional_motion_vibration_candidate",
+      "stimulation_authorized": false,
+      "evidence": [{
+        "kind": "Virtual Fly Brain MaleCNS classification",
+        "url": "https://www.virtualflybrain.org/term/none-malecns811808-vfb_jrmc17da/",
+        "claim": "MaleCNS SNpp58 is curated as mechanosensory_proprioceptive / chordotonal organ and classified as a femoral chordotonal club neuron."
+      }]
+    },
+    {
+      "male_cns_type": "SNpp59",
+      "functional_class": "feco_club_bidirectional_motion_vibration_candidate",
+      "stimulation_authorized": false,
+      "evidence": [{
+        "kind": "Virtual Fly Brain MaleCNS classification",
+        "url": "https://www.virtualflybrain.org/term/none-malecns908146-vfb_jrmc17dq/",
+        "claim": "MaleCNS SNpp59 is curated as mechanosensory_proprioceptive / chordotonal organ and classified as a femoral chordotonal club neuron."
+      }]
+    },
+    {
+      "male_cns_type": "SNpp60",
+      "functional_class": "feco_club_bidirectional_motion_vibration_candidate",
+      "stimulation_authorized": false,
+      "evidence": [{
+        "kind": "Virtual Fly Brain MaleCNS classification",
+        "url": "https://www.virtualflybrain.org/term/none-malecns812705-vfb_jrmc17dv/",
+        "claim": "MaleCNS SNpp60 is curated as mechanosensory_proprioceptive / chordotonal organ and classified as a femoral chordotonal club neuron."
+      }]
+    }
+  ]
+}
