@@ -6,7 +6,9 @@ on:
     paths:
       - ".github/workflows/proprioception-snpp41-body905407-morphology-audit.yml"
       - "src/neurofly/proprioception_morphology_audit.py"
+      - "src/neurofly/proprioception_morphology_receipt.py"
       - "tests/test_proprioception_morphology_audit.py"
+      - "tests/test_proprioception_morphology_receipt.py"
       - "docs/experiments/V011_SNPP41_BODY905407_MORPHOLOGY_AUDIT.md"
       - "pyproject.toml"
   workflow_dispatch:
@@ -51,11 +53,9 @@ jobs:
           python -m stonkfly prepare
           python -m neurofly brain-status
 
-      - name: Discover or verify official SWC morphology receipt
+      - name: Verify frozen official SWC morphology receipt
         run: |
-          # Discovery-first: until an official-SWC receipt SHA256 is frozen in
-          # source, this step intentionally exits non-zero after writing evidence.
-          python -m neurofly.proprioception_morphology_audit \
+          python -m neurofly.proprioception_morphology_receipt \
             --output "$AUDIT_OUTPUT"
 
       - name: Publish body 905407 morphology receipt
