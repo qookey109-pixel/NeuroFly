@@ -6,7 +6,9 @@ on:
     paths:
       - ".github/workflows/proprioception-snpp41-body905407-connectivity-audit.yml"
       - "src/neurofly/proprioception_connectivity_audit.py"
+      - "src/neurofly/proprioception_connectivity_receipt.py"
       - "tests/test_proprioception_connectivity_audit.py"
+      - "tests/test_proprioception_connectivity_receipt.py"
       - "pyproject.toml"
   workflow_dispatch:
 
@@ -50,11 +52,9 @@ jobs:
           python -m stonkfly prepare
           python -m neurofly brain-status
 
-      - name: Discover or verify body 905407 connectivity receipt
+      - name: Verify frozen body 905407 connectivity receipt
         run: |
-          # Discovery-first: until a prepared receipt SHA256 is frozen in source,
-          # this step intentionally exits non-zero after writing the evidence.
-          python -m neurofly.proprioception_connectivity_audit \
+          python -m neurofly.proprioception_connectivity_receipt \
             --output "$AUDIT_OUTPUT"
 
       - name: Publish body 905407 connectivity receipt
