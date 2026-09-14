@@ -10,6 +10,11 @@ from typing import Any, Callable
 from .brain_runtime import BrainBackend, BrainDecision
 from .gustation import contact_gustation
 from .maze_runtime import MazeEnvironment, StepResult
+from .neural_context import (
+    assert_firewalled_bundle,
+    olfaction_neural_payload,
+    prepare_firewalled_visual_input,
+)
 from .proprioception import feco_motion_proprioception, proprioceptive_channel_levels
 from .sensory_contract import assert_unprivileged_agent_input
 from .tactile import blocked_forward_contact, contact_mechanosensation
@@ -238,6 +243,7 @@ class GoalMazeSession:
         self.pending_tactile_contact = False
         self.virtual_body = VirtualFeCOJointBody()
         self.pending_proprioception = feco_motion_proprioception()
+        self.last_visual_diagnostics: dict[str, Any] | None = None
         self._lock = threading.RLock()
 
         if self.checkpoint:
@@ -272,15 +278,8 @@ class GoalMazeSession:
                     assert_unprivileged_agent_input(
                         {"proprioception": pending_proprioception}
                     )
-                    self.pending_proprioception = copy.deepcopy(
-                        pending_proprioception
-                    )
+                    self.pending_proprioception = copy.deepcopy(pending_proprioception)
 
-        # Keep one absolute world-clock deadline across neural decisions. The old
-        # per-decision timer restarted from a full interval every time tick() was
-        # called, so fast 50 ms decisions could permanently starve enemy motion.
-        # A fresh session intentionally starts a fresh deadline; offline time is
-        # never replayed as a burst of predator movement after checkpoint restore.
         self._world_next_tick_monotonic = (
             time.monotonic() + self._effective_world_tick_seconds()
         )
@@ -346,8 +345,6 @@ class GoalMazeSession:
         while True:
             delay = max(0.0, self._world_next_tick_monotonic - time.monotonic())
             if stop_event.wait(delay):
-                # Crucially, do not reset the deadline here. The remaining delay
-                # carries into the next neural decision.
                 return
             emitted: list[dict[str, Any]] = []
             terminal = False
@@ -380,6 +377,67 @@ class GoalMazeSession:
             if terminal:
                 return
 
+    def _prepare_brain_handoff(
+        self,
+        *,
+        world_context: dict[str, Any],
+        frame: Any,
+        gustation: dict[str, Any],
+        tactile: dict[str, Any],
+        proprioception: dict[str, Any],
+    ) -> tuple[Any, dict[str, Any]]:
+        if getattr(self.brain, "name", "") == "demo":
+            # DemoBrain is an explicitly privileged lightweight baseline used by
+            # smoke tests/UI scaffolding. It is not the MaleCNS neural agent.
+            self.last_visual_diagnostics = None
+            return frame, world_context
+
+        sensory_context: dict[str, Any] = {
+            "gustation": copy.deepcopy(gustation),
+            "contact_mechanosensation": copy.deepcopy(tactile),
+            "proprioception": copy.deepcopy(proprioception),
+        }
+
+        raw_olfaction = world_context.get("olfaction")
+        if isinstance(raw_olfaction, dict):
+            sensory_context["olfaction"] = olfaction_neural_payload(raw_olfaction)
+
+        mechanosensation = world_context.get("antennal_mechanosensation")
+        if isinstance(mechanosensation, dict):
+            sensory_context["antennal_mechanosensation"] = copy.deepcopy(
+                mechanosensation
+            )
+
+        bundle = prepare_firewalled_visual_input(
+            frame,
+            fly=self.environment.fly,
+            enemies=self.environment.enemies,
+            sensory_context=sensory_context,
+        )
+        assert_firewalled_bundle(bundle)
+        self.last_visual_diagnostics = copy.deepcopy(bundle["diagnostics"]["vision"])
+        return bundle["frame"], bundle["context"]
+
+    def _restore_visual_telemetry(self, decision: BrainDecision) -> BrainDecision:
+        if not self.last_visual_diagnostics or decision.backend != "malecns":
+            return decision
+        telemetry = dict(decision.telemetry)
+        internal = telemetry.get("vision")
+        vision = copy.deepcopy(self.last_visual_diagnostics)
+        if isinstance(internal, dict):
+            for key in ("change", "left_change", "right_change"):
+                if key in internal:
+                    vision[key] = internal[key]
+        telemetry["vision"] = vision
+        telemetry["visual_change"] = vision.get("change", 0.0)
+        telemetry["visual_left_change"] = vision.get("left_change", 0.0)
+        telemetry["visual_right_change"] = vision.get("right_change", 0.0)
+        return BrainDecision(
+            action=decision.action,
+            backend=decision.backend,
+            telemetry=telemetry,
+        )
+
     def tick(
         self,
         *,
@@ -387,31 +445,36 @@ class GoalMazeSession:
     ) -> dict[str, Any]:
         with self._lock:
             observed_episode = self.environment.episode
-            context = self.environment.snapshot(include_grid=False)
+            world_context = self.environment.snapshot(include_grid=False)
 
             gustatory_event = self.pending_gustatory_event
             self.pending_gustatory_event = None
             gustation = contact_gustation(event=gustatory_event)
             assert_unprivileged_agent_input({"gustation": gustation})
-            context["gustation"] = gustation
+            world_context["gustation"] = gustation
 
             tactile = contact_mechanosensation(
                 front=1.0 if self.pending_tactile_contact else 0.0
             )
             self.pending_tactile_contact = False
             assert_unprivileged_agent_input({"contact_mechanosensation": tactile})
-            context["contact_mechanosensation"] = tactile
+            world_context["contact_mechanosensation"] = tactile
 
-            # Proprioception is delayed by one decision. Decision N receives only
-            # the receptor-domain consequence of the body motion executed after
-            # decision N-1. The raw body state/motor label never enters context.
             proprioception = copy.deepcopy(self.pending_proprioception)
             proprioceptive_channel_levels(proprioception)
             assert_unprivileged_agent_input({"proprioception": proprioception})
-            context["proprioception"] = proprioception
+            world_context["proprioception"] = proprioception
             self.pending_proprioception = feco_motion_proprioception()
 
-            frame = self.environment.render_rgb()
+            raw_frame = self.environment.render_rgb()
+            frame, context = self._prepare_brain_handoff(
+                world_context=world_context,
+                frame=raw_frame,
+                gustation=gustation,
+                tactile=tactile,
+                proprioception=proprioception,
+            )
+
             reinforcement = self.pending_reinforcement
             if reinforcement == "none":
                 reinforcement = self.environment.reinforcement()
@@ -431,6 +494,7 @@ class GoalMazeSession:
         world_thread.start()
         try:
             decision = self.brain.decide(frame, reinforcement, context=context)
+            decision = self._restore_visual_telemetry(decision)
         finally:
             stop_event.set()
             world_thread.join(timeout=max(1.0, self._effective_world_tick_seconds() * 3))
@@ -438,9 +502,6 @@ class GoalMazeSession:
         with self._lock:
             self.last_decision = decision
             if self.environment.episode != observed_episode:
-                # A world-clock terminal/reset invalidates this decision and its
-                # potential body motion. The world-clock path already neutralized
-                # the virtual body, so a stale decision cannot advance it.
                 state = self._snapshot_locked(
                     decision=decision,
                     state_kind="stale_decision",
@@ -462,8 +523,6 @@ class GoalMazeSession:
             )
 
             if int(self.environment.total_food) > food_before:
-                # The food count is the contact fact. It remains valid even if
-                # the public step event is subsequently promoted to maze_cleared.
                 self.pending_gustatory_event = "food"
 
             applied_action = str(
@@ -476,22 +535,12 @@ class GoalMazeSession:
                 terminal=result.terminal,
             )
             if tactile_result["contact"]:
-                # Store only a one-shot sensory fact. No wall/object geometry,
-                # collision normal, reward, or route state crosses this latch.
                 self.pending_tactile_contact = True
 
             if result.terminal:
-                # The next episode starts with a neutral body. Do not leak the
-                # prior episode's final joint motion into a reset fly.
                 self._reset_virtual_body()
             else:
-                # Advance from the action actually executed by the body/controller
-                # boundary. Never infer proprioception from world displacement:
-                # a blocked FORWARD still has leg motion, while an overridden
-                # FORWARD->HOLD does not become a false walking signal.
-                self.pending_proprioception = self.virtual_body.advance(
-                    applied_action
-                )
+                self.pending_proprioception = self.virtual_body.advance(applied_action)
                 proprioceptive_channel_levels(self.pending_proprioception)
                 assert_unprivileged_agent_input(
                     {"proprioception": self.pending_proprioception}
@@ -532,9 +581,7 @@ class GoalMazeSession:
             payload["_pending_gustatory_event"] = self.pending_gustatory_event
             payload["_pending_tactile_contact"] = self.pending_tactile_contact
             payload["_virtual_body_state"] = self.virtual_body.persistence_snapshot()
-            payload["_pending_proprioception"] = copy.deepcopy(
-                self.pending_proprioception
-            )
+            payload["_pending_proprioception"] = copy.deepcopy(self.pending_proprioception)
             temporary.write_text(json.dumps(payload, indent=2) + "\n")
             temporary.replace(state_path)
 
