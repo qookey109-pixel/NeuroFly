@@ -1,0 +1,108 @@
+name: NeuroFly SNpp41 Instance Exception Audit
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/proprioception-snpp41-instance-exception-audit.yml"
+      - "src/neurofly/proprioception_exception_audit.py"
+      - "tests/test_proprioception_exception_audit.py"
+      - "pyproject.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: neurofly-snpp41-instance-exception-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  malecns-snpp41-instance-exception-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      AUDIT_OUTPUT: runs/somatosensation/snpp41-instance-exception-audit.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache read-only
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            malecns-v1-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare or verify pinned MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$(dirname "$AUDIT_OUTPUT")"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+
+      - name: Verify frozen exact SNpp41 exception identity
+        run: |
+          python -m neurofly.proprioception_exception_audit \
+            --output "$AUDIT_OUTPUT"
+          python - <<'PY'
+          import json
+          import os
+
+          report = json.load(open(os.environ["AUDIT_OUTPUT"]))
+          expected = {
+              "body_id": "905407",
+              "instance": "",
+              "type": "SNpp41",
+              "class": "mechanosensory_proprioceptive",
+              "subclass": "leg",
+              "superclass": "vnc_sensory",
+              "soma_side": "",
+          }
+          assert report["schema"] == "neurofly-proprioception-snpp41-instance-exception-audit-v1"
+          assert report["passed"] is True
+          assert report["status"] == "REVIEW_REQUIRED"
+          assert report["type_rows"] == 22
+          assert report["accepted_chordotonal_rows"] == 21
+          assert report["exception_leg_rows"] == 1
+          assert report["exception_identities"] == [expected]
+          assert report["expected_exception_identity"] == expected
+          assert report["blank_instance_frozen"] is True
+          assert report["blank_soma_side_frozen"] is True
+          assert report["gates"]["exception_body_id_present"] is True
+          assert report["gates"]["exception_required_taxonomy_present"] is True
+          assert report["gates"]["exception_identity_frozen"] is True
+          assert report["gates"]["exception_identity_matches_frozen_receipt"] is True
+          assert report["gates"]["instance_annotation_matches_frozen_receipt"] is True
+          assert report["gates"]["soma_side_annotation_matches_frozen_receipt"] is True
+          assert report["promotion_status"] == "review_required"
+          assert report["promotion_ready"] is False
+          assert report["stimulation_enabled"] is False
+          assert report["runtime_transduction_enabled"] is False
+          assert report["current_calibration_authorized"] is False
+          print(
+              "SNPP41_INSTANCE_EXCEPTION_REVIEW_REQUIRED",
+              "body_id=", expected["body_id"],
+              "instance_blank=", expected["instance"] == "",
+              "soma_side_blank=", expected["soma_side"] == "",
+              "current_calibration_authorized=", report["current_calibration_authorized"],
+          )
+          PY
+
+      - name: Publish SNpp41 instance exception receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-snpp41-instance-exception-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runs/somatosensation/snpp41-instance-exception-audit.json
+          if-no-files-found: warn
+          retention-days: 3
