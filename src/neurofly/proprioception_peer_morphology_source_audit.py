@@ -41,6 +41,16 @@ PEER_BODY_IDS = (
     "911942",
     "936031",
 )
+# The resolved SNpp41 VFB individuals occupy the jrmc173* source batch. Three
+# namespace slots are absent from the search results and exactly three frozen
+# peers remain unresolved. These IDs are therefore probed as diagnostics only.
+# They can resolve a peer *only* if get_term_info carries the exact MaleCNS body
+# accession; namespace adjacency alone is never accepted as identity evidence.
+BATCH_GAP_CANDIDATE_VFB_IDS = (
+    "VFB_jrmc1739",
+    "VFB_jrmc173f",
+    "VFB_jrmc173g",
+)
 EXPECTED_INVENTORY_SHA256: str | None = None
 
 
@@ -103,6 +113,17 @@ def _swc_urls(value: Any) -> list[str]:
         text = item.strip()
         if text.lower().startswith(("http://", "https://")) and ".swc" in text.lower():
             found.add(text)
+    return sorted(found)
+
+
+def _male_cns_body_ids(value: Any) -> list[str]:
+    found: set[str] = set()
+    for path, item in _walk(value):
+        if isinstance(item, str):
+            found.update(re.findall(r"MaleCNS:(\d+)", item))
+        if path and path[-1].lower() in {"accession", "bodyid", "body_id"}:
+            if isinstance(item, (str, int)) and str(item).isdigit():
+                found.add(str(item))
     return sorted(found)
 
 
@@ -196,13 +217,9 @@ def audit_inventory(
 
 
 def discover() -> dict[str, Any]:
-    # VFB's numeric body-ID search is not guaranteed to index every individual.
-    # Therefore use the same two-source discovery policy already validated for
-    # body 905407: numeric search plus the systematic type search. Candidates
-    # from either path are accepted only if get_term_info contains the exact
-    # MaleCNS body accession; no fuzzy identity fallback is permitted.
     type_search = _get_json("/search", {"query": TARGET_TYPE, "limit": 100})
     type_candidate_ids = set(_candidate_vfb_ids(type_search))
+    diagnostic_candidate_ids = set(BATCH_GAP_CANDIDATE_VFB_IDS)
     term_cache: dict[str, Any] = {}
     fetch_error_cache: dict[str, str] = {}
 
@@ -223,7 +240,9 @@ def discover() -> dict[str, Any]:
     for body_id in PEER_BODY_IDS:
         body_search = _get_json("/search", {"query": body_id, "limit": 50})
         body_candidate_ids = set(_candidate_vfb_ids(body_search))
-        candidate_ids = sorted(body_candidate_ids | type_candidate_ids)
+        candidate_ids = sorted(
+            body_candidate_ids | type_candidate_ids | diagnostic_candidate_ids
+        )
         matched: list[str] = []
         swc: set[str] = set()
         fetch_errors: list[str] = []
@@ -241,15 +260,44 @@ def discover() -> dict[str, Any]:
                 "body_id": body_id,
                 "body_search_candidate_vfb_ids": sorted(body_candidate_ids),
                 "type_search_candidate_vfb_ids": sorted(type_candidate_ids),
+                "diagnostic_batch_gap_candidate_vfb_ids": sorted(diagnostic_candidate_ids),
                 "candidate_vfb_ids": candidate_ids,
                 "matched_vfb_ids": sorted(set(matched)),
                 "swc_urls": sorted(swc),
                 "fetch_errors": sorted(set(fetch_errors)),
             }
         )
+
     report = audit_inventory(records)
+    unresolved = set(report["unresolved_body_ids"])
+    report["unresolved_diagnostics"] = [
+        {
+            "body_id": record["body_id"],
+            "body_search_candidate_vfb_ids": record["body_search_candidate_vfb_ids"],
+            "type_search_candidate_vfb_ids": record["type_search_candidate_vfb_ids"],
+            "diagnostic_batch_gap_candidate_vfb_ids": record[
+                "diagnostic_batch_gap_candidate_vfb_ids"
+            ],
+            "fetch_errors": record["fetch_errors"],
+        }
+        for record in records
+        if record["body_id"] in unresolved
+    ]
+    report["batch_gap_term_diagnostics"] = [
+        {
+            "vfb_id": vfb_id,
+            "male_cns_body_ids": (
+                [] if term_info(vfb_id) is None else _male_cns_body_ids(term_info(vfb_id))
+            ),
+            "swc_urls": [] if term_info(vfb_id) is None else _swc_urls(term_info(vfb_id)),
+            "fetch_error": fetch_error_cache.get(vfb_id),
+        }
+        for vfb_id in BATCH_GAP_CANDIDATE_VFB_IDS
+    ]
     report["vfb_api"] = VFB_API
-    report["discovery_policy"] = "exact-body-search-union-exact-snpp41-type-search"
+    report["discovery_policy"] = (
+        "exact-body-search-union-exact-snpp41-type-search-plus-batch-gap-diagnostics"
+    )
     return report
 
 
