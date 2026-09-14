@@ -1,6 +1,6 @@
 # V0.10 SNpp41 Instance Exception Audit
 
-Status: discovery gate; no promotion, current calibration, or stimulation.
+Status: **REVIEW_REQUIRED** identity receipt; no promotion, current calibration, or stimulation.
 
 ## Why this exists
 
@@ -11,49 +11,94 @@ The FeCO hook-pair evidence gate established a reproducible mixed-subclass condi
 
 Type-level sources call `SNpp41` a FeCO hook, but NeuroFly does not discard a row-level annotation conflict just to obtain a clean exact-type population.
 
-The next question is therefore not current amplitude. It is:
+## First prepared discovery run
 
-> Which exact MaleCNS body/instance carries the `SNpp41|leg` annotation exception?
+Prepared workflow run `34805000350` intentionally started without a frozen identity and exited red after publishing the exact exception record.
 
-## Discovery-fail design
+The discovered pinned MaleCNS identity is:
 
-Stonkfly's pinned `annotations(ids)` function returns annotations indexed by `bodyId`. The audit preserves that index and records:
+```json
+{
+  "body_id": "905407",
+  "instance": "",
+  "type": "SNpp41",
+  "class": "mechanosensory_proprioceptive",
+  "subclass": "leg",
+  "superclass": "vnc_sensory",
+  "soma_side": ""
+}
+```
 
-- `body_id`
-- `instance`
-- `type`
-- `class`
-- `subclass`
-- `superclass`
-- `soma_side`
+Structural evidence remained exactly:
 
-The first prepared workflow deliberately has no frozen exception identity in source. If the structural evidence still matches 22 total SNpp41 rows, 21 chordotonal-organ rows, and exactly one `leg` row, it reports `DISCOVERY_REQUIRED` and exits non-zero **after publishing the discovered identity**.
+- 22 total SNpp41 rows;
+- 21 chordotonal-organ rows;
+- 1 leg-subclass exception;
+- no other unexpected SNpp41 rows.
 
-This intentional red run prevents NeuroFly from silently accepting "whatever the one exception happens to be".
+## Blank metadata is evidence
 
-## Freeze stage
+Body `905407` has no populated `instance` and no populated `somaSide` in the pinned annotations exposed through Stonkfly.
 
-After observing the identity from the pinned prepared dataset, a follow-up commit must freeze that exact body/instance receipt. Only then may the audit return success, and the status must remain `REVIEW_REQUIRED`.
+NeuroFly treats those blank values as part of the frozen receipt. It does **not** infer an instance suffix, laterality, or leg identity from neighboring neurons, morphology, body ID, or expected bilateral symmetry.
 
-A frozen green receipt still requires:
+The audit therefore fails if a future dataset unexpectedly changes either blank field without an explicit evidence review. It also fails if the body ID or taxonomy changes.
 
-- `promotion_ready=false`
-- `stimulation_enabled=false`
-- `runtime_transduction_enabled=false`
-- `current_calibration_authorized=false`
+## Frozen verification gate
 
-Changing the body ID, instance, class, subclass, superclass, or side must fail closed.
+The source now freezes the exact identity above. A green prepared workflow is allowed only when the current pinned dataset reproduces all of these fields exactly, including the blank `instance` and blank `soma_side`.
+
+A successful verification still reports:
+
+- `status=REVIEW_REQUIRED`;
+- `promotion_ready=false`;
+- `stimulation_enabled=false`;
+- `runtime_transduction_enabled=false`;
+- `current_calibration_authorized=false`.
+
+It does not convert SNpp41 into a clean exact-type stimulation population.
+
+## Machine gates
+
+The audit requires:
+
+- exact SNpp41 type-row count = 22;
+- exact accepted chordotonal count = 21;
+- exact leg-exception count = 1;
+- exception body ID present;
+- type/class/subclass/superclass present;
+- frozen body ID = `905407`;
+- frozen instance = empty string;
+- frozen soma side = empty string;
+- exact frozen identity match;
+- promotion/current/stimulation remain blocked.
+
+An invented `SNpp41_R`, an inferred `R/L` soma side, another body ID, an extra exception, or a missing exception all fail closed.
 
 ## Interpretation boundary
 
-This audit can determine reproducible annotation identity. It cannot by itself determine whether the exception is:
+This audit establishes reproducible annotation identity only. It does not determine why body `905407` differs from the other SNpp41 rows.
+
+Possible explanations still include:
 
 - curator annotation drift;
 - segmentation/reconstruction ambiguity;
 - a legitimate mixed systematic type;
+- missing instance/laterality metadata;
 - a cross-dataset naming mismatch;
-- or another biological/annotation issue.
+- another biological/annotation issue.
 
-That interpretation requires comparison with current MaleCNS type resources, VFB/MANC records, morphology/connectivity and, where possible, curator evidence.
+Those possibilities require body-level morphology/connectivity and curator/cross-dataset evidence. The blank instance/somaSide must not be filled speculatively.
+
+## Next evidence gate
+
+The next safe step is a body-level audit of **MaleCNS body 905407**:
+
+1. obtain its current public MaleCNS/VFB/type-resource representation where available;
+2. compare its morphology/connectivity with the 21 chordotonal SNpp41 rows and with other leg-subclass sensory neurons;
+3. check whether the exception is reproducible across relevant datasets/curator exports;
+4. preserve a distinction between annotation evidence and biological interpretation.
+
+Separately, `SNpp39/SNpp41 -> extension/flexion` sensory tuning remains unresolved and must not be inferred from downstream motor effects.
 
 No proprioceptive current should be enabled from this audit alone.
