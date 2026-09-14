@@ -10,7 +10,7 @@ from .upstream import STONKFLY_COMMIT
 
 
 AUDIT_SCHEMA = "neurofly-tactile-leg-functional-crosswalk-audit-v1"
-DEFAULT_CROSSWALK = Path("data/tactile_leg_functional_crosswalk_v01.json")
+DEFAULT_CROSSWALK = Path("data/tactile_leg_functional_crosswalk_v02.json")
 TARGET_CLASS = "mechanosensory_tactile"
 
 
@@ -23,7 +23,7 @@ def _clean(value: Any) -> str:
 
 def load_crosswalk(path: str | Path = DEFAULT_CROSSWALK) -> dict[str, Any]:
     payload = json.loads(Path(path).read_text())
-    if payload.get("schema") != "neurofly-tactile-leg-functional-crosswalk-v0.1":
+    if payload.get("schema") != "neurofly-tactile-leg-functional-crosswalk-v0.2":
         raise ValueError("Unsupported tactile leg crosswalk schema")
     if payload.get("source_population_class") != TARGET_CLASS:
         raise ValueError("Tactile leg crosswalk must target mechanosensory_tactile")
