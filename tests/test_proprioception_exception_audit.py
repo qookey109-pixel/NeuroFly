@@ -43,9 +43,23 @@ def _rows() -> list[dict[str, str]]:
     return rows
 
 
-def test_first_run_is_intentionally_discovery_required(monkeypatch) -> None:
+def _pinned_shape_rows() -> list[dict[str, str]]:
+    rows = _rows()
+    rows[21] = {
+        "body_id": "905407",
+        "instance": "",
+        "type": "SNpp41",
+        "class": "mechanosensory_proprioceptive",
+        "subclass": "leg",
+        "superclass": "vnc_sensory",
+        "soma_side": "",
+    }
+    return rows
+
+
+def test_discovery_mode_can_surface_identity_without_frozen_instance(monkeypatch) -> None:
     monkeypatch.setattr(audit, "EXPECTED_EXCEPTION_IDENTITY", None)
-    report = audit.audit_records(_rows())
+    report = audit.audit_records(_pinned_shape_rows())
     assert report["status"] == "DISCOVERY_REQUIRED"
     assert report["passed"] is False
     assert report["type_rows"] == 22
@@ -53,22 +67,44 @@ def test_first_run_is_intentionally_discovery_required(monkeypatch) -> None:
     assert report["exception_leg_rows"] == 1
     assert report["exception_identities"] == [
         {
-            "body_id": "9999",
-            "instance": "SNpp41_exception",
+            "body_id": "905407",
+            "instance": "",
             "type": "SNpp41",
             "class": "mechanosensory_proprioceptive",
             "subclass": "leg",
             "superclass": "vnc_sensory",
-            "soma_side": "R",
+            "soma_side": "",
         }
     ]
+    assert report["gates"]["exception_body_id_present"] is True
+    assert report["gates"]["exception_required_taxonomy_present"] is True
     assert report["gates"]["exception_identity_frozen"] is False
+
+
+def test_real_frozen_blank_identity_reproduces_as_review_required() -> None:
+    report = audit.audit_records(_pinned_shape_rows())
+    assert report["passed"] is True
+    assert report["status"] == "REVIEW_REQUIRED"
+    assert report["expected_exception_identity"] == {
+        "body_id": "905407",
+        "instance": "",
+        "type": "SNpp41",
+        "class": "mechanosensory_proprioceptive",
+        "subclass": "leg",
+        "superclass": "vnc_sensory",
+        "soma_side": "",
+    }
+    assert report["blank_instance_frozen"] is True
+    assert report["blank_soma_side_frozen"] is True
+    assert report["gates"]["exception_identity_matches_frozen_receipt"] is True
+    assert report["gates"]["instance_annotation_matches_frozen_receipt"] is True
+    assert report["gates"]["soma_side_annotation_matches_frozen_receipt"] is True
     assert report["promotion_ready"] is False
     assert report["stimulation_enabled"] is False
     assert report["current_calibration_authorized"] is False
 
 
-def test_frozen_identity_reproduces_as_review_required(monkeypatch) -> None:
+def test_frozen_nonblank_synthetic_identity_still_supported(monkeypatch) -> None:
     expected = {
         "body_id": "9999",
         "instance": "SNpp41_exception",
@@ -83,46 +119,58 @@ def test_frozen_identity_reproduces_as_review_required(monkeypatch) -> None:
     assert report["passed"] is True
     assert report["status"] == "REVIEW_REQUIRED"
     assert report["expected_exception_identity"] == expected
-    assert report["gates"]["exception_identity_matches_frozen_receipt"] is True
-    assert report["promotion_ready"] is False
 
 
-def test_changed_body_identity_fails_closed(monkeypatch) -> None:
-    expected = {
-        "body_id": "9999",
-        "instance": "SNpp41_exception",
-        "type": "SNpp41",
-        "class": "mechanosensory_proprioceptive",
-        "subclass": "leg",
-        "superclass": "vnc_sensory",
-        "soma_side": "R",
-    }
-    monkeypatch.setattr(audit, "EXPECTED_EXCEPTION_IDENTITY", expected)
-    rows = copy.deepcopy(_rows())
-    rows[21]["body_id"] = "9998"
+def test_changed_body_identity_fails_closed() -> None:
+    rows = copy.deepcopy(_pinned_shape_rows())
+    rows[21]["body_id"] = "905408"
     report = audit.audit_records(rows)
     assert report["passed"] is False
     assert report["status"] == "FAIL"
     assert report["gates"]["exception_identity_matches_frozen_receipt"] is False
 
 
+def test_filling_blank_instance_without_evidence_fails_closed() -> None:
+    rows = copy.deepcopy(_pinned_shape_rows())
+    rows[21]["instance"] = "SNpp41_R"
+    report = audit.audit_records(rows)
+    assert report["passed"] is False
+    assert report["gates"]["instance_annotation_matches_frozen_receipt"] is False
+
+
+def test_inventing_soma_side_without_evidence_fails_closed() -> None:
+    rows = copy.deepcopy(_pinned_shape_rows())
+    rows[21]["soma_side"] = "R"
+    report = audit.audit_records(rows)
+    assert report["passed"] is False
+    assert report["gates"]["soma_side_annotation_matches_frozen_receipt"] is False
+
+
+def test_blank_body_id_is_not_accepted_as_complete_identity() -> None:
+    rows = copy.deepcopy(_pinned_shape_rows())
+    rows[21]["body_id"] = ""
+    report = audit.audit_records(rows)
+    assert report["passed"] is False
+    assert report["gates"]["exception_body_id_present"] is False
+
+
 def test_extra_or_missing_exception_fails_structural_gate(monkeypatch) -> None:
     monkeypatch.setattr(audit, "EXPECTED_EXCEPTION_IDENTITY", None)
 
-    missing = [row for row in _rows() if row.get("subclass") != "leg"]
+    missing = [row for row in _pinned_shape_rows() if row.get("subclass") != "leg"]
     missing_report = audit.audit_records(missing)
     assert missing_report["status"] == "FAIL"
     assert missing_report["gates"]["exact_leg_exception_count"] is False
 
-    extra = _rows() + [
+    extra = _pinned_shape_rows() + [
         {
             "body_id": "9997",
-            "instance": "SNpp41_exception_2",
+            "instance": "",
             "type": "SNpp41",
             "class": "mechanosensory_proprioceptive",
             "subclass": "leg",
             "superclass": "vnc_sensory",
-            "soma_side": "L",
+            "soma_side": "",
         }
     ]
     extra_report = audit.audit_records(extra)
@@ -133,7 +181,7 @@ def test_extra_or_missing_exception_fails_structural_gate(monkeypatch) -> None:
 
 def test_non_target_rows_never_affect_snpp41_receipt(monkeypatch) -> None:
     monkeypatch.setattr(audit, "EXPECTED_EXCEPTION_IDENTITY", None)
-    rows = _rows() + [
+    rows = _pinned_shape_rows() + [
         {
             "body_id": "8888",
             "instance": "SNpp58_leg",
