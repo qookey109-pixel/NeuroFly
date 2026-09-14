@@ -63,6 +63,52 @@ def blocked_forward_contact(
     return contact_mechanosensation(front=1.0 if blocked else 0.0)
 
 
+class TactileContactLatch:
+    """Queue a physical contact once and consume it on the next sensory frame.
+
+    The latch stores only one boolean fact, never the positions used to detect
+    the collision. Multiple contacts before consumption coalesce into one pulse.
+    This mirrors a one-shot next-decision sensory event without retaining world
+    geometry in checkpointable state.
+    """
+
+    def __init__(self, *, pending: bool = False) -> None:
+        if not isinstance(pending, bool):
+            raise ValueError("pending tactile state must be boolean")
+        self.pending = pending
+
+    def observe_step(
+        self,
+        *,
+        applied_action: str,
+        before_position: Sequence[int],
+        after_position: Sequence[int],
+        terminal: bool = False,
+    ) -> dict[str, Any]:
+        payload = blocked_forward_contact(
+            applied_action=applied_action,
+            before_position=before_position,
+            after_position=after_position,
+            terminal=terminal,
+        )
+        if payload["contact"]:
+            self.pending = True
+        return payload
+
+    def consume(self) -> dict[str, Any]:
+        pending = self.pending
+        self.pending = False
+        return contact_mechanosensation(front=1.0 if pending else 0.0)
+
+    def checkpoint_value(self) -> bool:
+        return bool(self.pending)
+
+    def restore(self, value: Any) -> None:
+        if not isinstance(value, bool):
+            raise ValueError("Persisted tactile pending state must be boolean")
+        self.pending = value
+
+
 def tactile_channel_levels(payload: dict[str, Any]) -> dict[str, Any]:
     """Validate the strict tactile contract without authorizing stimulation."""
 
