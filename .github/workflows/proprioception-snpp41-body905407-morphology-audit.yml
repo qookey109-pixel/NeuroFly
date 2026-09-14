@@ -1,0 +1,68 @@
+name: NeuroFly SNpp41 Body 905407 Morphology Audit
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/proprioception-snpp41-body905407-morphology-audit.yml"
+      - "src/neurofly/proprioception_morphology_audit.py"
+      - "tests/test_proprioception_morphology_audit.py"
+      - "docs/experiments/V011_SNPP41_BODY905407_MORPHOLOGY_AUDIT.md"
+      - "pyproject.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: neurofly-snpp41-body905407-morphology-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  malecns-snpp41-body905407-morphology-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      AUDIT_OUTPUT: runs/somatosensation/snpp41-body905407-morphology-audit.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache read-only
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            malecns-v1-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare or verify pinned MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$(dirname "$AUDIT_OUTPUT")"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+
+      - name: Discover or verify official SWC morphology receipt
+        run: |
+          # Discovery-first: until an official-SWC receipt SHA256 is frozen in
+          # source, this step intentionally exits non-zero after writing evidence.
+          python -m neurofly.proprioception_morphology_audit \
+            --output "$AUDIT_OUTPUT"
+
+      - name: Publish body 905407 morphology receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-snpp41-body905407-morphology-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runs/somatosensation/snpp41-body905407-morphology-audit.json
+          if-no-files-found: warn
+          retention-days: 3
