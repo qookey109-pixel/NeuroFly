@@ -1,0 +1,90 @@
+name: NeuroFly Somatosensation Annotation Audit
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/somatosensation-annotation-audit.yml"
+      - "src/neurofly/somatosensation_audit.py"
+      - "tests/test_somatosensation_audit.py"
+      - "pyproject.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: neurofly-somatosensation-annotation-audit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  malecns-somatosensation-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      AUDIT_OUTPUT: runs/somatosensation/somatosensation-annotation-audit.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache read-only
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            malecns-v1-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare or verify pinned MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$(dirname "$AUDIT_OUTPUT")"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+
+      - name: Audit curated tactile and proprioceptive sensory annotations
+        run: |
+          python -m neurofly.somatosensation_audit --output "$AUDIT_OUTPUT"
+          python - <<'PY'
+          import json
+          import os
+
+          report = json.load(open(os.environ["AUDIT_OUTPUT"]))
+          assert report["schema"] == "neurofly-somatosensation-annotation-audit-v1"
+          assert report["membership_policy"] == "curated-class-exact-match-only"
+          assert report["target_classes"] == {
+              "proprioception": "mechanosensory_proprioceptive",
+              "tactile": "mechanosensory_tactile",
+          }
+          assert report["stimulation_enabled"] is False
+          assert report["runtime_transduction_enabled"] is False
+          assert report["existing_jo_ce_routing_modified"] is False
+          assert report["passed"] is True
+          assert int(report["modality_counts"]["tactile"]) > 0
+          assert int(report["modality_counts"]["proprioception"]) > 0
+          print(
+              "SOMATOSENSATION_ANNOTATION_AUDIT_PASS",
+              "tactile=", report["modality_counts"]["tactile"],
+              "proprioception=", report["modality_counts"]["proprioception"],
+              "tactile_subclasses=", report["subclass_counts"]["tactile"],
+              "proprioceptive_subclasses=", report["subclass_counts"]["proprioception"],
+              "context_only=", report["context_only_class_counts"],
+          )
+          PY
+
+      - name: Publish compact somatosensation annotation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-somatosensation-annotation-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runs/somatosensation/somatosensation-annotation-audit.json
+          if-no-files-found: warn
+          retention-days: 3
