@@ -21,7 +21,7 @@ def test_parse_and_stats_are_deterministic() -> None:
     assert stats["root_count"] == 1
     assert stats["terminal_nodes"] == 2
     assert stats["branch_points"] == 1
-    assert stats["cable_length"] == 3.0
+    assert stats["cable_length"] == 3.414214
     assert stats["node_type_counts"] == {"1": 1, "3": 3}
 
 
