@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import copy
+import math
 from typing import Any, Mapping
 
+from .olfaction import OLFACTION_MODEL
 from .sensory_contract import assert_unprivileged_agent_input
 from .vision import VISION_MODEL
 from .vision_adapter import retinalize_topdown_rgb
@@ -39,6 +41,44 @@ def _vision_declaration(diagnostics: Mapping[str, Any]) -> dict[str, Any]:
         "world_geometry_exposed": False,
         "engineered_proxy": True,
     }
+
+
+def _bounded_level(value: Any, *, field: str) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"Invalid sensory intensity: {field}") from exc
+    if not math.isfinite(number) or not 0.0 <= number <= 1.0:
+        raise ValueError(f"Sensory intensity must stay within [0,1]: {field}")
+    return number
+
+
+def olfaction_neural_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Project diagnostic virtual olfaction onto bilateral neural-safe channels."""
+
+    if payload.get("model") != OLFACTION_MODEL:
+        raise ValueError("Unsupported olfaction model at neural firewall")
+
+    def channel(name: str) -> dict[str, float]:
+        source = payload.get(name)
+        if not isinstance(source, Mapping):
+            source = {}
+        return {
+            "left": _bounded_level(source.get("left", 0.0), field=f"{name}.left"),
+            "right": _bounded_level(source.get("right", 0.0), field=f"{name}.right"),
+            "intensity": _bounded_level(
+                source.get("intensity", 0.0), field=f"{name}.intensity"
+            ),
+        }
+
+    cleaned = {
+        "model": OLFACTION_MODEL,
+        "encoding": "bilateral-orn-current-proxy",
+        "food": channel("food"),
+        "danger": channel("danger"),
+    }
+    assert_unprivileged_agent_input({"olfaction": cleaned})
+    return cleaned
 
 
 def sanitize_neural_context(payload: Mapping[str, Any]) -> dict[str, Any]:
