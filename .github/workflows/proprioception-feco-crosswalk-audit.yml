@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/workflows/proprioception-feco-crosswalk-audit.yml"
       - "data/proprioception_feco_functional_crosswalk_v01.json"
+      - "data/proprioception_feco_functional_crosswalk_v02.json"
       - "src/neurofly/proprioception_crosswalk_audit.py"
       - "tests/test_proprioception_crosswalk_audit.py"
       - "pyproject.toml"
@@ -24,7 +25,7 @@ jobs:
     timeout-minutes: 90
     env:
       STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
-      CROSSWALK: data/proprioception_feco_functional_crosswalk_v01.json
+      CROSSWALK: data/proprioception_feco_functional_crosswalk_v02.json
       AUDIT_OUTPUT: runs/somatosensation/proprioception-feco-crosswalk-audit.json
 
     steps:
@@ -63,13 +64,23 @@ jobs:
 
           report = json.load(open(os.environ["AUDIT_OUTPUT"]))
           assert report["schema"] == "neurofly-proprioception-feco-functional-crosswalk-audit-v1"
-          assert report["crosswalk_schema"] == "neurofly-proprioception-feco-functional-crosswalk-v0.1"
-          assert report["crosswalk_type_count"] == 7
-          assert report["crosswalk_types"] == [
-              "SNpp39", "SNpp40", "SNpp50", "SNpp51", "SNpp58", "SNpp59", "SNpp60"
-          ]
+          assert report["crosswalk_schema"] == "neurofly-proprioception-feco-functional-crosswalk-v0.2"
+          assert report["crosswalk_type_count"] == 4
+          assert report["crosswalk_types"] == ["SNpp39", "SNpp58", "SNpp59", "SNpp60"]
           assert report["passed"] is True
-          assert int(report["selected_feco_candidates"]) > 0
+          assert int(report["proprioceptive_neurons_total"]) == 1454
+          assert int(report["chordotonal_organ_neurons_total"]) == 425
+          assert int(report["selected_feco_candidates"]) == 102
+          assert report["selected_type_counts"] == {
+              "SNpp39": 39,
+              "SNpp58": 16,
+              "SNpp59": 6,
+              "SNpp60": 41,
+          }
+          assert report["selected_function_counts"] == {
+              "feco_club_bidirectional_motion_vibration_candidate": 63,
+              "feco_hook_motion_direction_candidate": 39,
+          }
           assert not report["missing_crosswalk_types"]
           assert not report["non_proprioceptive_mapped_rows"]
           assert not report["disallowed_subclass_rows"]
@@ -80,7 +91,7 @@ jobs:
               "selected=", report["selected_feco_candidates"],
               "types=", report["selected_type_counts"],
               "functions=", report["selected_function_counts"],
-              "ambiguous_unresolved=", report["ambiguous_related_rows_left_unresolved"],
+              "unresolved=", report["unresolved_proprioceptive_neurons"],
           )
           PY
 
