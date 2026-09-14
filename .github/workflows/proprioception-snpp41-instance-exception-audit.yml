@@ -50,13 +50,53 @@ jobs:
           python -m stonkfly prepare
           python -m neurofly brain-status
 
-      - name: Discover exact SNpp41 exception identity
+      - name: Verify frozen exact SNpp41 exception identity
         run: |
-          # First evidence run is intentionally expected to fail because the
-          # body/instance identity is not yet frozen in source. The audit prints
-          # and writes the exact MaleCNS identity before returning non-zero.
           python -m neurofly.proprioception_exception_audit \
             --output "$AUDIT_OUTPUT"
+          python - <<'PY'
+          import json
+          import os
+
+          report = json.load(open(os.environ["AUDIT_OUTPUT"]))
+          expected = {
+              "body_id": "905407",
+              "instance": "",
+              "type": "SNpp41",
+              "class": "mechanosensory_proprioceptive",
+              "subclass": "leg",
+              "superclass": "vnc_sensory",
+              "soma_side": "",
+          }
+          assert report["schema"] == "neurofly-proprioception-snpp41-instance-exception-audit-v1"
+          assert report["passed"] is True
+          assert report["status"] == "REVIEW_REQUIRED"
+          assert report["type_rows"] == 22
+          assert report["accepted_chordotonal_rows"] == 21
+          assert report["exception_leg_rows"] == 1
+          assert report["exception_identities"] == [expected]
+          assert report["expected_exception_identity"] == expected
+          assert report["blank_instance_frozen"] is True
+          assert report["blank_soma_side_frozen"] is True
+          assert report["gates"]["exception_body_id_present"] is True
+          assert report["gates"]["exception_required_taxonomy_present"] is True
+          assert report["gates"]["exception_identity_frozen"] is True
+          assert report["gates"]["exception_identity_matches_frozen_receipt"] is True
+          assert report["gates"]["instance_annotation_matches_frozen_receipt"] is True
+          assert report["gates"]["soma_side_annotation_matches_frozen_receipt"] is True
+          assert report["promotion_status"] == "review_required"
+          assert report["promotion_ready"] is False
+          assert report["stimulation_enabled"] is False
+          assert report["runtime_transduction_enabled"] is False
+          assert report["current_calibration_authorized"] is False
+          print(
+              "SNPP41_INSTANCE_EXCEPTION_REVIEW_REQUIRED",
+              "body_id=", expected["body_id"],
+              "instance_blank=", expected["instance"] == "",
+              "soma_side_blank=", expected["soma_side"] == "",
+              "current_calibration_authorized=", report["current_calibration_authorized"],
+          )
+          PY
 
       - name: Publish SNpp41 instance exception receipt
         if: always()
