@@ -3,6 +3,8 @@ from __future__ import annotations
 import pytest
 
 from neurofly.proprioception_swc_asset_audit import (
+    EXPECTED_STATS_SHA256,
+    EXPECTED_SWC_SHA256,
     STATUS_DISCOVERY,
     STATUS_REVIEW,
     _parse_swc,
@@ -12,6 +14,17 @@ from neurofly.proprioception_swc_asset_audit import (
 
 
 SYNTHETIC_SWC = b"""# test skeleton\n1 1 0 0 0 1 -1\n2 3 1 0 0 0.5 1\n3 3 2 0 0 0.5 2\n4 3 1 1 0 0.5 1\n"""
+
+
+def test_frozen_body905407_asset_receipts_are_pinned() -> None:
+    assert (
+        EXPECTED_SWC_SHA256
+        == "a85f11d845f885c15ca9f79743e79a1a19e3a85000f0997e5ccc0e4be8f08211"
+    )
+    assert (
+        EXPECTED_STATS_SHA256
+        == "07350bda394d0e8a61b6b1285abb825af0a6f607620d7431f4a8ea4205ac4eea"
+    )
 
 
 def test_parse_and_stats_are_deterministic() -> None:
