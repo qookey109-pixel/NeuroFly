@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from neurofly.proprioception_peer_morphology_source_audit import (
+    BATCH_GAP_CANDIDATE_VFB_IDS,
+    EXPECTED_INVENTORY_SHA256,
     PEER_BODY_IDS,
     STATUS_DISCOVERY,
     STATUS_FAIL,
@@ -31,6 +33,18 @@ def test_frozen_peer_population_matches_connectivity_receipt() -> None:
     assert PEER_BODY_IDS[-1] == "936031"
 
 
+def test_frozen_inventory_receipt_and_batch_gap_candidates_are_pinned() -> None:
+    assert (
+        EXPECTED_INVENTORY_SHA256
+        == "5c7e7bcf85553c5cda5ae1688d3e66f17121171f7cde87891edce60dc5451f65"
+    )
+    assert BATCH_GAP_CANDIDATE_VFB_IDS == (
+        "VFB_jrmc1739",
+        "VFB_jrmc173f",
+        "VFB_jrmc173g",
+    )
+
+
 def test_recursive_helpers_find_identity_and_swc_only() -> None:
     payload = {
         "result": {
@@ -49,7 +63,10 @@ def test_recursive_helpers_find_identity_and_swc_only() -> None:
 
 
 def test_complete_unfrozen_inventory_is_discovery_required() -> None:
-    report = audit_inventory(_complete_records(), expected_inventory_sha256=None)
+    report = audit_inventory(
+        _complete_records(),
+        expected_inventory_sha256=None,
+    )
     assert report["status"] == STATUS_DISCOVERY
     assert report["passed"] is False
     assert report["unresolved_body_ids"] == []
@@ -59,7 +76,10 @@ def test_complete_unfrozen_inventory_is_discovery_required() -> None:
 
 
 def test_exact_frozen_inventory_is_review_required_not_promotion() -> None:
-    discovery = audit_inventory(_complete_records(), expected_inventory_sha256=None)
+    discovery = audit_inventory(
+        _complete_records(),
+        expected_inventory_sha256=None,
+    )
     report = audit_inventory(
         _complete_records(),
         expected_inventory_sha256=discovery["inventory_sha256"],
