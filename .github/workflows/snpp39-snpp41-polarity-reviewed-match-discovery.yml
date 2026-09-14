@@ -1,0 +1,41 @@
+name: NeuroFly SNpp39 SNpp41 Reviewed Match Discovery
+
+on:
+  pull_request:
+    paths:
+      - "src/neurofly/proprioception_polarity_reviewed_match_discovery.py"
+      - "tests/test_proprioception_polarity_reviewed_match_discovery.py"
+      - ".github/workflows/snpp39-snpp41-polarity-reviewed-match-discovery.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reviewed-match-discovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      OUTPUT: runs/somatosensation/snpp39-snpp41-polarity-reviewed-match-discovery.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install NeuroFly test dependencies
+        run: python -m pip install -e '.[test]'
+      - name: Run unit gate
+        run: pytest -q tests/test_proprioception_polarity_reviewed_match_discovery.py
+      - name: Inspect frozen reviewed BANC FANC match archive
+        run: |
+          mkdir -p "$(dirname "$OUTPUT")"
+          python -m neurofly.proprioception_polarity_reviewed_match_discovery --output "$OUTPUT"
+      - name: Publish reviewed match discovery
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-snpp39-snpp41-reviewed-match-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.OUTPUT }}
+          if-no-files-found: error
+          retention-days: 3
