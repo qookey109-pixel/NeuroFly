@@ -10,10 +10,13 @@ from .upstream import STONKFLY_COMMIT
 
 
 AUDIT_SCHEMA = "neurofly-proprioception-feco-functional-crosswalk-audit-v1"
-CROSSWALK_SCHEMA = "neurofly-proprioception-feco-functional-crosswalk-v0.1"
+SUPPORTED_CROSSWALK_SCHEMAS = {
+    "neurofly-proprioception-feco-functional-crosswalk-v0.1",
+    "neurofly-proprioception-feco-functional-crosswalk-v0.2",
+}
 TARGET_CLASS = "mechanosensory_proprioceptive"
 TARGET_SUBCLASS = "chordotonal organ"
-DEFAULT_CROSSWALK = Path("data/proprioception_feco_functional_crosswalk_v01.json")
+DEFAULT_CROSSWALK = Path("data/proprioception_feco_functional_crosswalk_v02.json")
 
 
 def _clean(value: Any) -> str:
@@ -25,12 +28,11 @@ def _clean(value: Any) -> str:
 
 def load_crosswalk(path: str | Path = DEFAULT_CROSSWALK) -> dict[str, Any]:
     payload = json.loads(Path(path).read_text())
-    if payload.get("schema") != CROSSWALK_SCHEMA:
+    if payload.get("schema") not in SUPPORTED_CROSSWALK_SCHEMAS:
         raise ValueError("Unsupported FeCO crosswalk schema")
     if payload.get("source_population_class") != TARGET_CLASS:
         raise ValueError("FeCO crosswalk must target mechanosensory_proprioceptive")
-    accepted = payload.get("accepted_curator_subclasses")
-    if accepted != [TARGET_SUBCLASS]:
+    if payload.get("accepted_curator_subclasses") != [TARGET_SUBCLASS]:
         raise ValueError("FeCO crosswalk must accept only chordotonal organ")
     if payload.get("stimulation_enabled") is not False:
         raise ValueError("FeCO discovery must not enable stimulation")
@@ -156,7 +158,7 @@ def audit_records(
         "stimulation_enabled": False,
         "runtime_transduction_enabled": False,
         "interpretation": (
-            "PASS validates only exact evidence-backed FeCO hook/claw/club candidate populations in the pinned MaleCNS annotations. It does not define receptor mechanics, joint-state transduction, current amplitude, or runtime proprioception."
+            "PASS validates only exact evidence-backed FeCO functional candidates in the pinned MaleCNS annotations. Unsupported FeCO functional classes and all non-selected proprioceptive neurons remain unresolved. No receptor mechanics, joint-state transduction, current amplitude, or runtime proprioception is authorized."
         ),
     }
 
