@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/workflows/tactile-leg-functional-crosswalk-audit.yml"
       - "data/tactile_leg_functional_crosswalk_v01.json"
+      - "data/tactile_leg_functional_crosswalk_v02.json"
       - "src/neurofly/tactile_crosswalk_audit.py"
       - "tests/test_tactile_crosswalk_audit.py"
       - "pyproject.toml"
@@ -24,7 +25,7 @@ jobs:
     timeout-minutes: 90
     env:
       STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
-      CROSSWALK: data/tactile_leg_functional_crosswalk_v01.json
+      CROSSWALK: data/tactile_leg_functional_crosswalk_v02.json
       AUDIT_OUTPUT: runs/somatosensation/tactile-leg-functional-crosswalk-audit.json
 
     steps:
@@ -63,16 +64,15 @@ jobs:
 
           report = json.load(open(os.environ["AUDIT_OUTPUT"]))
           assert report["schema"] == "neurofly-tactile-leg-functional-crosswalk-audit-v1"
-          assert report["crosswalk_schema"] == "neurofly-tactile-leg-functional-crosswalk-v0.1"
-          assert report["crosswalk_type_count"] == 8
+          assert report["crosswalk_schema"] == "neurofly-tactile-leg-functional-crosswalk-v0.2"
+          assert report["crosswalk_type_count"] == 6
           assert report["crosswalk_types"] == [
-              "SNta20", "SNta26", "SNta27", "SNta28",
-              "SNta30", "SNta34", "SNta37", "SNta42",
+              "SNta20", "SNta26", "SNta27", "SNta28", "SNta34", "SNta37",
           ]
           assert report["stimulation_enabled"] is False
           assert report["runtime_transduction_enabled"] is False
           assert report["passed"] is True
-          assert int(report["selected_leg_touch_candidates"]) > 0
+          assert int(report["selected_leg_touch_candidates"]) == 590
           assert not report["missing_crosswalk_types"]
           assert not report["non_tactile_mapped_rows"]
           assert not report["disallowed_subclass_rows"]
