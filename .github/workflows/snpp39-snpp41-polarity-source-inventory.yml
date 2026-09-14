@@ -1,0 +1,41 @@
+name: NeuroFly SNpp39 SNpp41 Polarity Source Inventory
+
+on:
+  pull_request:
+    paths:
+      - "src/neurofly/proprioception_polarity_source_inventory.py"
+      - "tests/test_proprioception_polarity_source_inventory.py"
+      - ".github/workflows/snpp39-snpp41-polarity-source-inventory.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  polarity-source-inventory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      OUTPUT: runs/somatosensation/snpp39-snpp41-polarity-source-inventory.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install NeuroFly test dependencies
+        run: python -m pip install -e '.[test]'
+      - name: Run unit gate
+        run: pytest -q tests/test_proprioception_polarity_source_inventory.py
+      - name: Discover frozen Harvard Dataverse source manifest
+        run: |
+          mkdir -p "$(dirname "$OUTPUT")"
+          python -m neurofly.proprioception_polarity_source_inventory --output "$OUTPUT"
+      - name: Publish source inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-snpp39-snpp41-polarity-source-inventory-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.OUTPUT }}
+          if-no-files-found: error
+          retention-days: 3
