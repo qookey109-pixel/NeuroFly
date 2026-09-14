@@ -18,8 +18,12 @@ TARGET_BODY_ID = "905407"
 TARGET_TYPE = "SNpp41"
 VFB_ID = "VFB_jrmc173b"
 SWC_URL = "https://www.virtualflybrain.org/data/VFB/i/jrmc/173b/VFB_00200000/volume.swc"
-EXPECTED_SWC_SHA256: str | None = None
-EXPECTED_STATS_SHA256: str | None = None
+EXPECTED_SWC_SHA256: str | None = (
+    "a85f11d845f885c15ca9f79743e79a1a19e3a85000f0997e5ccc0e4be8f08211"
+)
+EXPECTED_STATS_SHA256: str | None = (
+    "07350bda394d0e8a61b6b1285abb825af0a6f607620d7431f4a8ea4205ac4eea"
+)
 
 
 def _download_bytes(url: str) -> bytes:
