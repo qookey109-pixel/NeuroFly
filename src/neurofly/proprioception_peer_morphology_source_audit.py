@@ -196,18 +196,42 @@ def audit_inventory(
 
 
 def discover() -> dict[str, Any]:
+    # VFB's numeric body-ID search is not guaranteed to index every individual.
+    # Therefore use the same two-source discovery policy already validated for
+    # body 905407: numeric search plus the systematic type search. Candidates
+    # from either path are accepted only if get_term_info contains the exact
+    # MaleCNS body accession; no fuzzy identity fallback is permitted.
+    type_search = _get_json("/search", {"query": TARGET_TYPE, "limit": 100})
+    type_candidate_ids = set(_candidate_vfb_ids(type_search))
+    term_cache: dict[str, Any] = {}
+    fetch_error_cache: dict[str, str] = {}
+
+    def term_info(vfb_id: str) -> Any | None:
+        if vfb_id in term_cache:
+            return term_cache[vfb_id]
+        if vfb_id in fetch_error_cache:
+            return None
+        try:
+            info = _get_json("/get_term_info", {"id": vfb_id})
+        except Exception as exc:
+            fetch_error_cache[vfb_id] = f"{type(exc).__name__}:{exc}"
+            return None
+        term_cache[vfb_id] = info
+        return info
+
     records: list[dict[str, Any]] = []
     for body_id in PEER_BODY_IDS:
-        search = _get_json("/search", {"query": body_id, "limit": 50})
-        candidate_ids = _candidate_vfb_ids(search)
+        body_search = _get_json("/search", {"query": body_id, "limit": 50})
+        body_candidate_ids = set(_candidate_vfb_ids(body_search))
+        candidate_ids = sorted(body_candidate_ids | type_candidate_ids)
         matched: list[str] = []
         swc: set[str] = set()
         fetch_errors: list[str] = []
         for vfb_id in candidate_ids:
-            try:
-                info = _get_json("/get_term_info", {"id": vfb_id})
-            except Exception as exc:
-                fetch_errors.append(f"{vfb_id}:{type(exc).__name__}:{exc}")
+            info = term_info(vfb_id)
+            if info is None:
+                if vfb_id in fetch_error_cache:
+                    fetch_errors.append(f"{vfb_id}:{fetch_error_cache[vfb_id]}")
                 continue
             if _contains_body_id(info, body_id):
                 matched.append(vfb_id)
@@ -215,14 +239,17 @@ def discover() -> dict[str, Any]:
         records.append(
             {
                 "body_id": body_id,
+                "body_search_candidate_vfb_ids": sorted(body_candidate_ids),
+                "type_search_candidate_vfb_ids": sorted(type_candidate_ids),
                 "candidate_vfb_ids": candidate_ids,
                 "matched_vfb_ids": sorted(set(matched)),
                 "swc_urls": sorted(swc),
-                "fetch_errors": fetch_errors,
+                "fetch_errors": sorted(set(fetch_errors)),
             }
         )
     report = audit_inventory(records)
     report["vfb_api"] = VFB_API
+    report["discovery_policy"] = "exact-body-search-union-exact-snpp41-type-search"
     return report
 
 
