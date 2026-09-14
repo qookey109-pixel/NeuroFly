@@ -8,10 +8,11 @@ from .mechanosensation import (
     virtual_antennal_mechanosensation,
 )
 from .olfaction import OLFACTION_MODEL, virtual_olfaction
+from .tactile import TACTILE_MODEL, contact_mechanosensation
 from .vision import VISION_MODEL, fly_vision_state
 
 
-SENSORY_CONTRACT = "neurofly-sensory-contract-v0.3"
+SENSORY_CONTRACT = "neurofly-sensory-contract-v0.4"
 SENSORY_POLICY = "egocentric-no-privileged-world-state"
 
 # These fields may be useful to human diagnostics, but they must never appear in
@@ -35,6 +36,9 @@ PRIVILEGED_AGENT_KEYS = frozenset(
         "airflow_world",
         "body_relative",
         "signed_deflection",
+        "object_id",
+        "collision_normal",
+        "wall_coordinates",
     }
 )
 
@@ -92,6 +96,21 @@ def _mechanosensory_agent_input(mechanosensation: dict[str, Any]) -> dict[str, A
     }
 
 
+def _tactile_agent_input(tactile: dict[str, Any]) -> dict[str, Any]:
+    """Expose only the bounded contact channel, never collision geometry."""
+
+    channels = tactile.get("channels") or {}
+    front = _bounded_unit(channels.get("front", 0.0))
+    return {
+        "model": TACTILE_MODEL,
+        "available": bool(tactile.get("available", True)),
+        "encoding": "blocked-forward-external-touch-proxy",
+        "contact": bool(tactile.get("contact", False)),
+        "channels": {"front": front},
+        "stimulation_enabled": False,
+    }
+
+
 def _gustatory_agent_input(gustation: dict[str, Any]) -> dict[str, Any]:
     """Expose only contact-gated functional taste channels."""
 
@@ -137,6 +156,7 @@ def build_sensory_contract(
     enemies: list[dict[str, int]],
     airflow: dict[str, Any] | None = None,
     gustatory_event: str | None = None,
+    tactile_contact: bool = False,
 ) -> dict[str, Any]:
     """Build a strict boundary between fly-accessible input and diagnostics.
 
@@ -147,14 +167,16 @@ def build_sensory_contract(
     Vision pixels themselves travel separately through the retinal RGB adapter;
     the JSON contract only declares that transport and its policy. Gustation is
     contact-gated: a distant visible or smellable food does not create a taste
-    channel. The current maze emits a sugar/water proxy only after a food-contact
-    event, and no gustatory current is enabled by this contract.
+    channel. Contact mechanosensation is also contact-gated and exposes only a
+    bounded front-contact channel; it never exposes wall or collision geometry.
+    Neither taste nor tactile current is enabled by this contract.
     """
 
     olfaction = virtual_olfaction(grid=grid, fly=fly, enemies=enemies)
     vision = fly_vision_state(grid=grid, fly=fly, enemies=enemies)
     mechanosensation = virtual_antennal_mechanosensation(fly=fly, airflow=airflow)
     gustation = contact_gustation(event=gustatory_event)
+    tactile = contact_mechanosensation(front=1.0 if tactile_contact else 0.0)
 
     agent_input = {
         "vision": {
@@ -167,9 +189,7 @@ def build_sensory_contract(
         "olfaction": _olfactory_agent_input(olfaction),
         "antennal_mechanosensation": _mechanosensory_agent_input(mechanosensation),
         "proprioception": _reserved_modality("neurofly-proprioception-v0"),
-        "contact_mechanosensation": _reserved_modality(
-            "neurofly-contact-mechanosensation-v0"
-        ),
+        "contact_mechanosensation": _tactile_agent_input(tactile),
         "gustation": _gustatory_agent_input(gustation),
         "thermo_hygrosensation": _reserved_modality(
             "neurofly-thermo-hygrosensation-v0"
@@ -187,5 +207,6 @@ def build_sensory_contract(
             "olfaction": olfaction,
             "antennal_mechanosensation": mechanosensation,
             "gustation": gustation,
+            "contact_mechanosensation": tactile,
         },
     }

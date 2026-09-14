@@ -48,6 +48,12 @@ def test_contract_separates_agent_input_from_world_diagnostics() -> None:
     assert mech["left"] == {"jo_c": 0.0, "jo_e": 1.0}
     assert mech["right"] == {"jo_c": 0.0, "jo_e": 1.0}
 
+    tactile = agent["contact_mechanosensation"]
+    assert tactile["available"] is True
+    assert tactile["contact"] is False
+    assert tactile["channels"] == {"front": 0.0}
+    assert tactile["stimulation_enabled"] is False
+
     taste = agent["gustation"]
     assert taste["available"] is True
     assert taste["contact"] is False
@@ -59,6 +65,7 @@ def test_contract_separates_agent_input_from_world_diagnostics() -> None:
     assert "nearest_enemy" in diagnostics["vision"]
     assert diagnostics["antennal_mechanosensation"]["diagnostics"]["airflow_world"]
     assert diagnostics["gustation"]["contact"] is False
+    assert diagnostics["contact_mechanosensation"]["contact"] is False
     assert "source" not in agent["olfaction"]["food"]
     assert "distance_cells" not in agent["olfaction"]["food"]
     assert "diagnostics" not in mech
@@ -98,13 +105,37 @@ def test_gustation_requires_contact_event_not_visible_food() -> None:
     assert after_contact["stimulation_enabled"] is False
 
 
+def test_tactile_requires_explicit_physical_contact_signal() -> None:
+    grid, fly, enemies = _world()
+
+    without_contact = build_sensory_contract(
+        grid=grid,
+        fly=fly,
+        enemies=enemies,
+    )["agent_input"]["contact_mechanosensation"]
+    assert without_contact["contact"] is False
+    assert without_contact["channels"] == {"front": 0.0}
+
+    after_contact = build_sensory_contract(
+        grid=grid,
+        fly=fly,
+        enemies=enemies,
+        tactile_contact=True,
+    )["agent_input"]["contact_mechanosensation"]
+    assert after_contact["contact"] is True
+    assert after_contact["channels"] == {"front": 1.0}
+    assert after_contact["stimulation_enabled"] is False
+    assert "object_id" not in after_contact
+    assert "collision_normal" not in after_contact
+    assert "wall_coordinates" not in after_contact
+
+
 def test_future_modalities_are_reserved_not_invented() -> None:
     grid, fly, enemies = _world()
     agent = build_sensory_contract(grid=grid, fly=fly, enemies=enemies)["agent_input"]
 
     for name in (
         "proprioception",
-        "contact_mechanosensation",
         "thermo_hygrosensation",
         "polarized_light",
     ):
@@ -135,3 +166,9 @@ def test_privileged_world_truth_is_rejected_recursively() -> None:
                 }
             }
         )
+
+    for forbidden in ("object_id", "collision_normal", "wall_coordinates"):
+        with pytest.raises(ValueError, match="Privileged field"):
+            assert_unprivileged_agent_input(
+                {"contact_mechanosensation": {forbidden: "human-debug-only"}}
+            )
