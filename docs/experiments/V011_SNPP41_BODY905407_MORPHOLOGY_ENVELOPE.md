@@ -1,6 +1,6 @@
 # V0.11 SNpp41 Body 905407 Morphology Envelope Audit
 
-Status: read-only target comparison against a protocol frozen **before** target evaluation.
+Status: **REVIEW_REQUIRED / PASS** — read-only target comparison against a protocol frozen before target evaluation.
 
 ## Goal
 
@@ -30,19 +30,46 @@ Apply the frozen peer-only SNpp41 morphology protocol to MaleCNS body `905407` w
 
 No post-hoc threshold or feature change is allowed.
 
-## Scientific boundary
+## Result
 
-A pass means only that body `905407` lies inside this **coarse topology/geometry descriptor envelope** relative to the frozen SNpp41 peers.
+Workflow run `34826238233` completed successfully. The associated general NeuroFly CI run `34826238081` also passed.
 
-It does not establish receptor physiology, functional identity, movement-phase tuning, extension/flexion assignment, or behavioral causality.
+All frozen gates reproduced:
+
+- peer-only protocol receipt matched;
+- target SWC byte SHA matched;
+- target statistics SHA matched;
+- exact identity remained `905407 / VFB_jrmc173b`;
+- comparison used the predeclared metric and threshold only.
+
+Target result:
+
+- nearest frozen peer: **body `817154`**
+- target nearest-peer distance: **`0.452550685717`**
+- frozen peer-envelope threshold: **`1.833618426632`**
+- margin to threshold: **`1.381067740915`**
+- within frozen peer envelope: **yes**
+
+The next nearest peers were body `822285` at `1.698791618923`, body `816362` at `1.705356224638`, and body `817298` at `1.750825685910`.
+
+Workflow artifact:
+
+- artifact ID `10339809127`
+- ZIP SHA256 `f9d1d85390392b062f94258a27d533972584dc4d7034b00612db20ba94e258f4`
+
+## Interpretation
+
+Body `905407` falls comfortably inside this **predeclared coarse topology/geometry SNpp41 peer envelope**. Because the feature set, robust normalization, distance metric, and threshold were frozen before the target was evaluated, this result is not a post-hoc threshold fit.
+
+This remains a morphology result only. It does **not** establish receptor physiology, functional identity, movement-phase tuning, extension/flexion assignment, or behavioral causality.
 
 ## Hard locks
 
-Regardless of result:
+Despite the morphology PASS:
 
 - `promotion_ready=false`
 - `current_calibration_authorized=false`
 - `stimulation_enabled=false`
 - `runtime_transduction_enabled=false`
 
-Any proprioceptive stimulation/current remains blocked behind separate biological/tuning and frozen calibration evidence.
+Any proprioceptive stimulation/current remains blocked behind separate biological/tuning evidence and a later frozen calibration gate.
