@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
@@ -60,7 +60,11 @@ def load_crosswalk(path: str | Path = DEFAULT_CROSSWALK) -> dict[str, Any]:
         if not isinstance(evidence, list) or not evidence:
             raise ValueError(f"Missing anatomical evidence for {neuron_type}")
         for item in evidence:
-            if not _clean(item.get("kind")) or not _clean(item.get("url")) or not _clean(item.get("claim")):
+            if (
+                not _clean(item.get("kind"))
+                or not _clean(item.get("url"))
+                or not _clean(item.get("claim"))
+            ):
                 raise ValueError(f"Incomplete anatomical evidence for {neuron_type}")
     return payload
 
@@ -76,16 +80,19 @@ def audit_records(
     ``leg`` and ``mechanosensory bristle`` are the only accepted subclasses;
     mapped types appearing as notum/wing/etc. make the audit fail so a type-level
     anatomical assumption cannot silently spread into another body region.
+
+    Same-name rows outside ``mechanosensory_tactile`` remain a hard failure at
+    this discovery stage, but their exact class/subclass/superclass/instance
+    context is emitted so the crosswalk can be narrowed rather than the gate
+    being weakened blindly.
     """
 
     mappings = {
-        _clean(item["male_cns_type"]): item
-        for item in crosswalk["mappings"]
+        _clean(item["male_cns_type"]): item for item in crosswalk["mappings"]
     }
     mapped_types = set(mappings)
     accepted_subclasses = {
-        _clean(value).lower()
-        for value in crosswalk["accepted_curator_subclasses"]
+        _clean(value).lower() for value in crosswalk["accepted_curator_subclasses"]
     }
 
     scanned = 0
@@ -95,9 +102,10 @@ def audit_records(
     selected_subclass_counts: Counter[str] = Counter()
     evidence_tier_counts: Counter[str] = Counter()
     non_tactile_mapped_rows: Counter[str] = Counter()
+    non_tactile_context_counts: dict[str, Counter[str]] = defaultdict(Counter)
+    non_tactile_examples: dict[str, list[dict[str, str]]] = defaultdict(list)
     disallowed_subclass_rows: Counter[str] = Counter()
     ambiguous_related_rows: Counter[str] = Counter()
-    all_tactile_type_counts: Counter[str] = Counter()
 
     for row in records:
         scanned += 1
@@ -106,11 +114,13 @@ def audit_records(
         ).lower()
         neuron_type = _clean(row.get("type"))
         subclass = _clean(row.get("subclass", row.get("sub_class"))).lower()
+        superclass = _clean(
+            row.get("superclass", row.get("super_class"))
+        ).lower()
+        instance = _clean(row.get("instance"))
 
         if neuron_class == TARGET_CLASS:
             tactile_total += 1
-            if neuron_type:
-                all_tactile_type_counts[neuron_type] += 1
 
         # Combined labels are never split. Count only mixtures that mention at
         # least one approved exact type so the unresolved boundary is visible.
@@ -123,6 +133,24 @@ def audit_records(
             continue
         if neuron_class != TARGET_CLASS:
             non_tactile_mapped_rows[neuron_type] += 1
+            context_key = "|".join(
+                (
+                    neuron_class or "<blank-class>",
+                    subclass or "<blank-subclass>",
+                    superclass or "<blank-superclass>",
+                )
+            )
+            non_tactile_context_counts[neuron_type][context_key] += 1
+            if len(non_tactile_examples[neuron_type]) < 24:
+                non_tactile_examples[neuron_type].append(
+                    {
+                        "class": neuron_class,
+                        "subclass": subclass,
+                        "superclass": superclass,
+                        "type": neuron_type,
+                        "instance": instance,
+                    }
+                )
             continue
         if subclass not in accepted_subclasses:
             key = f"{neuron_type}|{subclass or '<blank>'}"
@@ -147,7 +175,10 @@ def audit_records(
         "ambiguous_combined_labels_remain_unselected": True,
         "unresolved_population_preserved": unresolved_tactile >= 0,
         "stimulation_remains_disabled": crosswalk.get("stimulation_enabled") is False,
-        "runtime_transduction_remains_disabled": crosswalk.get("runtime_transduction_enabled") is False,
+        "runtime_transduction_remains_disabled": crosswalk.get(
+            "runtime_transduction_enabled"
+        )
+        is False,
     }
     passed = all(gates.values())
 
@@ -169,8 +200,18 @@ def audit_records(
         "evidence_tier_counts": dict(sorted(evidence_tier_counts.items())),
         "missing_crosswalk_types": missing_types,
         "non_tactile_mapped_rows": dict(sorted(non_tactile_mapped_rows.items())),
+        "non_tactile_name_collision_context": {
+            neuron_type: dict(sorted(counter.items()))
+            for neuron_type, counter in sorted(non_tactile_context_counts.items())
+        },
+        "non_tactile_name_collision_examples": {
+            neuron_type: examples
+            for neuron_type, examples in sorted(non_tactile_examples.items())
+        },
         "disallowed_subclass_rows": dict(sorted(disallowed_subclass_rows.items())),
-        "ambiguous_related_rows_left_unresolved": dict(sorted(ambiguous_related_rows.items())),
+        "ambiguous_related_rows_left_unresolved": dict(
+            sorted(ambiguous_related_rows.items())
+        ),
         "gates": gates,
         "passed": passed,
         "stimulation_enabled": False,
@@ -180,6 +221,11 @@ def audit_records(
             "candidate population in the exact pinned MaleCNS annotations. Combined "
             "labels and all unsupported tactile neurons remain unresolved. No tactile "
             "current or runtime contact signal is authorized."
+            if passed
+            else "FAIL preserves the conservative boundary. Same-name rows outside "
+            "the exact tactile class or mapped tactile rows in disallowed subclasses "
+            "must be diagnosed or removed from the crosswalk before stimulation can "
+            "be considered."
         ),
     }
 
@@ -193,6 +239,8 @@ def _records_from_annotations(frame: Any) -> list[dict[str, Any]]:
             "cell_class",
             "subclass",
             "sub_class",
+            "superclass",
+            "super_class",
             "type",
             "instance",
         )
