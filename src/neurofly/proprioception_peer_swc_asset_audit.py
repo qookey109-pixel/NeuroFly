@@ -25,7 +25,9 @@ TARGET_TYPE = "SNpp41"
 FROZEN_SOURCE_INVENTORY_SHA256 = (
     "5c7e7bcf85553c5cda5ae1688d3e66f17121171f7cde87891edce60dc5451f65"
 )
-EXPECTED_COHORT_RECEIPT_SHA256: str | None = None
+EXPECTED_COHORT_RECEIPT_SHA256: str | None = (
+    "aeba54052eb7a53c1c1e9b7f6bf1a7fb1010baa3023db9b693af9f3e3e6e70d2"
+)
 
 PEER_ASSETS: tuple[tuple[str, str, str], ...] = (
     ("807970", "VFB_jrmc173d", "https://www.virtualflybrain.org/data/VFB/i/jrmc/173d/VFB_00200000/volume.swc"),
