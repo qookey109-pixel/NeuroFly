@@ -8,26 +8,39 @@ The V0.9 annotation audit established that the pinned MaleCNS graph contains 2,5
 
 This stage therefore asks a narrower question:
 
-> Which exact retained SNta types have direct external anatomical evidence linking that type to an adult leg nerve, while remaining inside the curator `mechanosensory_tactile` population?
+> Which exact retained SNta types have direct external anatomical evidence linking that type to an adult leg nerve, while remaining unambiguous inside the pinned MaleCNS curator annotations?
 
-## Conservative crosswalk
+## Candidate v0.1 and why it was rejected
 
-Eight exact single type labels are admitted as **leg-associated external-touch candidates**:
+The first candidate crosswalk contained eight exact type labels:
+
+`SNta20`, `SNta26`, `SNta27`, `SNta28`, `SNta30`, `SNta34`, `SNta37`, `SNta42`.
+
+Prepared MaleCNS audit run `34796509815` rejected that candidate even though it selected 719 exact tactile rows, because two type names also occurred in retained rows outside the exact tactile class:
+
+- `SNta30`: 11 rows with `class=unknown_sensory`, `subclass=mechanosensory bristle`, `superclass=vnc_sensory`
+- `SNta42`: 2 rows with `class=unknown_sensory`, `subclass=mechanosensory bristle`, `superclass=vnc_sensory`
+
+The class gate was **not** relaxed. Those two types were removed from the next candidate instead. The rejected v0.1 ledger is preserved at:
+
+`data/tactile_leg_functional_crosswalk_v01.json`
+
+## Conservative crosswalk v0.2
+
+Six exact single type labels remain as **leg-associated external-touch candidates**:
 
 - `SNta20`
 - `SNta26`
 - `SNta27`
 - `SNta28`
-- `SNta30`
 - `SNta34`
 - `SNta37`
-- `SNta42`
 
-Each mapping has explicit Virtual Fly Brain / MaleCNS anatomical evidence that at least one record of that exact type fasciculates with an adult prothoracic, mesothoracic, or metathoracic leg nerve. `SNta27` also has a direct curator `subclass=leg` record.
+Each mapping has explicit Virtual Fly Brain / MaleCNS anatomical evidence that at least one record of that exact type fasciculates with an adult mesothoracic or metathoracic leg nerve. `SNta27` also has a direct curator `subclass=leg` record.
 
-The machine-readable evidence ledger is:
+The active machine-readable evidence ledger is:
 
-`data/tactile_leg_functional_crosswalk_v01.json`
+`data/tactile_leg_functional_crosswalk_v02.json`
 
 ## Accepted curator subclasses
 
@@ -36,15 +49,19 @@ A mapped exact type may be retained only when its pinned MaleCNS row is itself `
 - `leg`
 - `mechanosensory bristle`
 
-If any mapped exact type appears in `notum`, `wing`, or another unexpected subclass, the prepared audit fails closed. This protects against extending type-level leg-nerve evidence into a different body region without review.
+Any same-name row outside `mechanosensory_tactile` remains a hard failure. If any mapped exact type appears in `notum`, `wing`, or another unexpected subclass, the prepared audit also fails closed. This protects against extending type-level leg-nerve evidence into a different or unresolved sensory population.
 
 ## Ambiguous labels remain unresolved
 
-Combined or uncertain type labels are never split. Examples:
+Combined or uncertain type labels are never split. Examples include:
 
 - `SNta20,SNta29`
 - `SNta27,SNta28`
+- `SNta28,SNta29`
+- `SNta28,SNta40`
+- `SNta28,SNta44`
 - `SNta31,SNta34`
+- `SNta19,SNta37`
 - `SNtaxx`
 - `SNxxxx`
 
@@ -67,13 +84,14 @@ Both tiers remain discovery candidates only. Neither authorizes neural stimulati
 
 ## Hard gates
 
-A PASS requires:
+A PASS for v0.2 requires:
 
-- all 8 exact crosswalk types are present in the pinned graph;
+- all 6 exact crosswalk types are present in the pinned graph;
 - selected rows are exactly `mechanosensory_tactile`;
+- no mapped type has a same-name retained row outside the tactile class;
 - no mapped type appears in a disallowed subclass;
 - combined labels remain unselected;
-- the selected population is non-empty;
+- exact selected population is 590 neurons for the pinned MaleCNS/Stonkfly baseline;
 - `stimulation_enabled=false`;
 - `runtime_transduction_enabled=false`.
 
