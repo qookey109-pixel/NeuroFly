@@ -8,6 +8,7 @@ from neurofly.proprioception import (
     feco_motion_proprioception,
     proprioceptive_channel_levels,
 )
+from neurofly.sensory_contract import assert_unprivileged_agent_input
 
 
 def test_neutral_joint_state_has_zero_motion_channels() -> None:
@@ -90,3 +91,25 @@ def test_contract_contains_no_world_state_or_motor_command_fields() -> None:
                 walk(nested)
 
     walk(payload)
+    assert_unprivileged_agent_input({"proprioception": payload})
+
+
+@pytest.mark.parametrize(
+    "forbidden_key",
+    [
+        "heading",
+        "world_velocity",
+        "world_displacement",
+        "reward",
+        "desired_action",
+        "joint_delta",
+        "joint_position",
+    ],
+)
+def test_raw_world_or_joint_state_is_rejected_by_global_sensory_guard(
+    forbidden_key: str,
+) -> None:
+    with pytest.raises(ValueError, match="Privileged field"):
+        assert_unprivileged_agent_input(
+            {"proprioception": {forbidden_key: 0.25}}
+        )
