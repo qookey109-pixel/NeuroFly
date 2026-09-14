@@ -18,10 +18,19 @@ EXPECTED_TYPE_ROWS = 22
 EXPECTED_ACCEPTED_ROWS = 21
 EXPECTED_EXCEPTION_ROWS = 1
 
-# Discovery deliberately starts without an expected identity. The prepared gate
-# must fail after surfacing the exact exception body/instance. A later evidence
-# commit may freeze the discovered identity; do not guess it here.
-EXPECTED_EXCEPTION_IDENTITY: dict[str, str] | None = None
+# Frozen from the first prepared MaleCNS discovery run 34805000350.
+# Blank instance/soma_side are part of the evidence receipt. They are not
+# missing values to infer or fill from morphology, laterality, or neighboring
+# systematic types.
+EXPECTED_EXCEPTION_IDENTITY: dict[str, str] | None = {
+    "body_id": "905407",
+    "instance": "",
+    "type": "SNpp41",
+    "class": "mechanosensory_proprioceptive",
+    "subclass": "leg",
+    "superclass": "vnc_sensory",
+    "soma_side": "",
+}
 
 
 def _clean(value: Any) -> str:
@@ -41,6 +50,15 @@ def _identity(row: Mapping[str, Any]) -> dict[str, str]:
         "superclass": _clean(row.get("superclass")).lower(),
         "soma_side": _clean(row.get("soma_side")).upper(),
     }
+
+
+def _required_identity_fields_present(item: Mapping[str, str]) -> bool:
+    """Require stable body/type taxonomy while permitting frozen blank metadata."""
+
+    return all(
+        item.get(key, "")
+        for key in ("body_id", "type", "class", "subclass", "superclass")
+    )
 
 
 def audit_records(records: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
@@ -72,10 +90,23 @@ def audit_records(records: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
 
     exception_identities = [_identity(row) for row in exceptions]
     identity_frozen = EXPECTED_EXCEPTION_IDENTITY is not None
+    observed_identity = exception_identities[0] if len(exception_identities) == 1 else None
     identity_matches = (
         identity_frozen
-        and len(exception_identities) == 1
-        and exception_identities[0] == EXPECTED_EXCEPTION_IDENTITY
+        and observed_identity is not None
+        and observed_identity == EXPECTED_EXCEPTION_IDENTITY
+    )
+    frozen_instance_matches = bool(
+        identity_frozen
+        and observed_identity is not None
+        and observed_identity.get("instance")
+        == EXPECTED_EXCEPTION_IDENTITY.get("instance")
+    )
+    frozen_soma_side_matches = bool(
+        identity_frozen
+        and observed_identity is not None
+        and observed_identity.get("soma_side")
+        == EXPECTED_EXCEPTION_IDENTITY.get("soma_side")
     )
 
     structural_gates = {
@@ -83,8 +114,11 @@ def audit_records(records: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
         "exact_chordotonal_row_count": len(accepted) == EXPECTED_ACCEPTED_ROWS,
         "exact_leg_exception_count": len(exceptions) == EXPECTED_EXCEPTION_ROWS,
         "no_unexpected_snpp41_rows": len(unexpected) == 0,
-        "all_exception_identities_complete": all(
-            item["body_id"] and item["instance"] for item in exception_identities
+        "exception_body_id_present": all(
+            bool(item.get("body_id")) for item in exception_identities
+        ),
+        "exception_required_taxonomy_present": all(
+            _required_identity_fields_present(item) for item in exception_identities
         ),
     }
     structural_pass = all(structural_gates.values())
@@ -92,6 +126,8 @@ def audit_records(records: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
         **structural_gates,
         "exception_identity_frozen": identity_frozen,
         "exception_identity_matches_frozen_receipt": bool(identity_matches),
+        "instance_annotation_matches_frozen_receipt": frozen_instance_matches,
+        "soma_side_annotation_matches_frozen_receipt": frozen_soma_side_matches,
         "promotion_remains_blocked": True,
         "stimulation_remains_disabled": True,
         "current_calibration_remains_blocked": True,
@@ -120,6 +156,12 @@ def audit_records(records: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
         "expected_exception_identity": EXPECTED_EXCEPTION_IDENTITY,
         "unexpected_rows": [_identity(row) for row in unexpected],
         "identity_frozen": identity_frozen,
+        "blank_instance_frozen": bool(
+            identity_frozen and EXPECTED_EXCEPTION_IDENTITY.get("instance") == ""
+        ),
+        "blank_soma_side_frozen": bool(
+            identity_frozen and EXPECTED_EXCEPTION_IDENTITY.get("soma_side") == ""
+        ),
         "promotion_status": "review_required",
         "promotion_ready": False,
         "stimulation_enabled": False,
@@ -127,10 +169,13 @@ def audit_records(records: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
         "current_calibration_authorized": False,
         "gates": gates,
         "interpretation": (
-            "DISCOVERY_REQUIRED is intentional on the first prepared run: the exact SNpp41|leg "
-            "body/instance must be observed from pinned MaleCNS before being frozen into a receipt. "
-            "REVIEW_REQUIRED after freezing means the same identity reproduced exactly, not that "
-            "SNpp41 was promoted for stimulation."
+            "REVIEW_REQUIRED means pinned MaleCNS reproduced the exact frozen SNpp41|leg "
+            "exception identity, including bodyId 905407 and the absence of instance/somaSide "
+            "annotations. Blank metadata is preserved as evidence and is never inferred. This "
+            "does not promote SNpp41 for stimulation."
+            if identity_frozen
+            else "DISCOVERY_REQUIRED means the exact SNpp41|leg identity must be observed from "
+            "pinned MaleCNS before any receipt can be frozen."
         ),
     }
 
@@ -179,7 +224,7 @@ def run_audit(*, output: str | Path | None = None) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Discover/freeze the exact MaleCNS SNpp41 mixed-subclass exception identity"
+        description="Verify the frozen MaleCNS SNpp41 mixed-subclass exception identity"
     )
     parser.add_argument(
         "--output",
