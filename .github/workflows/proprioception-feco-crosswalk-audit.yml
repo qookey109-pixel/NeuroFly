@@ -54,7 +54,7 @@ jobs:
           python -m stonkfly prepare
           python -m neurofly brain-status
 
-      - name: Audit evidence-backed FeCO exact types
+      - name: Audit FeCO hook-pair review evidence
         run: |
           python -m neurofly.proprioception_crosswalk_audit \
             --crosswalk "$CROSSWALK" \
@@ -66,6 +66,9 @@ jobs:
           report = json.load(open(os.environ["AUDIT_OUTPUT"]))
           assert report["schema"] == "neurofly-proprioception-feco-functional-crosswalk-audit-v2"
           assert report["crosswalk_schema"] == "neurofly-proprioception-feco-functional-crosswalk-v0.3"
+          assert report["status"] == "REVIEW_REQUIRED"
+          assert report["promotion_status"] == "review_required"
+          assert report["promotion_ready"] is False
           assert report["crosswalk_type_count"] == 5
           assert report["crosswalk_types"] == [
               "SNpp39", "SNpp41", "SNpp58", "SNpp59", "SNpp60"
@@ -73,19 +76,27 @@ jobs:
           assert report["passed"] is True
           assert int(report["proprioceptive_neurons_total"]) == 1454
           assert int(report["chordotonal_organ_neurons_total"]) == 425
-          assert int(report["selected_feco_candidates"]) == 124
-          assert int(report["unresolved_proprioceptive_neurons"]) == 1330
+          assert int(report["selected_feco_candidates"]) == 123
+          assert int(report["clean_selected_candidates"]) == 102
+          assert int(report["review_required_selected_candidates"]) == 21
+          assert int(report["unresolved_proprioceptive_neurons"]) == 1331
           assert report["selected_type_counts"] == {
               "SNpp39": 39,
-              "SNpp41": 22,
+              "SNpp41": 21,
               "SNpp58": 16,
               "SNpp59": 6,
               "SNpp60": 41,
           }
           assert report["selected_function_counts"] == {
               "feco_club_bidirectional_motion_vibration_candidate": 63,
-              "feco_hook_motion_direction_candidate": 61,
+              "feco_hook_motion_direction_candidate": 60,
           }
+          assert report["selected_mapping_status_counts"] == {
+              "clean_candidate": 102,
+              "review_required_mixed_subclass": 21,
+          }
+          assert report["expected_annotation_exceptions"] == {"SNpp41|leg": 1}
+          assert report["observed_annotation_exceptions"] == {"SNpp41|leg": 1}
           assert report["hook_types"] == ["SNpp39", "SNpp41"]
           assert report["hook_direction_identity"] == {
               "SNpp39": "unresolved",
@@ -93,18 +104,21 @@ jobs:
           }
           assert report["directional_hook_identity_resolved"] is False
           assert report["current_calibration_authorized"] is False
-          assert report["gates"]["complete_hook_pair_present"] is True
+          assert report["gates"]["annotation_exceptions_match_pinned_receipt"] is True
+          assert report["gates"]["complete_hook_pair_present_for_review"] is True
           assert report["gates"]["hook_direction_identity_remains_unresolved"] is True
+          assert report["gates"]["promotion_remains_review_required"] is True
           assert report["gates"]["current_calibration_remains_blocked"] is True
           assert not report["missing_crosswalk_types"]
           assert not report["non_proprioceptive_mapped_rows"]
-          assert not report["disallowed_subclass_rows"]
           assert report["stimulation_enabled"] is False
           assert report["runtime_transduction_enabled"] is False
           print(
-              "PROPRIOCEPTION_FECO_HOOK_PAIR_EVIDENCE_PASS",
+              "PROPRIOCEPTION_FECO_HOOK_PAIR_REVIEW_REQUIRED",
               "selected=", report["selected_feco_candidates"],
-              "types=", report["selected_type_counts"],
+              "clean=", report["clean_selected_candidates"],
+              "review=", report["review_required_selected_candidates"],
+              "annotation_exception=", report["observed_annotation_exceptions"],
               "hook_direction=", report["hook_direction_identity"],
               "current_calibration_authorized=", report["current_calibration_authorized"],
           )
