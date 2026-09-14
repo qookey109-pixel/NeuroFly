@@ -6,6 +6,7 @@ import math
 from pathlib import Path
 from typing import Any
 
+from .sensory_contract import assert_unprivileged_agent_input
 from .tactile import TACTILE_MODEL, tactile_channel_levels
 
 
@@ -228,7 +229,19 @@ def tactile_runtime_stimulation(
 ) -> tuple[list[tuple[Any, float]], dict[str, Any]]:
     """Translate the strict one-shot contact payload into calibrated current."""
 
-    levels = tactile_channel_levels({} if payload is None else payload)
+    if not payload:
+        return [], {
+            "available": False,
+            "contact": False,
+            "front": 0.0,
+            "runtime_enabled": tactile_current > 0.0,
+            "external_current": tactile_current,
+            "calibrated_current": TACTILE_CALIBRATED_CURRENT,
+            "status": "no-tactile-payload",
+        }
+
+    assert_unprivileged_agent_input({"contact_mechanosensation": payload})
+    levels = tactile_channel_levels(payload)
     levels = {
         **levels,
         "runtime_enabled": tactile_current > 0.0,
