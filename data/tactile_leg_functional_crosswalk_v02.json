@@ -1,0 +1,106 @@
+{
+  "schema": "neurofly-tactile-leg-functional-crosswalk-v0.2",
+  "source_population_class": "mechanosensory_tactile",
+  "target_function": "leg_external_touch_candidate",
+  "policy": "exact-type-plus-curated-subclass-plus-external-leg-nerve-evidence",
+  "supersedes_candidate_schema": "neurofly-tactile-leg-functional-crosswalk-v0.1",
+  "rejected_types_from_v01": {
+    "SNta30": "Exact type name also occurs in 11 retained rows curated as class=unknown_sensory; fail-closed removal.",
+    "SNta42": "Exact type name also occurs in 2 retained rows curated as class=unknown_sensory; fail-closed removal."
+  },
+  "accepted_curator_subclasses": [
+    "leg",
+    "mechanosensory bristle"
+  ],
+  "stimulation_enabled": false,
+  "runtime_transduction_enabled": false,
+  "mappings": [
+    {
+      "male_cns_type": "SNta20",
+      "functional_class": "leg_external_touch_candidate",
+      "stimulation_authorized": false,
+      "evidence": [
+        {
+          "kind": "Virtual Fly Brain MaleCNS anatomical relation",
+          "url": "https://www.virtualflybrain.org/term/none-malecns813121-vfb_jrmc1831/",
+          "claim": "A MaleCNS SNta20 mechanosensory_tactile neuron fasciculates with the adult mesothoracic leg nerve."
+        },
+        {
+          "kind": "Virtual Fly Brain MaleCNS anatomical relation",
+          "url": "https://www.virtualflybrain.org/blog/2022/01/01/none-malecns819314-vfb_jrmc182m/",
+          "claim": "A MaleCNS SNta20 mechanosensory_tactile neuron fasciculates with the adult metathoracic leg nerve."
+        }
+      ]
+    },
+    {
+      "male_cns_type": "SNta26",
+      "functional_class": "leg_external_touch_candidate",
+      "stimulation_authorized": false,
+      "evidence": [
+        {
+          "kind": "Virtual Fly Brain MaleCNS anatomical relation",
+          "url": "https://www.virtualflybrain.org/term/none-malecns812278-vfb_jrmc18cf/",
+          "claim": "A MaleCNS SNta26 mechanosensory_tactile neuron fasciculates with the adult mesothoracic leg nerve."
+        },
+        {
+          "kind": "Virtual Fly Brain MaleCNS anatomical relation",
+          "url": "https://www.virtualflybrain.org/term/none-malecns810488-vfb_jrmc18d5/",
+          "claim": "A MaleCNS SNta26 mechanosensory_tactile neuron fasciculates with the adult metathoracic leg nerve."
+        }
+      ]
+    },
+    {
+      "male_cns_type": "SNta27",
+      "functional_class": "leg_external_touch_candidate",
+      "stimulation_authorized": false,
+      "evidence": [
+        {
+          "kind": "Virtual Fly Brain MaleCNS anatomical relation",
+          "url": "https://www.virtualflybrain.org/term/none-malecns805765-vfb_jrmc18dh/",
+          "claim": "MaleCNS SNta27 is curated as mechanosensory_tactile subclass leg and fasciculates with the adult mesothoracic leg nerve."
+        }
+      ]
+    },
+    {
+      "male_cns_type": "SNta28",
+      "functional_class": "leg_external_touch_candidate",
+      "stimulation_authorized": false,
+      "evidence": [
+        {
+          "kind": "Virtual Fly Brain MaleCNS anatomical relation",
+          "url": "https://www.virtualflybrain.org/term/none-malecns812888-vfb_jrmc18fh/",
+          "claim": "A MaleCNS SNta28 mechanosensory_tactile neuron fasciculates with the adult mesothoracic leg nerve."
+        },
+        {
+          "kind": "Virtual Fly Brain MaleCNS anatomical relation",
+          "url": "https://www.virtualflybrain.org/term/none-malecns904820-vfb_jrmc18g1/",
+          "claim": "A MaleCNS SNta28 mechanosensory_tactile neuron fasciculates with the adult metathoracic leg nerve."
+        }
+      ]
+    },
+    {
+      "male_cns_type": "SNta34",
+      "functional_class": "leg_external_touch_candidate",
+      "stimulation_authorized": false,
+      "evidence": [
+        {
+          "kind": "Virtual Fly Brain MaleCNS anatomical relation",
+          "url": "https://www.virtualflybrain.org/term/none-malecns804263-vfb_jrmc18ut/",
+          "claim": "A MaleCNS SNta34 mechanosensory_tactile neuron fasciculates with the adult mesothoracic leg nerve."
+        }
+      ]
+    },
+    {
+      "male_cns_type": "SNta37",
+      "functional_class": "leg_external_touch_candidate",
+      "stimulation_authorized": false,
+      "evidence": [
+        {
+          "kind": "Virtual Fly Brain MaleCNS anatomical relation",
+          "url": "https://www.virtualflybrain.org/term/none-malecns809842-vfb_jrmc1935/",
+          "claim": "A MaleCNS SNta37 mechanosensory_tactile neuron fasciculates with the adult metathoracic leg nerve."
+        }
+      ]
+    }
+  ]
+}
