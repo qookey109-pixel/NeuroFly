@@ -10,6 +10,7 @@ from .brain_runtime import BrainBackend, BrainDecision
 from .gustation import contact_gustation
 from .maze_runtime import MazeEnvironment, StepResult
 from .sensory_contract import assert_unprivileged_agent_input
+from .tactile import blocked_forward_contact, contact_mechanosensation
 
 
 def _reinforcement_for_reward(reward: float) -> str:
@@ -231,6 +232,7 @@ class GoalMazeSession:
         self.last_decision: BrainDecision | None = None
         self.pending_reinforcement = "none"
         self.pending_gustatory_event: str | None = None
+        self.pending_tactile_contact = False
         self._lock = threading.RLock()
 
         if self.checkpoint:
@@ -246,6 +248,10 @@ class GoalMazeSession:
                 pending_taste = payload.get("_pending_gustatory_event")
                 if pending_taste in {"food", "energy_food"}:
                     self.pending_gustatory_event = str(pending_taste)
+                pending_touch = payload.get("_pending_tactile_contact", False)
+                if not isinstance(pending_touch, bool):
+                    raise ValueError("Persisted tactile contact latch must be boolean")
+                self.pending_tactile_contact = pending_touch
 
         # Keep one absolute world-clock deadline across neural decisions. The old
         # per-decision timer restarted from a full interval every time tick() was
@@ -354,11 +360,20 @@ class GoalMazeSession:
         with self._lock:
             observed_episode = self.environment.episode
             context = self.environment.snapshot(include_grid=False)
+
             gustatory_event = self.pending_gustatory_event
             self.pending_gustatory_event = None
             gustation = contact_gustation(event=gustatory_event)
             assert_unprivileged_agent_input({"gustation": gustation})
             context["gustation"] = gustation
+
+            tactile = contact_mechanosensation(
+                front=1.0 if self.pending_tactile_contact else 0.0
+            )
+            self.pending_tactile_contact = False
+            assert_unprivileged_agent_input({"contact_mechanosensation": tactile})
+            context["contact_mechanosensation"] = tactile
+
             frame = self.environment.render_rgb()
             reinforcement = self.pending_reinforcement
             if reinforcement == "none":
@@ -396,11 +411,35 @@ class GoalMazeSession:
                 return state
 
             food_before = int(self.environment.total_food)
+            before_position = (
+                int(self.environment.fly["x"]),
+                int(self.environment.fly["y"]),
+            )
             result = self.environment.agent_step(decision.action, move_enemies=False)
+            after_position = (
+                int(self.environment.fly["x"]),
+                int(self.environment.fly["y"]),
+            )
+
             if int(self.environment.total_food) > food_before:
                 # The food count is the contact fact. It remains valid even if
                 # the public step event is subsequently promoted to maze_cleared.
                 self.pending_gustatory_event = "food"
+
+            applied_action = str(
+                getattr(self.environment, "last_applied_action", decision.action)
+            )
+            tactile_result = blocked_forward_contact(
+                applied_action=applied_action,
+                before_position=before_position,
+                after_position=after_position,
+                terminal=result.terminal,
+            )
+            if tactile_result["contact"]:
+                # Store only a one-shot sensory fact. No wall/object geometry,
+                # collision normal, reward, or route state crosses this latch.
+                self.pending_tactile_contact = True
+
             self.pending_reinforcement = _reinforcement_for_reward(result.reward)
             terminal_snapshot = self._snapshot_locked(
                 decision=decision,
@@ -434,6 +473,7 @@ class GoalMazeSession:
             payload = self.environment.persistence_snapshot()
             payload["_pending_reinforcement"] = self.pending_reinforcement
             payload["_pending_gustatory_event"] = self.pending_gustatory_event
+            payload["_pending_tactile_contact"] = self.pending_tactile_contact
             temporary.write_text(json.dumps(payload, indent=2) + "\n")
             temporary.replace(state_path)
 
