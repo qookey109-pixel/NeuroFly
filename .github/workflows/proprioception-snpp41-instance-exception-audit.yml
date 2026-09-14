@@ -1,0 +1,68 @@
+name: NeuroFly SNpp41 Instance Exception Audit
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/proprioception-snpp41-instance-exception-audit.yml"
+      - "src/neurofly/proprioception_exception_audit.py"
+      - "tests/test_proprioception_exception_audit.py"
+      - "pyproject.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: neurofly-snpp41-instance-exception-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  malecns-snpp41-instance-exception-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      AUDIT_OUTPUT: runs/somatosensation/snpp41-instance-exception-audit.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache read-only
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            malecns-v1-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare or verify pinned MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$(dirname "$AUDIT_OUTPUT")"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+
+      - name: Discover exact SNpp41 exception identity
+        run: |
+          # First evidence run is intentionally expected to fail because the
+          # body/instance identity is not yet frozen in source. The audit prints
+          # and writes the exact MaleCNS identity before returning non-zero.
+          python -m neurofly.proprioception_exception_audit \
+            --output "$AUDIT_OUTPUT"
+
+      - name: Publish SNpp41 instance exception receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-snpp41-instance-exception-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runs/somatosensation/snpp41-instance-exception-audit.json
+          if-no-files-found: warn
+          retention-days: 3
