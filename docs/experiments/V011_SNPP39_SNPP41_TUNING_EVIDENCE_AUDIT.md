@@ -1,6 +1,6 @@
 # V0.11 SNpp39 / SNpp41 Tuning Evidence Audit
 
-Status: **REVIEW_REQUIRED / direction polarity unresolved**. This is a read-only biological evidence gate. No proprioceptive current or stimulation is authorized.
+Status: **REVIEW_REQUIRED / PASS with direction polarity unresolved**. This is a read-only biological evidence gate. No proprioceptive current or stimulation is authorized.
 
 ## Why this gate exists
 
@@ -59,6 +59,31 @@ The evidence inspected in this gate does **not** provide an explicit experimenta
 - `SNpp41 = flexion-encoding hook` or `SNpp41 = extension-encoding hook`.
 
 The connectome paper predicts opposing effects on flexor/extensor motor circuits, but assigning the sensory polarity from the sign of a predicted reflex circuit would be an inference. NeuroFly does not accept that as ground truth.
+
+## Audit result
+
+Workflow run `34826904378` completed successfully.
+
+All conservative evidence gates passed:
+
+- exact evidence schema and systematic types preserved;
+- hook directional-movement identity supported;
+- both systematic-type polarity claims explicitly unresolved;
+- all four direct polarity assignments explicitly forbidden;
+- cross-dataset annotation conflicts preserved;
+- every supported claim retains source references;
+- current calibration, stimulation, runtime transduction, and promotion remain blocked.
+
+Evidence manifest SHA256:
+
+`c93e23d2cc51d1aa86f6050ab23a86591506827574ff8d200ee84a717ea85fad`
+
+Workflow artifact:
+
+- artifact ID `10340563807`
+- ZIP SHA256 `eb37afd73a599b84ab1e82787695bc629863354b3e43630cd728b04bf1cd5a1d`
+
+The associated general NeuroFly CI run `34826904324` completed with all five jobs successful.
 
 ## Frozen decision boundary
 
