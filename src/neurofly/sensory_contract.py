@@ -15,9 +15,10 @@ from .vision import VISION_MODEL, fly_vision_state
 SENSORY_CONTRACT = "neurofly-sensory-contract-v0.4"
 SENSORY_POLICY = "egocentric-no-privileged-world-state"
 
-# These fields may be useful to human diagnostics, but they must never appear in
-# the machine-readable neural input payload. The nervous system should receive
-# sensory transduction, not solved geometry or game-state truth.
+# These fields may be useful to human diagnostics or internal body simulation,
+# but they must never appear in the machine-readable neural input payload. The
+# nervous system should receive sensory transduction, not solved geometry,
+# motor-command labels, raw world kinematics, reward, or untransduced joint state.
 PRIVILEGED_AGENT_KEYS = frozenset(
     {
         "x",
@@ -28,17 +29,24 @@ PRIVILEGED_AGENT_KEYS = frozenset(
         "target",
         "target_action",
         "action",
+        "desired_action",
         "demo_action",
         "grid",
         "enemies",
         "route",
         "path",
+        "heading",
+        "world_velocity",
+        "world_displacement",
+        "reward",
         "airflow_world",
         "body_relative",
         "signed_deflection",
         "object_id",
         "collision_normal",
         "wall_coordinates",
+        "joint_delta",
+        "joint_position",
     }
 )
 
