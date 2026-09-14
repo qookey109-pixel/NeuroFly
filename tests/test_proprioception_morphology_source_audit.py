@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from neurofly.proprioception_morphology_source_audit import (
+    EXPECTED_SOURCE_SHA256,
+    EXPECTED_VFB_ID,
     STATUS_DISCOVERY,
     STATUS_REVIEW,
     _candidate_vfb_ids,
@@ -8,6 +10,14 @@ from neurofly.proprioception_morphology_source_audit import (
     _morphology_hints,
     build_report,
 )
+
+
+def test_frozen_vfb_identity_and_source_receipt_are_pinned() -> None:
+    assert EXPECTED_VFB_ID == "VFB_jrmc173b"
+    assert (
+        EXPECTED_SOURCE_SHA256
+        == "f1ff278a2c40691987f2de473302fcc259df3ad854f0b8c942eb05c7127067da"
+    )
 
 
 def test_candidate_vfb_ids_are_discovered_recursively() -> None:
