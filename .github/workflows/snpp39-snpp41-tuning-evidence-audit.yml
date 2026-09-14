@@ -1,0 +1,42 @@
+name: NeuroFly SNpp39 SNpp41 Tuning Evidence Audit
+
+on:
+  pull_request:
+    paths:
+      - "data/snpp39_snpp41_tuning_evidence_v01.json"
+      - "src/neurofly/proprioception_tuning_evidence_audit.py"
+      - "tests/test_proprioception_tuning_evidence_audit.py"
+      - ".github/workflows/snpp39-snpp41-tuning-evidence-audit.yml"
+      - "docs/experiments/V011_SNPP39_SNPP41_TUNING_EVIDENCE_AUDIT.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tuning-evidence-audit:
+    runs-on: ubuntu-24.04
+    env:
+      AUDIT_OUTPUT: runs/somatosensation/snpp39-snpp41-tuning-evidence-audit.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install NeuroFly test dependencies
+        run: python -m pip install -e '.[test]'
+      - name: Run unit gate
+        run: pytest -q tests/test_proprioception_tuning_evidence_audit.py
+      - name: Audit conservative tuning evidence boundary
+        run: |
+          mkdir -p "$(dirname "$AUDIT_OUTPUT")"
+          python -m neurofly.proprioception_tuning_evidence_audit --output "$AUDIT_OUTPUT"
+      - name: Publish tuning evidence receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-snpp39-snpp41-tuning-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.AUDIT_OUTPUT }}
+          if-no-files-found: warn
+          retention-days: 3
