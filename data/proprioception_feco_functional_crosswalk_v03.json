@@ -1,0 +1,93 @@
+{
+  "schema": "neurofly-proprioception-feco-functional-crosswalk-v0.3",
+  "source_population_class": "mechanosensory_proprioceptive",
+  "accepted_curator_subclasses": ["chordotonal organ"],
+  "policy": "exact-type-plus-curated-class-subclass-plus-vfb-and-connectome-feco-classification-fail-closed-v3",
+  "stimulation_enabled": false,
+  "runtime_transduction_enabled": false,
+  "directional_hook_identity_resolved": false,
+  "current_calibration_authorized": false,
+  "interpretation": "SNpp39 and SNpp41 are both evidence-backed FeCO hook types. Published physiology establishes extension- and flexion-sensitive hook populations, and connectome work identifies SNpp39/SNpp41 as two opposing hook connectivity types, but the reviewed evidence used here does not directly assign SNpp39 versus SNpp41 to the extension versus flexion sensory tuning labels. Direction-specific neural stimulation therefore remains blocked.",
+  "rejected_candidates": [
+    {
+      "schema": "neurofly-proprioception-feco-functional-crosswalk-v0.1",
+      "prepared_run": 34800856439,
+      "reason": "SNpp40/SNpp50/SNpp51 also occur in subclass=leg; SNpp51 additionally has a same-name unknown_sensory/leg row. Class/subclass gates were not relaxed."
+    }
+  ],
+  "mappings": [
+    {
+      "male_cns_type": "SNpp39",
+      "functional_class": "feco_hook_motion_direction_candidate",
+      "hook_direction_identity": "unresolved",
+      "downstream_effect_summary": "connectome-predicted flexor-favoring / extensor-inhibiting circuit effect; not used as a sensory tuning label",
+      "stimulation_authorized": false,
+      "evidence": [
+        {
+          "kind": "Virtual Fly Brain MaleCNS classification",
+          "url": "https://www.virtualflybrain.org/term/none-malecns810445-vfb_jrmc1721/",
+          "claim": "MaleCNS SNpp39 is curated as mechanosensory_proprioceptive / chordotonal organ and classified as a femoral chordotonal hook neuron."
+        },
+        {
+          "kind": "MANC systematic annotation / eLife reviewed preprint",
+          "url": "https://elifesciences.org/reviewed-preprints/97766v1",
+          "claim": "Connectome analysis identifies SNpp39 and SNpp41 as the two FeCO hook connectivity types and predicts opposing effects on tibia flexor versus extensor motor circuits. The text does not directly assign the systematic type names to extension- versus flexion-sensitive sensory tuning labels."
+        }
+      ]
+    },
+    {
+      "male_cns_type": "SNpp41",
+      "functional_class": "feco_hook_motion_direction_candidate",
+      "hook_direction_identity": "unresolved",
+      "downstream_effect_summary": "connectome-predicted extensor-favoring / flexor-inhibiting circuit effect; not used as a sensory tuning label",
+      "stimulation_authorized": false,
+      "evidence": [
+        {
+          "kind": "Virtual Fly Brain MaleCNS classification",
+          "url": "https://www.virtualflybrain.org/term/none-malecns813147-vfb_jrmc1738/",
+          "claim": "MaleCNS SNpp41 is curated as mechanosensory_proprioceptive / chordotonal organ and classified as a femoral chordotonal hook neuron."
+        },
+        {
+          "kind": "Male CNS Cell Type Explorer",
+          "url": "https://reiserlab.github.io/celltype-explorer-drosophila-male-cns/types/SNpp41.html",
+          "claim": "male-cns:v1.0 lists SNpp41 with AKA FeCO hook and 22 neurons."
+        },
+        {
+          "kind": "MANC systematic annotation / eLife reviewed preprint",
+          "url": "https://elifesciences.org/reviewed-preprints/97766v1",
+          "claim": "Connectome analysis identifies SNpp41 and SNpp39 as the two FeCO hook connectivity types and predicts opposing effects on tibia flexor versus extensor motor circuits. The text does not directly assign the systematic type names to extension- versus flexion-sensitive sensory tuning labels."
+        }
+      ]
+    },
+    {
+      "male_cns_type": "SNpp58",
+      "functional_class": "feco_club_bidirectional_motion_vibration_candidate",
+      "stimulation_authorized": false,
+      "evidence": [{
+        "kind": "Virtual Fly Brain MaleCNS classification",
+        "url": "https://www.virtualflybrain.org/term/none-malecns811808-vfb_jrmc17da/",
+        "claim": "MaleCNS SNpp58 is curated as mechanosensory_proprioceptive / chordotonal organ and classified as a femoral chordotonal club neuron."
+      }]
+    },
+    {
+      "male_cns_type": "SNpp59",
+      "functional_class": "feco_club_bidirectional_motion_vibration_candidate",
+      "stimulation_authorized": false,
+      "evidence": [{
+        "kind": "Virtual Fly Brain MaleCNS classification",
+        "url": "https://www.virtualflybrain.org/term/none-malecns908146-vfb_jrmc17dq/",
+        "claim": "MaleCNS SNpp59 is curated as mechanosensory_proprioceptive / chordotonal organ and classified as a femoral chordotonal club neuron."
+      }]
+    },
+    {
+      "male_cns_type": "SNpp60",
+      "functional_class": "feco_club_bidirectional_motion_vibration_candidate",
+      "stimulation_authorized": false,
+      "evidence": [{
+        "kind": "Virtual Fly Brain MaleCNS classification",
+        "url": "https://www.virtualflybrain.org/term/none-malecns812705-vfb_jrmc17dv/",
+        "claim": "MaleCNS SNpp60 is curated as mechanosensory_proprioceptive / chordotonal organ and classified as a femoral chordotonal club neuron."
+      }]
+    }
+  ]
+}
