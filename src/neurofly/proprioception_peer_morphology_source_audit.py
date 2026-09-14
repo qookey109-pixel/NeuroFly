@@ -43,15 +43,17 @@ PEER_BODY_IDS = (
 )
 # The resolved SNpp41 VFB individuals occupy the jrmc173* source batch. Three
 # namespace slots are absent from the search results and exactly three frozen
-# peers remain unresolved. These IDs are therefore probed as diagnostics only.
-# They can resolve a peer *only* if get_term_info carries the exact MaleCNS body
+# peers were initially unresolved. These IDs remain explicit diagnostics. They
+# can resolve a peer only when get_term_info carries the exact MaleCNS body
 # accession; namespace adjacency alone is never accepted as identity evidence.
 BATCH_GAP_CANDIDATE_VFB_IDS = (
     "VFB_jrmc1739",
     "VFB_jrmc173f",
     "VFB_jrmc173g",
 )
-EXPECTED_INVENTORY_SHA256: str | None = None
+EXPECTED_INVENTORY_SHA256: str | None = (
+    "5c7e7bcf85553c5cda5ae1688d3e66f17121171f7cde87891edce60dc5451f65"
+)
 
 
 def _get_json(path: str, params: dict[str, str | int]) -> Any:
