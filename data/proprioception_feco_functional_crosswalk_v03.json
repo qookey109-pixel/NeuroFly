@@ -2,12 +2,29 @@
   "schema": "neurofly-proprioception-feco-functional-crosswalk-v0.3",
   "source_population_class": "mechanosensory_proprioceptive",
   "accepted_curator_subclasses": ["chordotonal organ"],
-  "policy": "exact-type-plus-curated-class-subclass-plus-vfb-and-connectome-feco-classification-fail-closed-v3",
+  "policy": "exact-type-plus-curated-class-subclass-plus-known-exception-receipt-fail-closed-v3",
+  "promotion_status": "review_required",
+  "promotion_ready": false,
   "stimulation_enabled": false,
   "runtime_transduction_enabled": false,
   "directional_hook_identity_resolved": false,
   "current_calibration_authorized": false,
-  "interpretation": "SNpp39 and SNpp41 are both evidence-backed FeCO hook types. Published physiology establishes extension- and flexion-sensitive hook populations, and connectome work identifies SNpp39/SNpp41 as two opposing hook connectivity types, but the reviewed evidence used here does not directly assign SNpp39 versus SNpp41 to the extension versus flexion sensory tuning labels. Direction-specific neural stimulation therefore remains blocked.",
+  "prepared_evidence": {
+    "workflow_run": 34804436631,
+    "dataset": "MaleCNS v1.0",
+    "neurons": 166700,
+    "result": "SNpp41 has 21 accepted chordotonal-organ rows and 1 same-type subclass=leg row; do not promote the systematic type as clean."
+  },
+  "expected_annotation_exceptions": [
+    {
+      "male_cns_type": "SNpp41",
+      "class": "mechanosensory_proprioceptive",
+      "subclass": "leg",
+      "count": 1,
+      "disposition": "review_required_not_selected_not_stimulated"
+    }
+  ],
+  "interpretation": "SNpp39 and SNpp41 are literature/type-level FeCO hook candidates, but pinned MaleCNS v1.0 contains a mixed-subclass SNpp41 annotation: 21 SNpp41 rows pass the mechanosensory_proprioceptive/chordotonal-organ gate and 1 SNpp41 row is subclass=leg. NeuroFly records the hook pair for evidence review but does not promote SNpp41 as a clean exact-type stimulation population. Extension/flexion identity is also unresolved. Direction-specific stimulation and current calibration remain blocked.",
   "rejected_candidates": [
     {
       "schema": "neurofly-proprioception-feco-functional-crosswalk-v0.1",
@@ -19,6 +36,7 @@
     {
       "male_cns_type": "SNpp39",
       "functional_class": "feco_hook_motion_direction_candidate",
+      "mapping_status": "clean_candidate",
       "hook_direction_identity": "unresolved",
       "downstream_effect_summary": "connectome-predicted flexor-favoring / extensor-inhibiting circuit effect; not used as a sensory tuning label",
       "stimulation_authorized": false,
@@ -38,19 +56,20 @@
     {
       "male_cns_type": "SNpp41",
       "functional_class": "feco_hook_motion_direction_candidate",
+      "mapping_status": "review_required_mixed_subclass",
       "hook_direction_identity": "unresolved",
       "downstream_effect_summary": "connectome-predicted extensor-favoring / flexor-inhibiting circuit effect; not used as a sensory tuning label",
       "stimulation_authorized": false,
       "evidence": [
         {
-          "kind": "Virtual Fly Brain MaleCNS classification",
-          "url": "https://www.virtualflybrain.org/term/none-malecns813147-vfb_jrmc1738/",
-          "claim": "MaleCNS SNpp41 is curated as mechanosensory_proprioceptive / chordotonal organ and classified as a femoral chordotonal hook neuron."
-        },
-        {
           "kind": "Male CNS Cell Type Explorer",
           "url": "https://reiserlab.github.io/celltype-explorer-drosophila-male-cns/types/SNpp41.html",
-          "claim": "male-cns:v1.0 lists SNpp41 with AKA FeCO hook and 22 neurons."
+          "claim": "male-cns:v1.0 type page lists SNpp41 with AKA FeCO hook and 22 neurons."
+        },
+        {
+          "kind": "Pinned NeuroFly prepared MaleCNS annotation audit",
+          "claim": "Of 22 SNpp41 rows, 21 are mechanosensory_proprioceptive/chordotonal organ and one is mechanosensory_proprioceptive/leg. The exception is retained as REVIEW_REQUIRED and is not selected for stimulation.",
+          "url": "https://github.com/qookey109-pixel/NeuroFly/actions/runs/34804436631"
         },
         {
           "kind": "MANC systematic annotation / eLife reviewed preprint",
@@ -62,6 +81,7 @@
     {
       "male_cns_type": "SNpp58",
       "functional_class": "feco_club_bidirectional_motion_vibration_candidate",
+      "mapping_status": "clean_candidate",
       "stimulation_authorized": false,
       "evidence": [{
         "kind": "Virtual Fly Brain MaleCNS classification",
@@ -72,6 +92,7 @@
     {
       "male_cns_type": "SNpp59",
       "functional_class": "feco_club_bidirectional_motion_vibration_candidate",
+      "mapping_status": "clean_candidate",
       "stimulation_authorized": false,
       "evidence": [{
         "kind": "Virtual Fly Brain MaleCNS classification",
@@ -82,6 +103,7 @@
     {
       "male_cns_type": "SNpp60",
       "functional_class": "feco_club_bidirectional_motion_vibration_candidate",
+      "mapping_status": "clean_candidate",
       "stimulation_authorized": false,
       "evidence": [{
         "kind": "Virtual Fly Brain MaleCNS classification",
