@@ -25,6 +25,16 @@ from .mechanosensation import (
 )
 from .olfaction import DANGER_ORN_TYPE, FOOD_ORN_TYPE, OLFACTION_MODEL
 from .sensory_contract import assert_unprivileged_agent_input
+from .tactile import TACTILE_MODEL
+from .tactile_runtime import (
+    TACTILE_CALIBRATED_CURRENT,
+    TACTILE_CALIBRATION_RECEIPT_SHA256,
+    TACTILE_CROSSWALK_SCHEMA,
+    load_and_validate_tactile_runtime_evidence,
+    resolve_tactile_runtime_population,
+    tactile_runtime_stimulation,
+    validated_tactile_current,
+)
 from .vision import VISION_MODEL
 from .vision_adapter import retinalize_topdown_rgb
 
@@ -336,11 +346,10 @@ class DemoBrain:
 class MaleCNSBrain:
     """Maze decoder on top of Stonkfly's pinned MaleCNS VisualMemoryBrain.
 
-    NeuroFly routes visual, olfactory, default-on antennal mechanosensory and
-    contact-only gustatory signals into the pinned MaleCNS runtime. Gustation is
-    strictly separated from reinforcement: calibrated taste current never implies
-    reward or aversion and is present only when the context carries a physical
-    contact payload.
+    NeuroFly routes visual, olfactory, default-on antennal mechanosensory,
+    contact-only gustatory and calibrated contact-tactile signals into the pinned
+    MaleCNS runtime. Taste and touch remain strictly separated from reinforcement:
+    sensory current never implies reward or aversion.
     """
 
     name = "malecns"
@@ -356,6 +365,7 @@ class MaleCNSBrain:
         mechanosensation_current: float = MECHANOSENSATION_CALIBRATED_CURRENT,
         bitter_current: float = GUSTATION_CALIBRATED_BITTER_CURRENT,
         sugar_water_current: float = GUSTATION_CALIBRATED_SUGAR_WATER_CURRENT,
+        tactile_current: float = TACTILE_CALIBRATED_CURRENT,
         decoder_threshold_hz: float = 2.0,
         learning: bool = True,
         checkpoint: str | Path | None = None,
@@ -373,6 +383,7 @@ class MaleCNSBrain:
             expected=GUSTATION_CALIBRATED_SUGAR_WATER_CURRENT,
             name="sugar_water_current",
         )
+        tactile_current = validated_tactile_current(tactile_current)
         try:
             import numpy as np
             from stonkfly.neural.common import annotations
@@ -395,6 +406,7 @@ class MaleCNSBrain:
         self.mechanosensation_current = mechanosensation_current
         self.bitter_current = bitter_current
         self.sugar_water_current = sugar_water_current
+        self.tactile_current = tactile_current
         self.decoder_threshold_hz = float(decoder_threshold_hz)
         self.learning = bool(learning)
         self.brain = VisualMemoryBrain()
@@ -472,6 +484,15 @@ class MaleCNSBrain:
             label="sugar_water",
         )
 
+        self.tactile_population = empty
+        tactile_population_report: dict[str, Any] | None = None
+        tactile_evidence: dict[str, Any] | None = None
+        if self.tactile_current > 0.0:
+            tactile_evidence = load_and_validate_tactile_runtime_evidence()
+            self.tactile_population, tactile_population_report = (
+                resolve_tactile_runtime_population(np, a, self.brain.ids)
+            )
+
         self.identities = {
             "left": [str(self.brain.ids[i]) for i in self.left],
             "right": [str(self.brain.ids[i]) for i in self.right],
@@ -527,6 +548,21 @@ class MaleCNSBrain:
             },
             "unresolved_gustatory_neurons_used": 0,
             "taste_is_reinforcement": False,
+            "biological_validation": False,
+            "behavioral_benefit_validated": False,
+        }
+        self.tactile_report = {
+            "model": TACTILE_MODEL,
+            "engineered_proxy": True,
+            "enabled": self.tactile_current > 0.0,
+            "input_policy": "strict-one-shot-front-contact-only",
+            "crosswalk_schema": TACTILE_CROSSWALK_SCHEMA,
+            "calibration_receipt_sha256": TACTILE_CALIBRATION_RECEIPT_SHA256,
+            "external_current": self.tactile_current,
+            "calibrated_current": TACTILE_CALIBRATED_CURRENT,
+            "population": tactile_population_report,
+            "evidence": tactile_evidence,
+            "touch_is_reinforcement": False,
             "biological_validation": False,
             "behavioral_benefit_validated": False,
         }
@@ -666,6 +702,21 @@ class MaleCNSBrain:
             )
         return pulses, levels
 
+    def _tactile_stimulation(
+        self,
+        context: dict[str, Any] | None,
+    ) -> tuple[list[tuple[Any, float]], dict[str, Any]]:
+        payload = (
+            {}
+            if context is None
+            else (context.get("contact_mechanosensation") or {})
+        )
+        return tactile_runtime_stimulation(
+            payload,
+            population=self.tactile_population,
+            tactile_current=self.tactile_current,
+        )
+
     def _visual_input(
         self,
         frame: Any,
@@ -725,6 +776,7 @@ class MaleCNSBrain:
             self._mechanosensory_stimulation(context)
         )
         gustation_pulses, gustation_levels = self._gustatory_stimulation(context)
+        tactile_pulses, tactile_levels = self._tactile_stimulation(context)
         counts = np.zeros(b.n, dtype=np.int32)
         compute_seconds = 0.0
         remaining = round(self.neural_ms / b.dt)
@@ -739,6 +791,7 @@ class MaleCNSBrain:
                 *odor_pulses,
                 *mechanosensation_pulses,
                 *gustation_pulses,
+                *tactile_pulses,
             ]
             if pulse:
                 stimulation.append((b.circuit[reinforcement], self.pulse_current))
@@ -767,6 +820,11 @@ class MaleCNSBrain:
             "bitter": int(counts[self.bitter_grns].sum()),
             "sugar_water": int(counts[self.sugar_water_grns].sum()),
         }
+        tactile_spikes = (
+            int(counts[self.tactile_population].sum())
+            if len(self.tactile_population)
+            else 0
+        )
         telemetry = {
             **decoder,
             "backend": self.name,
@@ -801,6 +859,10 @@ class MaleCNSBrain:
             "gustation": gustation_levels,
             "gustation_spikes": gustation_spikes,
             "gustation_report": self.gustation_report,
+            "tactile_model": TACTILE_MODEL,
+            "contact_mechanosensation": tactile_levels,
+            "tactile_spikes": tactile_spikes,
+            "tactile_report": self.tactile_report,
             "memory": b.memory(),
         }
         return BrainDecision(action=action, backend=self.name, telemetry=telemetry)

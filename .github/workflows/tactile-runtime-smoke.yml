@@ -1,0 +1,201 @@
+name: NeuroFly Tactile Runtime Smoke
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/tactile-runtime-smoke.yml"
+      - "data/tactile_current_calibration_v1.json"
+      - "data/tactile_leg_functional_crosswalk_v02.json"
+      - "src/neurofly/brain_runtime.py"
+      - "src/neurofly/goal_training.py"
+      - "src/neurofly/tactile.py"
+      - "src/neurofly/tactile_runtime.py"
+      - "src/neurofly/curriculum.py"
+      - "tests/test_tactile_runtime.py"
+      - "tests/test_tactile_runtime_routing.py"
+      - "pyproject.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: neurofly-tactile-runtime-smoke-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  malecns-tactile-runtime-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      RECEIPT: runs/somatosensation/tactile-runtime-smoke.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache read-only
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            malecns-v1-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare or verify pinned MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$(dirname "$RECEIPT")"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+
+      - name: Execute calibrated contact-only tactile runtime smoke
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+
+          from neurofly.brain_runtime import MaleCNSBrain
+          from neurofly.curriculum import CurriculumMazeEnvironment
+          from neurofly.gustation import contact_gustation
+          from neurofly.mechanosensation import MECHANOSENSATION_MODEL
+          from neurofly.sensory_contract import assert_unprivileged_agent_input
+          from neurofly.tactile import TACTILE_MODEL, contact_mechanosensation
+          from neurofly.tactile_runtime import (
+              EXPECTED_TACTILE_NEURONS,
+              EXPECTED_TACTILE_TYPE_COUNTS,
+              TACTILE_CALIBRATED_CURRENT,
+              TACTILE_CALIBRATION_RECEIPT_SHA256,
+              TACTILE_BODY_IDS_SHA256,
+          )
+
+          env = CurriculumMazeEnvironment(seed=109)
+          frame = env.render_rgb()
+          base_context = env.snapshot(include_grid=False)
+          mech = base_context["antennal_mechanosensation"]
+          assert mech["model"] == MECHANOSENSATION_MODEL
+          assert mech["available"] is True
+
+          no_contact_context = dict(base_context)
+          no_contact_context["gustation"] = contact_gustation()
+          no_contact_context["contact_mechanosensation"] = contact_mechanosensation(front=0.0)
+          assert_unprivileged_agent_input(
+              {"contact_mechanosensation": no_contact_context["contact_mechanosensation"]}
+          )
+
+          no_probe = MaleCNSBrain(learning=False, neural_ms=200.0)
+          no_direct_pulses, no_levels = no_probe._tactile_stimulation(no_contact_context)
+          assert no_levels["available"] is True
+          assert no_levels["contact"] is False
+          assert no_levels["front"] == 0.0
+          assert no_direct_pulses == []
+          no_memory_before = no_probe.brain.memory()["sha256"]
+          no_decision = no_probe.decide(frame, reinforcement="none", context=no_contact_context)
+          no_memory_after = no_probe.brain.memory()["sha256"]
+          assert no_memory_before == no_memory_after
+
+          contact_context = dict(base_context)
+          contact_context["gustation"] = contact_gustation()
+          contact_context["contact_mechanosensation"] = contact_mechanosensation(front=1.0)
+          assert_unprivileged_agent_input(
+              {"contact_mechanosensation": contact_context["contact_mechanosensation"]}
+          )
+
+          brain = MaleCNSBrain(learning=False, neural_ms=200.0)
+          direct_pulses, direct_levels = brain._tactile_stimulation(contact_context)
+          assert len(direct_pulses) == 1
+          indices, current = direct_pulses[0]
+          assert len(indices) == EXPECTED_TACTILE_NEURONS
+          assert float(current) == TACTILE_CALIBRATED_CURRENT
+          assert direct_levels["contact"] is True
+          assert direct_levels["front"] == 1.0
+
+          memory_before = brain.brain.memory()["sha256"]
+          decision = brain.decide(frame, reinforcement="none", context=contact_context)
+          memory_after = brain.brain.memory()["sha256"]
+          assert memory_before == memory_after
+
+          levels = decision.telemetry["contact_mechanosensation"]
+          tactile_spikes = int(decision.telemetry["tactile_spikes"])
+          no_contact_spikes = int(no_decision.telemetry["tactile_spikes"])
+          tactile_report = decision.telemetry["tactile_report"]
+          mech_levels = decision.telemetry["antennal_mechanosensation"]
+          mech_spikes = decision.telemetry["mechanosensation_spikes"]
+
+          assert levels["available"] is True
+          assert levels["contact"] is True
+          assert levels["front"] == 1.0
+          assert levels["runtime_enabled"] is True
+          assert float(levels["external_current"]) == TACTILE_CALIBRATED_CURRENT
+          assert tactile_spikes > no_contact_spikes
+
+          assert tactile_report["enabled"] is True
+          assert tactile_report["calibration_receipt_sha256"] == TACTILE_CALIBRATION_RECEIPT_SHA256
+          assert tactile_report["population"]["neurons"] == EXPECTED_TACTILE_NEURONS
+          assert tactile_report["population"]["type_counts"] == EXPECTED_TACTILE_TYPE_COUNTS
+          assert tactile_report["population"]["body_ids_sha256"] == TACTILE_BODY_IDS_SHA256
+          assert tactile_report["population"]["unresolved_tactile_neurons_used"] == 0
+          assert tactile_report["touch_is_reinforcement"] is False
+
+          # Existing default-on airflow must remain active during tactile routing.
+          assert mech_levels["available"] is True
+          assert int(mech_spikes["jo_c_left"]) > 0
+          assert int(mech_spikes["jo_e_right"]) > 0
+
+          receipt = {
+              "schema": "neurofly-tactile-runtime-smoke-v1",
+              "passed": True,
+              "seed": 109,
+              "tactile_model": TACTILE_MODEL,
+              "calibration_receipt_sha256": TACTILE_CALIBRATION_RECEIPT_SHA256,
+              "tactile_current": TACTILE_CALIBRATED_CURRENT,
+              "tactile_neurons": EXPECTED_TACTILE_NEURONS,
+              "type_counts": EXPECTED_TACTILE_TYPE_COUNTS,
+              "selected_body_ids_sha256": TACTILE_BODY_IDS_SHA256,
+              "no_contact_direct_pulses": len(no_direct_pulses),
+              "contact_direct_pulses": len(direct_pulses),
+              "no_contact_tactile_spikes": no_contact_spikes,
+              "contact_tactile_spikes": tactile_spikes,
+              "ambient_airflow_active_during_touch": True,
+              "touch_is_reinforcement": False,
+              "unresolved_tactile_neurons_used": 0,
+              "memory_sha256_before": memory_before,
+              "memory_sha256_after": memory_after,
+              "action": decision.action,
+              "biological_validation": False,
+              "behavioral_benefit_validated": False,
+          }
+          digest = hashlib.sha256(
+              json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
+          ).hexdigest()
+          receipt["receipt_sha256"] = digest
+          with open(os.environ["RECEIPT"], "w") as handle:
+              json.dump(receipt, handle, indent=2, sort_keys=True)
+              handle.write("\n")
+
+          print(
+              "TACTILE_RUNTIME_SMOKE_PASS",
+              "no_contact_spikes=", no_contact_spikes,
+              "contact_spikes=", tactile_spikes,
+              "action=", decision.action,
+              "receipt=", digest,
+          )
+          PY
+
+      - name: Publish compact tactile runtime receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-tactile-runtime-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runs/somatosensation/tactile-runtime-smoke.json
+          if-no-files-found: warn
+          retention-days: 3
