@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 import urllib.parse
 import urllib.request
@@ -80,11 +81,14 @@ def _candidate_vfb_ids(value: Any) -> list[str]:
 
 
 def _contains_body_id(value: Any, body_id: str) -> bool:
+    """Match exact body accessions; never accept numeric-prefix substrings."""
+
     for path, item in _walk(value):
         if isinstance(item, (str, int)) and str(item) == body_id:
             return True
-        if isinstance(item, str) and f"MaleCNS:{body_id}" in item:
-            return True
+        if isinstance(item, str):
+            if any(match == body_id for match in re.findall(r"MaleCNS:(\d+)", item)):
+                return True
         if path and path[-1].lower() in {"accession", "bodyid", "body_id"}:
             if str(item) == body_id:
                 return True
