@@ -5,6 +5,7 @@ import math
 from typing import Any, Mapping
 
 from .olfaction import OLFACTION_MODEL
+from .proprioception import proprioceptive_channel_levels
 from .sensory_contract import assert_unprivileged_agent_input
 from .vision import VISION_MODEL
 from .vision_adapter import retinalize_topdown_rgb
@@ -84,6 +85,16 @@ def sanitize_neural_context(payload: Mapping[str, Any]) -> dict[str, Any]:
         raise ValueError(f"Non-sensory fields cannot cross neural context firewall: {unexpected}")
 
     cleaned = {str(key): copy.deepcopy(value) for key, value in payload.items()}
+
+    proprioception = cleaned.get("proprioception")
+    if proprioception is not None:
+        if not isinstance(proprioception, Mapping):
+            raise ValueError("Proprioception neural payload must be a mapping")
+        # Systematic-type polarity/evidence metadata belongs to the control plane,
+        # not the neural sensory plane. Only the strict FeCO receptor-domain
+        # contract may cross under the proprioception modality key.
+        proprioceptive_channel_levels(dict(proprioception))
+
     assert_unprivileged_agent_input(cleaned)
     return cleaned
 
