@@ -243,6 +243,7 @@ class GoalMazeSession:
         self.pending_tactile_contact = False
         self.virtual_body = VirtualFeCOJointBody()
         self.pending_proprioception = feco_motion_proprioception()
+        self.last_observed_proprioception = copy.deepcopy(self.pending_proprioception)
         self.last_visual_diagnostics: dict[str, Any] | None = None
         self._lock = threading.RLock()
 
@@ -313,6 +314,28 @@ class GoalMazeSession:
             "backend": getattr(self.brain, "name", type(self.brain).__name__),
             "telemetry": {} if active_decision is None else active_decision.telemetry,
         }
+
+        observed_proprioception = copy.deepcopy(self.last_observed_proprioception)
+        observed_levels = proprioceptive_channel_levels(observed_proprioception)
+        data["human_diagnostics"] = {
+            "proprioception": {
+                "source": "latest-neural-handoff-receptor-domain",
+                "model": observed_proprioception["model"],
+                "encoding": observed_proprioception["encoding"],
+                "channels": {
+                    "hook_extension": observed_levels["hook_extension"],
+                    "hook_flexion": observed_levels["hook_flexion"],
+                    "club_motion": observed_levels["club_motion"],
+                    "club_vibration": observed_levels["club_vibration"],
+                },
+                "stimulation_enabled": observed_levels["stimulation_enabled"],
+                "runtime_transduction_enabled": observed_levels[
+                    "runtime_transduction_enabled"
+                ],
+                "systematic_type_mapping_exposed": False,
+            }
+        }
+
         data["state_kind"] = state_kind
         data["world_tick_seconds"] = self._effective_world_tick_seconds()
         if step_event is not None:
@@ -463,6 +486,7 @@ class GoalMazeSession:
             proprioception = copy.deepcopy(self.pending_proprioception)
             proprioceptive_channel_levels(proprioception)
             assert_unprivileged_agent_input({"proprioception": proprioception})
+            self.last_observed_proprioception = copy.deepcopy(proprioception)
             world_context["proprioception"] = proprioception
             self.pending_proprioception = feco_motion_proprioception()
 
