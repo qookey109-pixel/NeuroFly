@@ -201,7 +201,7 @@
     );
     setText(
       'proprioceptionSemanticNote',
-      '上方 live 數值只代表工程 receptor channel；A/B 只保留 physiology-supported inference。兩者沒有 executable alias，也沒有 proprioceptive current。'
+      '上方 live 數值只代表工程 receptor channel；A/B 只保留 physiology-supported inference。沒有 executable hook_extension/flexion → SNpp39/41 alias，也沒有 proprioceptive current。'
     );
   }
 
