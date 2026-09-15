@@ -21,6 +21,12 @@
     return `${hours} 小時 ${minutes % 60} 分 ${Math.floor(seconds % 60)} 秒`;
   }
 
+  function formatReceptorLevel(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number) || number < 0 || number > 1) return '—';
+    return `${(number * 100).toFixed(1)}%`;
+  }
+
   function render(history) {
     if (!Array.isArray(history) || history.length === 0) {
       target.textContent = '尚未破關';
@@ -54,10 +60,20 @@
     panel.setAttribute('aria-label', 'FeCO proprioception systematic-type observability');
     panel.innerHTML = `
       <div class="rail-heading compact-rail-heading">
-        <div><span>PROPRIOCEPTION / CONTROL PLANE</span><h2>FeCO 方向語意狀態</h2></div>
+        <div><span>PROPRIOCEPTION</span><h2>FeCO receptor / control plane</h2></div>
       </div>
       <div class="brain-sentence">
-        <span>證據狀態</span>
+        <span>LIVE RECEPTOR INPUT</span>
+        <p id="proprioceptionLiveStatus">等待本次 neural handoff receptor 資料…</p>
+      </div>
+      <div class="telemetry-lines">
+        <div><span>Hook extension</span><strong id="proprioceptionHookExtension">—</strong></div>
+        <div><span>Hook flexion</span><strong id="proprioceptionHookFlexion">—</strong></div>
+        <div><span>Club motion</span><strong id="proprioceptionClubMotion">—</strong></div>
+        <div><span>Club vibration</span><strong id="proprioceptionClubVibration">—</strong></div>
+      </div>
+      <div class="brain-sentence">
+        <span>證據狀態 / CONTROL PLANE</span>
         <p id="proprioceptionSemanticStatus">載入中…</p>
       </div>
       <div class="telemetry-lines">
@@ -70,7 +86,7 @@
       </div>
       <div class="brain-sentence">
         <span>解讀</span>
-        <p id="proprioceptionSemanticNote">這裡是人類觀察用 control plane，不是 MaleCNS 感覺輸入。</p>
+        <p id="proprioceptionSemanticNote">Live receptor 數值與 SNpp39/SNpp41 候選語意分離；control plane 不回流成 neural input。</p>
       </div>
     `;
 
@@ -90,6 +106,43 @@
     const candidate = candidateLabels[record.candidate_function] || record.candidate_function || '—';
     const evidence = record.evidence_level || '—';
     return `${systematicType} · ${candidate} · ${evidence}（推論）`;
+  }
+
+  function renderLiveProprioception(view) {
+    ensureProprioceptionPanel();
+    const record = view?.human_diagnostics?.proprioception;
+    const channels = record?.channels;
+    const values = channels && [
+      channels.hook_extension,
+      channels.hook_flexion,
+      channels.club_motion,
+      channels.club_vibration,
+    ];
+    const validLevels = Array.isArray(values)
+      && values.every(value => Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 1);
+    const valid = record
+      && record.source === 'latest-neural-handoff-receptor-domain'
+      && record.model === 'neurofly-feco-motion-proxy-v0.1'
+      && record.encoding === 'virtual-joint-motion-only-proxy'
+      && record.stimulation_enabled === false
+      && record.runtime_transduction_enabled === false
+      && record.systematic_type_mapping_exposed === false
+      && validLevels;
+
+    if (!valid) {
+      setText('proprioceptionLiveStatus', '即時 receptor 診斷不可用 · FAIL CLOSED');
+      setText('proprioceptionHookExtension', '—');
+      setText('proprioceptionHookFlexion', '—');
+      setText('proprioceptionClubMotion', '—');
+      setText('proprioceptionClubVibration', '—');
+      return;
+    }
+
+    setText('proprioceptionLiveStatus', '本次 neural handoff 的 receptor-domain 輸入 · human diagnostics only');
+    setText('proprioceptionHookExtension', formatReceptorLevel(channels.hook_extension));
+    setText('proprioceptionHookFlexion', formatReceptorLevel(channels.hook_flexion));
+    setText('proprioceptionClubMotion', formatReceptorLevel(channels.club_motion));
+    setText('proprioceptionClubVibration', formatReceptorLevel(channels.club_vibration));
   }
 
   function renderProprioceptionSemantics(contract) {
@@ -148,7 +201,7 @@
     );
     setText(
       'proprioceptionSemanticNote',
-      'A/B 只保留目前的 physiology-supported inference；沒有 executable hook_extension/flexion → SNpp39/41 alias，也沒有 proprioceptive current。'
+      '上方 live 數值只代表工程 receptor channel；A/B 只保留 physiology-supported inference。兩者沒有 executable alias，也沒有 proprioceptive current。'
     );
   }
 
@@ -173,6 +226,7 @@
       const payload = await response.json();
       const view = payload?.final_state || payload?.trajectory?.[payload.trajectory.length - 1];
       render(view?.clear_history);
+      renderLiveProprioception(view);
     } catch (_) {}
   }
 
@@ -184,7 +238,9 @@
     source.addEventListener('malecns', event => {
       try {
         const payload = JSON.parse(event.data);
-        render(payload?.state?.clear_history);
+        const view = payload?.state;
+        render(view?.clear_history);
+        renderLiveProprioception(view);
       } catch (_) {}
     });
   } catch (_) {}
