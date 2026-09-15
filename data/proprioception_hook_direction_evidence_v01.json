@@ -1,0 +1,59 @@
+{
+  "schema": "neurofly-proprioception-hook-direction-evidence-v0.1",
+  "status": "REVIEW_REQUIRED",
+  "direct_crosswalk_found": false,
+  "current_calibration_authorized": false,
+  "stimulation_enabled": false,
+  "runtime_transduction_enabled": false,
+  "promotion_ready": false,
+  "policy": "direct-type-to-physiology-evidence-required-for-promotion",
+  "systematic_types": {
+    "SNpp41": {
+      "anatomical_identity": "FeCO hook",
+      "direct_directional_tuning": null,
+      "circuit_consistent_hypothesis": "flexion",
+      "hypothesis_strength": "strong-inference-not-direct-crosswalk",
+      "evidence": [
+        {
+          "kind": "MaleCNS-circuit-prediction",
+          "claim": "SNpp41 is predicted to inhibit tibia flexor/accessory flexor and activate tibia extensor through the reconstructed premotor circuit.",
+          "url": "https://elifesciences.org/reviewed-preprints/97766"
+        },
+        {
+          "kind": "independent-functional-connectome-rule",
+          "claim": "Flexion-tuned hook axons provide excitatory feedback to tibia extensor motor neurons and inhibitory feedback to tibia flexor motor neurons.",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11071415/"
+        }
+      ]
+    },
+    "SNpp39": {
+      "anatomical_identity": "FeCO hook",
+      "direct_directional_tuning": null,
+      "circuit_consistent_hypothesis": "extension",
+      "hypothesis_strength": "strong-inference-not-direct-crosswalk",
+      "evidence": [
+        {
+          "kind": "MaleCNS-circuit-prediction",
+          "claim": "SNpp39 is predicted to inhibit tibia extensor while disinhibiting tibia flexor/accessory flexor through the reconstructed premotor circuit.",
+          "url": "https://elifesciences.org/reviewed-preprints/97766"
+        },
+        {
+          "kind": "independent-functional-connectome-rule",
+          "claim": "Extension-tuned hook axons provide excitatory feedback to tibia flexor motor neurons and inhibitory feedback to tibia extensor motor neurons.",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11071415/"
+        }
+      ]
+    }
+  },
+  "direct_functional_context": {
+    "hook_flexion_driver": "VT038873-p65ADZ + R32H08-GAL4.DBD",
+    "hook_extension_driver": "VT018774-p65ADZ + VT040547-GAL4.DBD",
+    "source": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10644877/",
+    "note": "These driver lines establish flexion- and extension-tuned hook populations, but the current evidence pass did not find an author-provided exact driver-line-to-SNpp39/SNpp41 crosswalk."
+  },
+  "required_before_promotion": [
+    "author source-data or annotation table explicitly linking SNpp39/SNpp41 to flexion/extension",
+    "or an exact validated morphology/driver-line crosswalk with an immutable receipt",
+    "or equivalent direct experimental/type-level evidence"
+  ]
+}
