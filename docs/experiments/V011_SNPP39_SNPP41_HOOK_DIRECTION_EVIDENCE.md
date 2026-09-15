@@ -48,6 +48,20 @@ The machine-readable evidence matrix therefore keeps:
 
 The audit fails closed if a direct directional label is inserted while the direct-crosswalk gate remains unresolved, if the inferred polarity is silently changed, or if any current/stimulation/runtime lock is opened.
 
+## Verification receipt
+
+Workflow `34917475235` passed the dedicated hook-direction evidence gate on branch head `f7c45ace386f5dc808580272f41264a81e267eb4`.
+
+- dedicated evidence workflow: **PASS**
+- general NeuroFly CI `34917475125`: **PASS**
+- artifact ID: `10377036587`
+- artifact ZIP SHA256: `ac361fdce62ca084efd31cbbd004c2f50f7c6f48a0bcfc26b73d366c300035e1`
+- result status: `REVIEW_REQUIRED`
+- `direct_crosswalk_found=false`
+- `current_calibration_authorized=false`
+
+A green workflow here verifies the evidence boundary and hard locks; it does not promote the inferred polarity to direct physiology.
+
 ## Promotion requirement
 
 Before directional identity can authorize a prepared MaleCNS current calibration, NeuroFly requires one of:
