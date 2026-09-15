@@ -1,0 +1,40 @@
+{
+  "schema": "neurofly-proprioception-systematic-type-semantics-v0.1",
+  "status": "REVIEW_REQUIRED",
+  "plane": "control-plane-only-not-neural-input",
+  "systematic_type_polarity_resolved": false,
+  "semantic_polarity": "unresolved",
+  "engineering_receptor_channels": {
+    "hook_extension": {
+      "semantic_scope": "virtual-joint-direction-engineering-proxy",
+      "systematic_type_binding": null
+    },
+    "hook_flexion": {
+      "semantic_scope": "virtual-joint-direction-engineering-proxy",
+      "systematic_type_binding": null
+    }
+  },
+  "opaque_systematic_channels": {
+    "hook_direction_channel_A": {
+      "systematic_type": "SNpp39",
+      "anatomical_identity": "FeCO hook",
+      "candidate_function": "hook_extension_sensitive",
+      "evidence_level": "PHYSIOLOGY_SUPPORTED_INFERENCE",
+      "authoritative_polarity": false,
+      "runtime_routable": false
+    },
+    "hook_direction_channel_B": {
+      "systematic_type": "SNpp41",
+      "anatomical_identity": "FeCO hook",
+      "candidate_function": "hook_flexion_sensitive",
+      "evidence_level": "PHYSIOLOGY_SUPPORTED_INFERENCE",
+      "authoritative_polarity": false,
+      "runtime_routable": false
+    }
+  },
+  "current_calibration_authorized": false,
+  "stimulation_enabled": false,
+  "runtime_transduction_enabled": false,
+  "promotion_ready": false,
+  "neural_payload_eligible": false
+}
