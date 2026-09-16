@@ -4,6 +4,15 @@
 
   const LIVE_RELAY = 'https://neurofly-curriculum-relay.onrender.com/events';
   const PROPRIOCEPTION_SEMANTICS = './proprioception-semantics.json';
+  const TEMPORAL_SCHEMA = 'neurofly-proprioception-temporal-observability-v0.1';
+  const TEMPORAL_SOURCE = 'verified-neural-handoff-receptor-domain';
+  const TEMPORAL_MAX_CAPACITY = 36;
+  const RECEPTOR_CHANNELS = [
+    'hook_extension',
+    'hook_flexion',
+    'club_motion',
+    'club_vibration',
+  ];
 
   const candidateLabels = {
     hook_extension_sensitive: 'extension-sensitive 候選',
@@ -73,6 +82,13 @@
         <div><span>Club vibration</span><strong id="proprioceptionClubVibration">—</strong></div>
       </div>
       <div class="brain-sentence">
+        <span>RECENT RECEPTOR HISTORY</span>
+        <p id="proprioceptionTemporalStatus">等待 bounded neural-handoff history…</p>
+      </div>
+      <div id="proprioceptionTemporalHistory" class="telemetry-lines">
+        <div><span>History</span><strong>—</strong></div>
+      </div>
+      <div class="brain-sentence">
         <span>證據狀態 / CONTROL PLANE</span>
         <p id="proprioceptionSemanticStatus">載入中…</p>
       </div>
@@ -86,7 +102,7 @@
       </div>
       <div class="brain-sentence">
         <span>解讀</span>
-        <p id="proprioceptionSemanticNote">Live receptor 數值與 SNpp39/SNpp41 候選語意分離；control plane 不回流成 neural input。</p>
+        <p id="proprioceptionSemanticNote">Live/history receptor 數值與 SNpp39/SNpp41 候選語意分離；human diagnostics 不回流成 neural input。</p>
       </div>
     `;
 
@@ -145,6 +161,93 @@
     setText('proprioceptionClubVibration', formatReceptorLevel(channels.club_vibration));
   }
 
+  function validateTemporalSample(sample, previousSequence) {
+    if (!sample || typeof sample !== 'object') return false;
+    const sequence = Number(sample.sequence);
+    const channels = sample.channels;
+    const keys = channels && Object.keys(channels).sort();
+    const expectedKeys = [...RECEPTOR_CHANNELS].sort();
+    const levelsValid = Array.isArray(keys)
+      && keys.length === expectedKeys.length
+      && keys.every((key, index) => key === expectedKeys[index])
+      && RECEPTOR_CHANNELS.every(key => {
+        const value = Number(channels[key]);
+        return Number.isFinite(value) && value >= 0 && value <= 1;
+      });
+    const sequenceValid = Number.isInteger(sequence)
+      && sequence > 0
+      && (previousSequence == null || sequence === previousSequence + 1);
+    return sequenceValid
+      && sample.source === TEMPORAL_SOURCE
+      && sample.model === 'neurofly-feco-motion-proxy-v0.1'
+      && sample.encoding === 'virtual-joint-motion-only-proxy'
+      && sample.stimulation_enabled === false
+      && sample.runtime_transduction_enabled === false
+      && sample.systematic_type_mapping_exposed === false
+      && sample.current_calibration_authorized === false
+      && sample.neural_payload_eligible === false
+      && levelsValid;
+  }
+
+  function renderTemporalProprioception(view) {
+    ensureProprioceptionPanel();
+    const record = view?.human_diagnostics?.proprioception_temporal;
+    const samples = record?.samples;
+    const capacity = Number(record?.capacity);
+    const sampleCount = Number(record?.sample_count);
+    let previousSequence = null;
+    const samplesValid = Array.isArray(samples)
+      && samples.every(sample => {
+        const valid = validateTemporalSample(sample, previousSequence);
+        if (valid) previousSequence = Number(sample.sequence);
+        return valid;
+      });
+    const valid = record
+      && record.schema === TEMPORAL_SCHEMA
+      && record.source === TEMPORAL_SOURCE
+      && record.human_only === true
+      && Number.isInteger(capacity)
+      && capacity >= 1
+      && capacity <= TEMPORAL_MAX_CAPACITY
+      && Number.isInteger(sampleCount)
+      && sampleCount === samples?.length
+      && sampleCount <= capacity
+      && record.history_persistence_enabled === false
+      && record.systematic_type_mapping_exposed === false
+      && record.current_calibration_authorized === false
+      && record.stimulation_enabled === false
+      && record.runtime_transduction_enabled === false
+      && record.neural_payload_eligible === false
+      && samplesValid;
+
+    const historyTarget = document.getElementById('proprioceptionTemporalHistory');
+    if (!valid || !historyTarget) {
+      setText('proprioceptionTemporalStatus', 'Temporal receptor history 不可用 · FAIL CLOSED');
+      if (historyTarget) historyTarget.innerHTML = '<div><span>History</span><strong>—</strong></div>';
+      return;
+    }
+
+    setText(
+      'proprioceptionTemporalStatus',
+      `${sampleCount}/${capacity} 筆 verified handoff · human-only · 不寫入 checkpoint`
+    );
+    const visible = samples.slice(-8);
+    if (visible.length === 0) {
+      historyTarget.innerHTML = '<div><span>History</span><strong>尚無 handoff sample</strong></div>';
+      return;
+    }
+    historyTarget.innerHTML = visible.map(sample => {
+      const channels = sample.channels;
+      const compact = [
+        `E ${formatReceptorLevel(channels.hook_extension)}`,
+        `F ${formatReceptorLevel(channels.hook_flexion)}`,
+        `M ${formatReceptorLevel(channels.club_motion)}`,
+        `V ${formatReceptorLevel(channels.club_vibration)}`,
+      ].join(' · ');
+      return `<div><span>#${sample.sequence}</span><strong>${compact}</strong></div>`;
+    }).join('');
+  }
+
   function renderProprioceptionSemantics(contract) {
     ensureProprioceptionPanel();
     const valid = contract
@@ -201,7 +304,7 @@
     );
     setText(
       'proprioceptionSemanticNote',
-      '上方 live 數值只代表工程 receptor channel；A/B 只保留 physiology-supported inference。沒有 executable hook_extension/flexion → SNpp39/41 alias，也沒有 proprioceptive current。'
+      'Live/history 只顯示 verified engineering receptor handoff；A/B 仍只保留 physiology-supported inference。沒有 executable hook_extension/flexion → SNpp39/41 alias、沒有 proprioceptive current，history 也不會回流成 neural input。'
     );
   }
 
@@ -227,6 +330,7 @@
       const view = payload?.final_state || payload?.trajectory?.[payload.trajectory.length - 1];
       render(view?.clear_history);
       renderLiveProprioception(view);
+      renderTemporalProprioception(view);
     } catch (_) {}
   }
 
@@ -241,6 +345,7 @@
         const view = payload?.state;
         render(view?.clear_history);
         renderLiveProprioception(view);
+        renderTemporalProprioception(view);
       } catch (_) {}
     });
   } catch (_) {}
