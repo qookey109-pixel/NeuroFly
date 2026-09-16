@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from .goal_training import GoalMazeSession
+from .proprioception_temporal_analysis import analyze_proprioception_temporal_history
 from .proprioception_temporal_observability import ProprioceptionTemporalRecorder
 
 
@@ -46,7 +47,9 @@ class TemporalGoalMazeSession(GoalMazeSession):
         diagnostics = data.get("human_diagnostics")
         if not isinstance(diagnostics, dict):
             raise ValueError("GoalMazeSession human diagnostics contract is missing")
-        diagnostics["proprioception_temporal"] = (
-            self.proprioception_temporal_recorder.snapshot()
+        history = self.proprioception_temporal_recorder.snapshot()
+        diagnostics["proprioception_temporal"] = history
+        diagnostics["proprioception_temporal_analysis"] = (
+            analyze_proprioception_temporal_history(history)
         )
         return data
