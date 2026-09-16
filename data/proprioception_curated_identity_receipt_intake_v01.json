@@ -1,0 +1,108 @@
+{
+  "schema": "neurofly-proprioception-curated-identity-receipt-intake-v0.1",
+  "status": "REVIEW_REQUIRED",
+  "receipt_state": "NOT_PROVIDED",
+  "scope": "offline-authorized-curated-receipt-intake-only",
+  "upstream_provenance_gate": {
+    "pull_request": 76,
+    "head_sha": "e6a2b99f27c6ba93286cc007c97ab5c4c60e539d",
+    "provenance_state": "AUTHENTICATED_CURATED_SOURCE_REQUIRED"
+  },
+  "accepted_capture_methods": [
+    "authorized-neuronbridge-session",
+    "verified-immutable-annotation-archive"
+  ],
+  "official_source_contract": {
+    "service": "NeuronBridge",
+    "curated_endpoint": "/curated_matches",
+    "curated_table": "janelia-neuronbridge-custom-annotations",
+    "required_confidence": "Confident",
+    "required_region": "vnc",
+    "allowed_systematic_types": ["SNpp39", "SNpp41"]
+  },
+  "functional_direction_anchors": {
+    "hook_flexion": [
+      {
+        "kind": "exact-functional-driver",
+        "driver_kind": "full-gal4",
+        "components": ["GMR21D12-GAL4"]
+      },
+      {
+        "kind": "exact-functional-driver",
+        "driver_kind": "split-gal4",
+        "components": ["VT038873-p65ADZ", "R32H08-GAL4.DBD"]
+      }
+    ],
+    "hook_extension": [
+      {
+        "kind": "exact-functional-driver",
+        "driver_kind": "split-gal4",
+        "components": ["VT018774-p65ADZ", "VT040547-GAL4.DBD"]
+      }
+    ]
+  },
+  "immutable_equivalent_driver_policy": {
+    "allowed": true,
+    "line_identifier_required": true,
+    "equivalence_receipt_sha256_required": true,
+    "equivalence_must_be_reviewed_separately": true
+  },
+  "receipt_required_fields": [
+    "schema",
+    "capture_method",
+    "source",
+    "source_version",
+    "captured_at",
+    "authorization_header_stored",
+    "credentials_or_tokens_stored",
+    "raw_response_sha256",
+    "records"
+  ],
+  "record_required_fields": [
+    "direction",
+    "driver_reference",
+    "queried_identifier",
+    "dataset",
+    "region",
+    "annotation",
+    "annotator",
+    "cell_type",
+    "raw_item_sha256"
+  ],
+  "receipt_acceptance_rules": {
+    "both_direction_classes_required": true,
+    "at_least_one_record_per_direction": true,
+    "all_records_confident": true,
+    "all_records_vnc": true,
+    "all_records_have_annotator": true,
+    "all_records_have_dataset": true,
+    "only_snpp39_snpp41_targets": true,
+    "within_direction_target_consistency_required": true,
+    "cross_direction_pure_bijection_required": true,
+    "raw_response_sha256_required": true,
+    "raw_item_sha256_required": true,
+    "authorization_header_storage_forbidden": true,
+    "credential_or_token_storage_forbidden": true
+  },
+  "candidate_receipt": null,
+  "existing_hypotheses": {
+    "SNpp39": "extension",
+    "SNpp41": "flexion"
+  },
+  "receipt_validation_does_not_imply": [
+    "current_calibration_authorization",
+    "stimulation_authorization",
+    "runtime_transduction_authorization",
+    "runtime_gating_authorization",
+    "neural_payload_eligibility",
+    "automatic_merge"
+  ],
+  "direct_crosswalk_found": false,
+  "polarity_resolved": false,
+  "current_calibration_authorized": false,
+  "stimulation_enabled": false,
+  "runtime_transduction_enabled": false,
+  "runtime_gating_authorized": false,
+  "neural_payload_eligible": false,
+  "promotion_ready": false
+}
