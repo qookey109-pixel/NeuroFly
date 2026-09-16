@@ -1,0 +1,74 @@
+{
+  "schema": "neurofly-proprioception-temporal-wiring-evidence-v0.1",
+  "status": "REVIEW_REQUIRED",
+  "scope": "human-only temporal observability plus non-executable FeCO wiring evidence",
+  "direct_snpp39_snpp41_direction_crosswalk_found": false,
+  "systematic_type_mapping_exposed": false,
+  "current_calibration_authorized": false,
+  "stimulation_enabled": false,
+  "runtime_transduction_enabled": false,
+  "neural_payload_eligible": false,
+  "observability": {
+    "receptor_history_capacity": 36,
+    "source": "verified-neural-handoff-receptor-domain",
+    "persistent": false,
+    "records_world_state": false,
+    "records_motor_command": false,
+    "records_reward": false,
+    "records_systematic_type": false
+  },
+  "direct_functional_connectome_evidence": [
+    {
+      "evidence_level": "DIRECT_CONNECTIVITY",
+      "claim": "FeCO claw and hook axons connect to local VNC interneurons and leg motor neurons, supporting fast local proprioceptive feedback pathways.",
+      "source": "https://www.nature.com/articles/s41467-025-59302-3"
+    },
+    {
+      "evidence_level": "DIRECT_CONNECTIVITY",
+      "claim": "Hook flexion and hook extension axons have strongly different postsynaptic connectivity; same-direction claw and hook populations share more downstream connectivity than opposite-direction hook populations.",
+      "source": "https://www.nature.com/articles/s41467-025-59302-3"
+    },
+    {
+      "evidence_level": "DIRECT_CONNECTIVITY",
+      "claim": "Hook axons receive substantial inhibitory presynaptic input, prominently from 9A neurons, consistent with context-dependent suppression of expected proprioceptive feedback.",
+      "source": "https://www.nature.com/articles/s41467-025-59302-3"
+    },
+    {
+      "evidence_level": "DIRECT_CONNECTIVITY",
+      "claim": "Flexion-tuned claw and hook axons provide net excitatory feedback toward tibia extensor motor output and inhibitory feedback toward tibia flexor motor output; extension-tuned populations show the complementary pattern.",
+      "source": "https://www.nature.com/articles/s41467-025-59302-3"
+    }
+  ],
+  "malecns_systematic_context": [
+    {
+      "evidence_level": "DIRECT_DATABASE_ANNOTATION",
+      "claim": "MaleCNS systematic annotation treats SNpp39 and SNpp41 as proprioceptive leg sensory types associated with FeCO hook circuitry.",
+      "source": "https://elifesciences.org/reviewed-preprints/97766"
+    },
+    {
+      "evidence_level": "DIRECT_CONNECTIVITY",
+      "claim": "MaleCNS connectivity groups SNpp39 and SNpp41 with proprioceptive types receiving strong connectivity from inhibitory hemilineage 09A.",
+      "source": "https://elifesciences.org/reviewed-preprints/97766"
+    }
+  ],
+  "polarity_boundary": {
+    "SNpp39": {
+      "anatomical_identity": "FeCO hook",
+      "direct_directional_tuning": null,
+      "candidate_direction": "extension",
+      "candidate_evidence_level": "PHYSIOLOGY_SUPPORTED_INFERENCE"
+    },
+    "SNpp41": {
+      "anatomical_identity": "FeCO hook",
+      "direct_directional_tuning": null,
+      "candidate_direction": "flexion",
+      "candidate_evidence_level": "PHYSIOLOGY_SUPPORTED_INFERENCE"
+    },
+    "promotion_rule": "Do not bind engineering hook_extension/hook_flexion channels to SNpp39/SNpp41 until direct type-level physiology or an independently validated immutable identity crosswalk is available."
+  },
+  "research_interpretation": [
+    "Temporal receptor traces can be compared with known directional FeCO circuit motifs for human analysis only.",
+    "Temporal coincidence or anti-correlation is not identity evidence and cannot resolve SNpp39/SNpp41 polarity.",
+    "Connectome pathway sign and motor-module targeting may strengthen a physiology-supported hypothesis but cannot substitute for a direct systematic-type tuning crosswalk."
+  ]
+}
