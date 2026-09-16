@@ -260,15 +260,34 @@ jobs:
           PY
 
       - name: Continue NeuroFly on next free runner
+        id: continue-runtime
         if: ${{ always() && steps.train.outcome == 'success' && steps.state-cache.outcome == 'success' && steps.runtime-policy.outcome == 'success' && steps.runtime-policy.outputs.enabled == 'true' && (github.event_name != 'workflow_dispatch' || inputs.continuous) }}
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
           NEXT_STEPS: ${{ steps.runtime-policy.outputs.steps }}
+        shell: bash
         run: |
+          set -u
           echo "Checkpoint is safely persisted. Dispatching the next NeuroFly runner with ${NEXT_STEPS} decisions."
-          gh api --method POST \
-            -H "Accept: application/vnd.github+json" \
-            "/repos/${GITHUB_REPOSITORY}/actions/workflows/full-malecns-free.yml/dispatches" \
-            -f ref=main \
-            -f "inputs[steps]=${NEXT_STEPS}" \
-            -f "inputs[continuous]=true"
+          for attempt in 1 2 3; do
+            if gh api --method POST \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/${GITHUB_REPOSITORY}/actions/workflows/full-malecns-free.yml/dispatches" \
+              -f ref=main \
+              -f "inputs[steps]=${NEXT_STEPS}" \
+              -f "inputs[continuous]=true"; then
+              echo "CONTINUOUS_RUNTIME_DISPATCH_OK attempt=${attempt}"
+              exit 0
+            fi
+            echo "::warning::Continuation dispatch attempt ${attempt}/3 failed."
+            if [ "$attempt" -lt 3 ]; then
+              sleep $((attempt * 20))
+            fi
+          done
+          echo "::error::Continuation dispatch failed after 3 attempts; the watchdog will recover the chain."
+          exit 1
+
+      - name: Warn if runtime continuation dispatch failed
+        if: ${{ always() && steps.continue-runtime.outcome == 'failure' }}
+        run: echo "::warning::MaleCNS training and checkpoint persistence succeeded, but runner handoff failed. NeuroFly Runtime Watchdog will retry from the persisted checkpoint."
