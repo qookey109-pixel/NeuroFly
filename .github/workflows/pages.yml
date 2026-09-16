@@ -7,13 +7,6 @@ on:
     paths:
       - 'site/**'
       - '.github/workflows/pages.yml'
-  workflow_run:
-    workflows:
-      - NeuroFly Curriculum Training
-    types:
-      - completed
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
