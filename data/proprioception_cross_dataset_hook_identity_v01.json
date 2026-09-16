@@ -1,0 +1,153 @@
+{
+  "schema": "neurofly-proprioception-cross-dataset-hook-identity-v0.1",
+  "status": "REVIEW_REQUIRED",
+  "observed_at": "2026-09-16",
+  "scope": "systematic-hook-identity-only",
+  "source_kind": "public-vfb-annotation-snapshot",
+  "records": [
+    {
+      "dataset": "BANC_626",
+      "body_id": "720575941578950133",
+      "vfb_id": "VFB_001059vs",
+      "systematic_type": "SNpp39",
+      "leg": "front",
+      "subclass": "front_leg_hook_chordotonal_organ_neuron",
+      "classification": "femoral chordotonal hook neuron",
+      "sex": "female",
+      "source_url": "https://www.virtualflybrain.org/term/banc_626720575941578950133-vfb_001059vs/"
+    },
+    {
+      "dataset": "BANC_626",
+      "body_id": "720575941642643557",
+      "vfb_id": "VFB_00104ye2",
+      "systematic_type": "SNpp39",
+      "leg": "middle",
+      "subclass": "middle_leg_hook_chordotonal_organ_neuron",
+      "classification": "femoral chordotonal hook neuron",
+      "sex": "female",
+      "source_url": "https://www.virtualflybrain.org/term/banc_626720575941642643557-vfb_00104ye2/"
+    },
+    {
+      "dataset": "BANC_626",
+      "body_id": "720575941531825611",
+      "vfb_id": "VFB_00105pzq",
+      "systematic_type": "SNpp39",
+      "leg": "hind",
+      "subclass": "hind_leg_hook_chordotonal_organ_neuron",
+      "classification": "femoral chordotonal hook neuron",
+      "sex": "female",
+      "source_url": "https://www.virtualflybrain.org/term/banc_626720575941531825611-vfb_00105pzq/"
+    },
+    {
+      "dataset": "BANC_626",
+      "body_id": "720575941460957651",
+      "vfb_id": "VFB_001069bx",
+      "systematic_type": "SNpp41",
+      "leg": "front",
+      "subclass": "front_leg_hook_chordotonal_organ_neuron",
+      "classification": "femoral chordotonal hook neuron",
+      "sex": "female",
+      "source_url": "https://www.virtualflybrain.org/term/banc_626720575941460957651-vfb_001069bx/"
+    },
+    {
+      "dataset": "BANC_626",
+      "body_id": "720575941593894102",
+      "vfb_id": "VFB_00105597",
+      "systematic_type": "SNpp41",
+      "leg": "middle",
+      "subclass": "middle_leg_hook_chordotonal_organ_neuron",
+      "classification": "femoral chordotonal hook neuron",
+      "sex": "female",
+      "source_url": "https://www.virtualflybrain.org/term/banc_626720575941593894102-vfb_00105597/"
+    },
+    {
+      "dataset": "BANC_626",
+      "body_id": "720575941503646514",
+      "vfb_id": "VFB_00105x02",
+      "systematic_type": "SNpp41",
+      "leg": "hind",
+      "subclass": "hind_leg_hook_chordotonal_organ_neuron",
+      "classification": "femoral chordotonal hook neuron",
+      "sex": "female",
+      "source_url": "https://www.virtualflybrain.org/term/banc_626720575941503646514-vfb_00105x02/"
+    },
+    {
+      "dataset": "MaleCNS_v1.0",
+      "body_id": "833439",
+      "vfb_id": "VFB_jrmc171l",
+      "systematic_type": "SNpp39",
+      "leg": "front",
+      "subclass": "chordotonal organ",
+      "classification": "femoral chordotonal hook neuron",
+      "sex": "male",
+      "source_url": "https://www.virtualflybrain.org/term/none-malecns833439-vfb_jrmc171l/"
+    },
+    {
+      "dataset": "MaleCNS_v1.0",
+      "body_id": "913886",
+      "vfb_id": "VFB_jrmc1724",
+      "systematic_type": "SNpp39",
+      "leg": "middle",
+      "subclass": "chordotonal organ",
+      "classification": "femoral chordotonal hook neuron",
+      "sex": "male",
+      "source_url": "https://www.virtualflybrain.org/term/none-malecns913886-vfb_jrmc1724/"
+    },
+    {
+      "dataset": "MaleCNS_v1.0",
+      "body_id": "813911",
+      "vfb_id": "VFB_jrmc1727",
+      "systematic_type": "SNpp39",
+      "leg": "hind",
+      "subclass": "chordotonal organ",
+      "classification": "femoral chordotonal hook neuron",
+      "sex": "male",
+      "source_url": "https://www.virtualflybrain.org/term/none-malecns813911-vfb_jrmc1727/"
+    },
+    {
+      "dataset": "MaleCNS_v1.0",
+      "body_id": "911942",
+      "vfb_id": "VFB_jrmc173f",
+      "systematic_type": "SNpp41",
+      "leg": "middle",
+      "subclass": "chordotonal organ",
+      "classification": "femoral chordotonal hook neuron",
+      "sex": "male",
+      "source_url": "https://www.virtualflybrain.org/term/none-malecns911942-vfb_jrmc173f/"
+    },
+    {
+      "dataset": "MaleCNS_v1.0",
+      "body_id": "819524",
+      "vfb_id": "VFB_jrmc1739",
+      "systematic_type": "SNpp41",
+      "leg": "hind",
+      "subclass": "chordotonal organ",
+      "classification": "femoral chordotonal hook neuron",
+      "sex": "male",
+      "source_url": "https://www.virtualflybrain.org/term/none-malecns819524-vfb_jrmc1739/"
+    }
+  ],
+  "systematic_types": {
+    "SNpp39": {
+      "hook_identity_supported": true,
+      "direct_directional_tuning": null,
+      "circuit_consistent_hypothesis": "extension",
+      "hypothesis_strength": "PHYSIOLOGY_SUPPORTED_INFERENCE"
+    },
+    "SNpp41": {
+      "hook_identity_supported": true,
+      "direct_directional_tuning": null,
+      "circuit_consistent_hypothesis": "flexion",
+      "hypothesis_strength": "PHYSIOLOGY_SUPPORTED_INFERENCE"
+    }
+  },
+  "cross_dataset_hook_identity_consistent": true,
+  "direct_crosswalk_found": false,
+  "polarity_resolved": false,
+  "current_calibration_authorized": false,
+  "stimulation_enabled": false,
+  "runtime_transduction_enabled": false,
+  "runtime_gating_authorized": false,
+  "neural_payload_eligible": false,
+  "promotion_ready": false
+}
