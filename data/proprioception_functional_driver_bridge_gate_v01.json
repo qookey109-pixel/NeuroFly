@@ -1,0 +1,100 @@
+{
+  "schema": "neurofly-proprioception-functional-driver-bridge-gate-v0.1",
+  "status": "REVIEW_REQUIRED",
+  "bridge_state": "ACCESS_REQUIRED",
+  "observed_at": "2026-09-16",
+  "scope": "functional-driver-to-systematic-type-identity-only",
+  "functional_driver_evidence": {
+    "hook_flexion": {
+      "direct_functional_label_supported": true,
+      "drivers": [
+        {
+          "kind": "full-gal4",
+          "components": ["GMR21D12-GAL4"]
+        },
+        {
+          "kind": "split-gal4",
+          "components": ["VT038873-p65ADZ", "R32H08-GAL4.DBD"]
+        }
+      ]
+    },
+    "hook_extension": {
+      "direct_functional_label_supported": true,
+      "drivers": [
+        {
+          "kind": "split-gal4",
+          "components": ["VT018774-p65ADZ", "VT040547-GAL4.DBD"]
+        }
+      ]
+    }
+  },
+  "functional_sources": [
+    {
+      "kind": "primary-physiology",
+      "url": "https://doi.org/10.1016/j.neuron.2023.07.009",
+      "supports": "hook flexion and hook extension driver identities"
+    },
+    {
+      "kind": "primary-physiology",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10634730/",
+      "supports": "independent use of hook flexion and hook extension driver contexts"
+    }
+  ],
+  "neuronbridge_capability": {
+    "software_repo": "JaneliaSciComp/neuronbridge",
+    "reviewed_commit": "18d97306372d27322482208432663f9f2b6b52a8",
+    "release_notes_url": "https://github.com/JaneliaSciComp/neuronbridge/blob/18d97306372d27322482208432663f9f2b6b52a8/public/RELEASENOTES.md",
+    "curated_split_gal4_to_cell_type_supported": true,
+    "curated_endpoint": "/curated_matches",
+    "confidence_levels": ["Confident", "Probable", "Candidate"],
+    "confident_definition": ">95% confidence based on detailed examination of all potential associations",
+    "search_requires_login": true,
+    "authenticated_curated_result_obtained": false,
+    "public_exact_pair_receipt_frozen": false
+  },
+  "component_only_public_evidence": {
+    "available": true,
+    "sufficient_for_split_identity": false,
+    "reason": "Single enhancer-component expression and morphology surfaces do not establish the intersection produced by the exact split-GAL4 pair."
+  },
+  "cross_dataset_conflict_guard": {
+    "manc_legacy_conflicts_observed": true,
+    "manc_conflict_examples_are_identity_authority": false,
+    "computed_morphology_match_alone_is_sufficient": false,
+    "reason": "Existing public MANC annotations include SNpp39/SNpp41 records with conflicting FeCO subclass labels, so morphology/computed matches alone cannot promote polarity."
+  },
+  "predeclared_promotion_requirements": {
+    "exact_functional_driver_or_immutable_line_identifier": true,
+    "expert_curated_match_record_required": true,
+    "minimum_curated_confidence": "Confident",
+    "vnc_anatomical_region_required": true,
+    "source_or_annotator_required": true,
+    "systematic_type_must_be_one_of": ["SNpp39", "SNpp41"],
+    "both_direction_classes_required": true,
+    "pure_bijection_required": true,
+    "independent_hook_identity_consistency_required": true,
+    "conflicting_assignments_forbidden": true,
+    "immutable_receipt_required": true
+  },
+  "systematic_types": {
+    "SNpp39": {
+      "direct_directional_tuning": null,
+      "circuit_consistent_hypothesis": "extension",
+      "hypothesis_strength": "PHYSIOLOGY_SUPPORTED_INFERENCE"
+    },
+    "SNpp41": {
+      "direct_directional_tuning": null,
+      "circuit_consistent_hypothesis": "flexion",
+      "hypothesis_strength": "PHYSIOLOGY_SUPPORTED_INFERENCE"
+    }
+  },
+  "direct_bridge_receipt": null,
+  "direct_crosswalk_found": false,
+  "polarity_resolved": false,
+  "current_calibration_authorized": false,
+  "stimulation_enabled": false,
+  "runtime_transduction_enabled": false,
+  "runtime_gating_authorized": false,
+  "neural_payload_eligible": false,
+  "promotion_ready": false
+}
