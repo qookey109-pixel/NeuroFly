@@ -42,7 +42,8 @@ def test_temporal_hud_preserves_systematic_type_and_current_locks() -> None:
 
     assert "沒有 executable hook_extension/flexion → SNpp39/41 alias" in source
     assert "沒有 proprioceptive current" in source
-    assert "history 也不會回流成 neural input" in source
+    assert "human diagnostics 不回流成 neural input" in source
+    assert "event analysis 也不會回流成 neural input" in source
 
 
 def test_temporal_hud_cache_buster_moves_past_live_only_version() -> None:
