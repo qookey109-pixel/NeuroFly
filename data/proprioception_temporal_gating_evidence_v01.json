@@ -1,0 +1,78 @@
+{
+  "schema": "neurofly-proprioception-temporal-gating-evidence-v0.1",
+  "status": "REVIEW_REQUIRED",
+  "scope": "human-only evidence for hook-class temporal coding and predictive presynaptic inhibition",
+  "runtime_gating_authorized": false,
+  "phase_kernel_authorized": false,
+  "current_calibration_authorized": false,
+  "stimulation_enabled": false,
+  "systematic_type_mapping_exposed": false,
+  "neural_payload_eligible": false,
+  "hook_class_evidence": [
+    {
+      "evidence_level": "DIRECT_PHYSIOLOGY",
+      "claim": "FeCO hook proprioceptors encode tibia movement with phasic, directionally tuned responses, whereas claw proprioceptors encode position tonically.",
+      "source": "https://www.nature.com/articles/s41586-025-09554-2"
+    },
+    {
+      "evidence_level": "DIRECT_PHYSIOLOGY",
+      "claim": "Movement-encoding hook axons are selectively suppressed during self-generated walking and grooming, while position-encoding proprioceptor axons remain active across behaviours.",
+      "source": "https://www.nature.com/articles/s41586-025-09554-2"
+    },
+    {
+      "evidence_level": "DIRECT_CONNECTIVITY",
+      "claim": "GABAergic 9A interneurons provide presynaptic inhibition to movement-encoding hook axons and receive descending input positioned to drive context-specific and leg-specific suppression.",
+      "source": "https://www.nature.com/articles/s41586-025-09554-2"
+    },
+    {
+      "evidence_level": "DIRECT_PHYSIOLOGY",
+      "claim": "Activity of the inhibitory interneurons and their descending inputs correlates with self-generated but not passive leg movements.",
+      "source": "https://www.nature.com/articles/s41586-025-09554-2"
+    },
+    {
+      "evidence_level": "DIRECT_CONNECTIVITY",
+      "claim": "Hook axons receive abundant inhibitory presynaptic input, prominently from 9A neurons, while hook and claw pathways connect to local leg motor circuits.",
+      "source": "https://www.nature.com/articles/s41467-025-59302-3"
+    }
+  ],
+  "malecns_context": [
+    {
+      "evidence_level": "DIRECT_DATABASE_ANNOTATION",
+      "claim": "MaleCNS SNpp39 and SNpp41 are FeCO hook proprioceptive sensory types and belong to the proprioceptive grouping with strong connectivity from inhibitory hemilineage 09A.",
+      "source": "https://elifesciences.org/reviewed-preprints/97766"
+    }
+  ],
+  "temporal_resolution_boundary": {
+    "evidence_level": "DIRECT_AUTHOR_LIMITATION",
+    "phase_of_step_cycle_resolved": false,
+    "inhibitory_lead_time_resolved": false,
+    "millisecond_kernel_resolved": false,
+    "claim": "Calcium dynamics were too slow to determine whether 9A activity precedes movement or whether sensory suppression is phase-locked within the movement cycle; faster measurements such as voltage imaging are required for that temporal resolution.",
+    "source": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13070307/"
+  },
+  "identity_boundary": {
+    "hook_class_modulation_supported": true,
+    "SNpp39_directional_tuning_direct": null,
+    "SNpp41_directional_tuning_direct": null,
+    "SNpp39_candidate_direction": "extension",
+    "SNpp41_candidate_direction": "flexion",
+    "candidate_evidence_level": "PHYSIOLOGY_SUPPORTED_INFERENCE",
+    "direct_type_level_polarity_crosswalk_found": false,
+    "rule": "Hook-class predictive inhibition evidence must not be used to promote the SNpp39/SNpp41 direction inference into an executable type-level mapping."
+  },
+  "allowed_human_only_analysis": [
+    "detect receptor pulse onset and offset from already-recorded handoff history",
+    "count hook-direction pulse transitions",
+    "measure engineering handoff lag in decision-index units",
+    "compare self-generated proxy histories across actions for diagnostics only"
+  ],
+  "forbidden_promotions": [
+    "derive a millisecond inhibitory kernel from calcium traces",
+    "inject 9A-like inhibition into SNpp39 or SNpp41",
+    "convert hook-class suppression into a systematic-type direction label",
+    "calibrate proprioceptive neural current",
+    "route motor command or world truth into the receptor history",
+    "treat temporal correlation as neuron identity evidence"
+  ],
+  "next_evidence_gate": "Require phase-resolved or otherwise quantitatively time-resolved hook/9A physiology, plus an independently validated MaleCNS target identity path, before proposing any executable predictive-inhibition kernel."
+}
