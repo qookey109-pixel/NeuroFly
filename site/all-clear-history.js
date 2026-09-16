@@ -7,12 +7,45 @@
   const TEMPORAL_SCHEMA = 'neurofly-proprioception-temporal-observability-v0.1';
   const TEMPORAL_SOURCE = 'verified-neural-handoff-receptor-domain';
   const TEMPORAL_MAX_CAPACITY = 36;
+  const TEMPORAL_EVENT_TIMEBASE = 'decision-index-only';
   const RECEPTOR_CHANNELS = [
     'hook_extension',
     'hook_flexion',
     'club_motion',
     'club_vibration',
   ];
+  const RECEPTOR_LABELS = {
+    hook_extension: 'Hook extension',
+    hook_flexion: 'Hook flexion',
+    club_motion: 'Club motion',
+    club_vibration: 'Club vibration',
+  };
+  const TEMPORAL_HISTORY_KEYS = [
+    'schema',
+    'source',
+    'human_only',
+    'capacity',
+    'sample_count',
+    'samples',
+    'history_persistence_enabled',
+    'systematic_type_mapping_exposed',
+    'current_calibration_authorized',
+    'stimulation_enabled',
+    'runtime_transduction_enabled',
+    'neural_payload_eligible',
+  ].sort();
+  const TEMPORAL_SAMPLE_KEYS = [
+    'sequence',
+    'source',
+    'model',
+    'encoding',
+    'channels',
+    'stimulation_enabled',
+    'runtime_transduction_enabled',
+    'systematic_type_mapping_exposed',
+    'current_calibration_authorized',
+    'neural_payload_eligible',
+  ].sort();
 
   const candidateLabels = {
     hook_extension_sensitive: 'extension-sensitive 候選',
@@ -34,6 +67,13 @@
     const number = Number(value);
     if (!Number.isFinite(number) || number < 0 || number > 1) return '—';
     return `${(number * 100).toFixed(1)}%`;
+  }
+
+  function exactKeys(record, expectedKeys) {
+    if (!record || typeof record !== 'object' || Array.isArray(record)) return false;
+    const keys = Object.keys(record).sort();
+    return keys.length === expectedKeys.length
+      && keys.every((key, index) => key === expectedKeys[index]);
   }
 
   function render(history) {
@@ -89,6 +129,13 @@
         <div><span>History</span><strong>—</strong></div>
       </div>
       <div class="brain-sentence">
+        <span>TEMPORAL EVENT ANALYSIS</span>
+        <p id="proprioceptionTemporalAnalysisStatus">等待 decision-index event summary…</p>
+      </div>
+      <div id="proprioceptionTemporalAnalysis" class="telemetry-lines">
+        <div><span>Analysis</span><strong>—</strong></div>
+      </div>
+      <div class="brain-sentence">
         <span>證據狀態 / CONTROL PLANE</span>
         <p id="proprioceptionSemanticStatus">載入中…</p>
       </div>
@@ -102,7 +149,7 @@
       </div>
       <div class="brain-sentence">
         <span>解讀</span>
-        <p id="proprioceptionSemanticNote">Live/history receptor 數值與 SNpp39/SNpp41 候選語意分離；human diagnostics 不回流成 neural input。</p>
+        <p id="proprioceptionSemanticNote">Live/history/event summary 與 SNpp39/SNpp41 候選語意分離；human diagnostics 不回流成 neural input。</p>
       </div>
     `;
 
@@ -162,7 +209,7 @@
   }
 
   function validateTemporalSample(sample, previousSequence) {
-    if (!sample || typeof sample !== 'object') return false;
+    if (!exactKeys(sample, TEMPORAL_SAMPLE_KEYS)) return false;
     const sequence = Number(sample.sequence);
     const channels = sample.channels;
     const keys = channels && Object.keys(channels).sort();
@@ -189,12 +236,11 @@
       && levelsValid;
   }
 
-  function renderTemporalProprioception(view) {
-    ensureProprioceptionPanel();
-    const record = view?.human_diagnostics?.proprioception_temporal;
-    const samples = record?.samples;
-    const capacity = Number(record?.capacity);
-    const sampleCount = Number(record?.sample_count);
+  function validateTemporalRecord(record) {
+    if (!exactKeys(record, TEMPORAL_HISTORY_KEYS)) return false;
+    const samples = record.samples;
+    const capacity = Number(record.capacity);
+    const sampleCount = Number(record.sample_count);
     let previousSequence = null;
     const samplesValid = Array.isArray(samples)
       && samples.every(sample => {
@@ -202,8 +248,7 @@
         if (valid) previousSequence = Number(sample.sequence);
         return valid;
       });
-    const valid = record
-      && record.schema === TEMPORAL_SCHEMA
+    return record.schema === TEMPORAL_SCHEMA
       && record.source === TEMPORAL_SOURCE
       && record.human_only === true
       && Number.isInteger(capacity)
@@ -219,11 +264,142 @@
       && record.runtime_transduction_enabled === false
       && record.neural_payload_eligible === false
       && samplesValid;
+  }
+
+  function deriveTemporalEventAnalysis(record) {
+    const samples = record.samples;
+    const channels = {};
+
+    RECEPTOR_CHANNELS.forEach(channel => {
+      const events = [];
+      let activeSamples = 0;
+      let risingTransitions = 0;
+      let fallingTransitions = 0;
+      let previousActive = null;
+      let current = null;
+
+      samples.forEach((sample, index) => {
+        const sequence = Number(sample.sequence);
+        const level = Number(sample.channels[channel]);
+        const active = level > 0;
+        if (active) activeSamples += 1;
+
+        if (active && previousActive !== true) {
+          if (previousActive === false) risingTransitions += 1;
+          current = {
+            observed_start_sequence: sequence,
+            observed_end_sequence: sequence,
+            observed_duration_decisions: 1,
+            peak_level: level,
+            left_censored: index === 0,
+            right_censored: false,
+          };
+          events.push(current);
+        } else if (active && current) {
+          current.observed_end_sequence = sequence;
+          current.observed_duration_decisions = current.observed_end_sequence
+            - current.observed_start_sequence
+            + 1;
+          current.peak_level = Math.max(current.peak_level, level);
+        }
+
+        if (!active && previousActive === true) {
+          fallingTransitions += 1;
+          current = null;
+        }
+        previousActive = active;
+      });
+
+      if (samples.length > 0 && previousActive === true && events.length > 0) {
+        events[events.length - 1].right_censored = true;
+      }
+
+      channels[channel] = {
+        active_sample_count: activeSamples,
+        rising_transition_count_within_window: risingTransitions,
+        falling_transition_count_within_window: fallingTransitions,
+        event_count_observed: events.length,
+        events,
+      };
+    });
+
+    const firstSequence = samples.length > 0 ? Number(samples[0].sequence) : null;
+    const lastSequence = samples.length > 0 ? Number(samples[samples.length - 1].sequence) : null;
+    return {
+      timebase: TEMPORAL_EVENT_TIMEBASE,
+      sample_count: samples.length,
+      first_retained_sequence: firstSequence,
+      last_retained_sequence: lastSequence,
+      window_left_censoring_possible: samples.length > 0 && firstSequence !== 1,
+      channels,
+      milliseconds_inferred: false,
+      step_cycle_phase_resolved: false,
+      inhibitory_lead_time_resolved: false,
+    };
+  }
+
+  function renderTemporalEventAnalysis(record) {
+    const analysisTarget = document.getElementById('proprioceptionTemporalAnalysis');
+    if (!analysisTarget) return;
+    if (!validateTemporalRecord(record)) {
+      setText('proprioceptionTemporalAnalysisStatus', 'Temporal event analysis 不可用 · FAIL CLOSED');
+      analysisTarget.innerHTML = '<div><span>Analysis</span><strong>—</strong></div>';
+      return;
+    }
+
+    const analysis = deriveTemporalEventAnalysis(record);
+    const windowLabel = analysis.sample_count === 0
+      ? '尚無 retained sample'
+      : `#${analysis.first_retained_sequence}–#${analysis.last_retained_sequence}`;
+    const censorLabel = analysis.window_left_censoring_possible
+      ? 'left-window censoring possible'
+      : 'no discarded-left-window evidence';
+    setText(
+      'proprioceptionTemporalAnalysisStatus',
+      `${analysis.timebase} · browser-local human-only derived · ms / biological phase / 9A lead time 未解析`
+    );
+
+    const rows = [
+      `<div><span>Window</span><strong>${windowLabel} · ${censorLabel}</strong></div>`,
+    ];
+    RECEPTOR_CHANNELS.forEach(channel => {
+      const summary = analysis.channels[channel];
+      const latest = summary.events[summary.events.length - 1];
+      let latestLabel = '無 observed event';
+      if (latest) {
+        const censor = [
+          latest.left_censored ? 'L-censored' : null,
+          latest.right_censored ? 'R-censored' : null,
+        ].filter(Boolean).join(' / ');
+        latestLabel = `latest #${latest.observed_start_sequence}–#${latest.observed_end_sequence}`
+          + ` · ${latest.observed_duration_decisions} decisions`
+          + ` · peak ${formatReceptorLevel(latest.peak_level)}`
+          + (censor ? ` · ${censor}` : '');
+      }
+      rows.push(
+        `<div><span>${RECEPTOR_LABELS[channel]}</span><strong>`
+        + `${summary.event_count_observed} events · active ${summary.active_sample_count}`
+        + ` · ↑ ${summary.rising_transition_count_within_window}`
+        + ` · ↓ ${summary.falling_transition_count_within_window}`
+        + ` · ${latestLabel}</strong></div>`
+      );
+    });
+    analysisTarget.innerHTML = rows.join('');
+  }
+
+  function renderTemporalProprioception(view) {
+    ensureProprioceptionPanel();
+    const record = view?.human_diagnostics?.proprioception_temporal;
+    const samples = record?.samples;
+    const capacity = Number(record?.capacity);
+    const sampleCount = Number(record?.sample_count);
+    const valid = validateTemporalRecord(record);
 
     const historyTarget = document.getElementById('proprioceptionTemporalHistory');
     if (!valid || !historyTarget) {
       setText('proprioceptionTemporalStatus', 'Temporal receptor history 不可用 · FAIL CLOSED');
       if (historyTarget) historyTarget.innerHTML = '<div><span>History</span><strong>—</strong></div>';
+      renderTemporalEventAnalysis(record);
       return;
     }
 
@@ -231,6 +407,7 @@
       'proprioceptionTemporalStatus',
       `${sampleCount}/${capacity} 筆 verified handoff · human-only · 不寫入 checkpoint`
     );
+    renderTemporalEventAnalysis(record);
     const visible = samples.slice(-8);
     if (visible.length === 0) {
       historyTarget.innerHTML = '<div><span>History</span><strong>尚無 handoff sample</strong></div>';
@@ -304,7 +481,7 @@
     );
     setText(
       'proprioceptionSemanticNote',
-      'Live/history 只顯示 verified engineering receptor handoff；A/B 仍只保留 physiology-supported inference。沒有 executable hook_extension/flexion → SNpp39/41 alias、沒有 proprioceptive current，history 也不會回流成 neural input。'
+      'Live/history/event summary 只顯示 verified engineering receptor handoff 的 human diagnostics；A/B 仍只保留 physiology-supported inference。沒有 executable hook_extension/flexion → SNpp39/41 alias、沒有 proprioceptive current，event analysis 也不會回流成 neural input。'
     );
   }
 
