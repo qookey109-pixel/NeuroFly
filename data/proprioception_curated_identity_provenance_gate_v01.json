@@ -1,0 +1,114 @@
+{
+  "schema": "neurofly-proprioception-curated-identity-provenance-gate-v0.1",
+  "status": "REVIEW_REQUIRED",
+  "observed_at": "2026-09-16",
+  "scope": "evidence-provenance-only",
+  "upstream_bridge_gate": {
+    "pull_request": 75,
+    "head_sha": "e308dbe815db8c3d65e3d0f03d26eab4387651af",
+    "bridge_state": "ACCESS_REQUIRED",
+    "direct_bridge_receipt": null
+  },
+  "neuronbridge_open_data": {
+    "repository": "JaneliaSciComp/neuronbridge-data",
+    "reviewed_commit": "0b6c184ce5af4fc6ae3264f8c89ba88c62ef2caa",
+    "production_pointer": "v3_10_0",
+    "bucket": "s3://janelia-neuronbridge-data-prod",
+    "documented_as_open_rest_api": true,
+    "documented_object_families": [
+      "current.txt",
+      "schemas",
+      "config.json",
+      "publishedNames.txt",
+      "references.json",
+      "metadata/by_body",
+      "metadata/by_line",
+      "metadata/cdsresults",
+      "metadata/pppresults"
+    ],
+    "expert_curated_identity_records_documented_in_open_api": false,
+    "computed_or_precomputed_morphology_is_identity_authority": false
+  },
+  "neuronbridge_curated_service": {
+    "repository": "JaneliaSciComp/neuronbridge-services",
+    "reviewed_commit": "3847c602fcc5e3ae2bae47b7308ee11263ae6cef",
+    "endpoint": "/curated_matches",
+    "method": "GET",
+    "jwt_authorizer_required": true,
+    "jwt_identity_source": "$request.header.Authorization",
+    "dynamodb_table": "janelia-neuronbridge-custom-annotations",
+    "record_partition": "searchString",
+    "direct_query_result_obtained": false
+  },
+  "neuronbridge_annotation_archive": {
+    "repository": "JaneliaSciComp/neuronbridge-precompute",
+    "reviewed_commit": "e51e7c1ed6523597a7f6f6f9cbe18a53ac4eb1f3",
+    "input_columns": [
+      "Line Name",
+      "Dataset",
+      "Region",
+      "Term",
+      "Term type",
+      "Annotation",
+      "Annotator"
+    ],
+    "dynamodb_table": "janelia-neuronbridge-custom-annotations",
+    "archive_bucket": "s3://janelia-neuronbridge-annotation",
+    "archive_input_prefix": "input",
+    "public_readability_verified": false,
+    "exact_hook_driver_archive_object_obtained": false,
+    "immutable_archive_receipt": null
+  },
+  "neuronbridge_frontend": {
+    "repository": "JaneliaSciComp/neuronbridge",
+    "reviewed_commit": "18d97306372d27322482208432663f9f2b6b52a8",
+    "curated_results_fields": [
+      "confidence",
+      "anatomical_region",
+      "matched_cell_type_or_body",
+      "source"
+    ],
+    "curated_endpoint_used": "/curated_matches",
+    "curated_results_are_distinct_from_computed_matches": true
+  },
+  "provenance_conclusion": {
+    "state": "AUTHENTICATED_CURATED_SOURCE_REQUIRED",
+    "open_morphology_api_can_resolve_polarity": false,
+    "computed_match_score_can_resolve_polarity": false,
+    "component_expression_can_resolve_split_identity": false,
+    "authenticated_curated_record_or_equivalent_immutable_archive_required": true,
+    "login_or_authorization_bypass_permitted": false
+  },
+  "future_receipt_requirements": {
+    "both_hook_direction_classes_required": true,
+    "exact_driver_or_immutable_equivalent_required": true,
+    "curated_confidence_required": "Confident",
+    "vnc_region_required": true,
+    "annotator_or_source_required": true,
+    "target_systematic_type_must_be_one_of": ["SNpp39", "SNpp41"],
+    "pure_bijection_required": true,
+    "conflicts_forbidden": true,
+    "source_version_or_table_version_required": true,
+    "immutable_content_hash_required": true
+  },
+  "systematic_types": {
+    "SNpp39": {
+      "direct_directional_tuning": null,
+      "circuit_consistent_hypothesis": "extension",
+      "hypothesis_strength": "PHYSIOLOGY_SUPPORTED_INFERENCE"
+    },
+    "SNpp41": {
+      "direct_directional_tuning": null,
+      "circuit_consistent_hypothesis": "flexion",
+      "hypothesis_strength": "PHYSIOLOGY_SUPPORTED_INFERENCE"
+    }
+  },
+  "direct_crosswalk_found": false,
+  "polarity_resolved": false,
+  "current_calibration_authorized": false,
+  "stimulation_enabled": false,
+  "runtime_transduction_enabled": false,
+  "runtime_gating_authorized": false,
+  "neural_payload_eligible": false,
+  "promotion_ready": false
+}
