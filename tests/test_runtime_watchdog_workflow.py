@@ -32,7 +32,7 @@ def test_watchdog_runs_periodically_and_honors_runtime_policy():
 def test_watchdog_refuses_duplicate_active_runner_and_has_visibility_cooldown():
     text = WATCHDOG.read_text()
 
-    active_check = 'select(.status != \\"completed\\")'
+    active_check = 'select(.status != "completed")'
     assert active_check in text
     assert 'echo "active=$active" >> "$GITHUB_OUTPUT"' in text
     assert "age_seconds" in text
