@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import platform
 import queue
@@ -12,10 +13,10 @@ from typing import Any
 
 from .brain_runtime import MaleCNSBrain
 from .curriculum import CURRICULUM_VERSION, CurriculumMazeEnvironment
-from .goal_training import GoalMazeSession
 from .live_relay import GitHubOIDCLivePublisher
 from .olfaction import OLFACTION_MODEL
 from .preflight import collect_preflight
+from .proprioception_temporal_runtime import TemporalGoalMazeSession
 from .smoke import _digest_json, _neural_decision_verified, _public_maze_state
 from .upstream import STONKFLY_COMMIT
 
@@ -56,6 +57,11 @@ GOAL_FIELDS = (
     "olfaction",
 )
 
+PUBLIC_HUMAN_DIAGNOSTIC_FIELDS = (
+    "proprioception",
+    "proprioception_temporal",
+)
+
 ODOR_TELEMETRY_FIELDS = (
     "olfaction_model",
     "olfaction",
@@ -70,6 +76,16 @@ def _public_goal_state(state: dict[str, Any]) -> dict[str, Any]:
     for key in GOAL_FIELDS:
         if key in state:
             public[key] = state.get(key)
+
+    source_diagnostics = state.get("human_diagnostics")
+    if isinstance(source_diagnostics, dict):
+        diagnostics = {
+            key: copy.deepcopy(source_diagnostics[key])
+            for key in PUBLIC_HUMAN_DIAGNOSTIC_FIELDS
+            if isinstance(source_diagnostics.get(key), dict)
+        }
+        if diagnostics:
+            public["human_diagnostics"] = diagnostics
 
     source_telemetry = ((state.get("brain") or {}).get("telemetry") or {})
     public_telemetry = ((public.get("brain") or {}).get("telemetry") or {})
@@ -180,7 +196,7 @@ def run_self_training(
     started = time.time()
     brain = MaleCNSBrain(checkpoint=checkpoint)
     environment = CurriculumMazeEnvironment(seed=seed) if curriculum else None
-    session = GoalMazeSession(
+    session = TemporalGoalMazeSession(
         brain,
         checkpoint=checkpoint,
         seed=seed,
