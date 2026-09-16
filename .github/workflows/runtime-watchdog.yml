@@ -74,24 +74,30 @@ jobs:
             fi
           fi
 
+          cooldown_elapsed=false
+          if [ "$age_seconds" -ge 180 ]; then
+            cooldown_elapsed=true
+          fi
+
           echo "active=$active" >> "$GITHUB_OUTPUT"
           echo "latest_id=$latest_id" >> "$GITHUB_OUTPUT"
           echo "latest_status=$latest_status" >> "$GITHUB_OUTPUT"
           echo "latest_conclusion=$latest_conclusion" >> "$GITHUB_OUTPUT"
           echo "age_seconds=$age_seconds" >> "$GITHUB_OUTPUT"
+          echo "cooldown_elapsed=$cooldown_elapsed" >> "$GITHUB_OUTPUT"
 
-          echo "WATCHDOG_RUNTIME_STATUS active=$active latest_id=$latest_id latest_status=$latest_status latest_conclusion=$latest_conclusion age_seconds=$age_seconds"
+          echo "WATCHDOG_RUNTIME_STATUS active=$active latest_id=$latest_id latest_status=$latest_status latest_conclusion=$latest_conclusion age_seconds=$age_seconds cooldown_elapsed=$cooldown_elapsed"
 
       - name: Keep existing runner authority
         if: ${{ steps.policy.outputs.enabled == 'true' && steps.inspect.outputs.active != '0' }}
         run: echo "An active/queued NeuroFly curriculum runner already exists; watchdog will not dispatch another one."
 
       - name: Respect handoff visibility cooldown
-        if: ${{ steps.policy.outputs.enabled == 'true' && steps.inspect.outputs.active == '0' && fromJSON(steps.inspect.outputs.age_seconds) < 180 }}
+        if: ${{ steps.policy.outputs.enabled == 'true' && steps.inspect.outputs.active == '0' && steps.inspect.outputs.cooldown_elapsed != 'true' }}
         run: echo "The latest curriculum run completed less than 3 minutes ago; allow GitHub's newly dispatched run to become visible before recovery."
 
       - name: Recover stopped continuous runtime
-        if: ${{ steps.policy.outputs.enabled == 'true' && steps.inspect.outputs.active == '0' && fromJSON(steps.inspect.outputs.age_seconds) >= 180 }}
+        if: ${{ steps.policy.outputs.enabled == 'true' && steps.inspect.outputs.active == '0' && steps.inspect.outputs.cooldown_elapsed == 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
           NEXT_STEPS: ${{ steps.policy.outputs.steps }}
