@@ -7,6 +7,13 @@ on:
     paths:
       - 'site/**'
       - '.github/workflows/pages.yml'
+  workflow_run:
+    workflows:
+      - NeuroFly Curriculum Training
+    types:
+      - completed
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -27,6 +34,8 @@ jobs:
     steps:
       - name: Checkout main
         uses: actions/checkout@v6
+        with:
+          ref: main
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
