@@ -201,6 +201,39 @@ jobs:
         if: ${{ always() && steps.build-state.outcome == 'success' && steps.publish-state.outcome != 'success' }}
         run: echo "::warning::Verified state publish failed, but the checkpoint is safe and continuous runtime may continue."
 
+      # GITHUB_TOKEN-authored pushes do not recursively trigger normal push
+      # workflows or GitHub Pages builds. workflow_dispatch is an explicit
+      # documented exception, so hand the verified main snapshot to Pages
+      # directly after the publish step succeeds.
+      - name: Refresh GitHub Pages from verified main state
+        id: refresh-pages
+        if: ${{ always() && steps.build-state.outcome == 'success' && steps.publish-state.outcome == 'success' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -u
+          for attempt in 1 2 3; do
+            if gh api --method POST \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/${GITHUB_REPOSITORY}/actions/workflows/pages.yml/dispatches" \
+              -f ref=main; then
+              echo "PAGES_REFRESH_DISPATCH_OK attempt=${attempt}"
+              exit 0
+            fi
+            echo "::warning::Pages refresh dispatch attempt ${attempt}/3 failed."
+            if [ "$attempt" -lt 3 ]; then
+              sleep $((attempt * 20))
+            fi
+          done
+          echo "::error::Pages refresh dispatch failed after 3 attempts; verified state remains safe on main."
+          exit 1
+
+      - name: Warn if Pages refresh dispatch failed
+        if: ${{ always() && steps.refresh-pages.outcome == 'failure' }}
+        run: echo "::warning::Verified MaleCNS state is safely published on main, but GitHub Pages refresh dispatch failed. The runtime chain may continue."
+
       - name: Check dataset cache size
         id: dataset-size
         if: ${{ always() && steps.train.outcome == 'success' }}
