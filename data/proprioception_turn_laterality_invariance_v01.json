@@ -1,0 +1,40 @@
+{
+  "schema": "neurofly-proprioception-turn-laterality-invariance-v0.1",
+  "status": "REVIEW_REQUIRED",
+  "scope": "representative-joint-turn-laterality-invariance-only",
+  "upstream": {
+    "pull_request": 80,
+    "head_sha": "99b8596deb1a2b110571a4b1e563ce084614348b",
+    "engineering_proxy_characterized": true
+  },
+  "execution_alphabet": ["HOLD", "FORWARD", "TURN_LEFT", "TURN_RIGHT"],
+  "laterality_swap": {
+    "HOLD": "HOLD",
+    "FORWARD": "FORWARD",
+    "TURN_LEFT": "TURN_RIGHT",
+    "TURN_RIGHT": "TURN_LEFT"
+  },
+  "exhaustive_max_sequence_length": 5,
+  "required_properties": {
+    "receptor_trajectory_invariant_under_turn_swap": true,
+    "private_joint_mechanics_invariant_under_turn_swap": true,
+    "receptor_payload_contains_no_motor_execution_label": true,
+    "receptor_payload_contains_no_private_joint_state": true,
+    "receptor_payload_passes_unprivileged_sensory_guard": true,
+    "turn_laterality_not_recoverable_from_receptor_trajectory": true
+  },
+  "interpretation": {
+    "motor_class_reafference_allowed": true,
+    "turn_laterality_privileged_cue_forbidden": true,
+    "six_leg_laterality_modeled": false,
+    "biological_laterality_claimed": false
+  },
+  "hard_locks": {
+    "systematic_type_mapping_exposed": false,
+    "current_calibration_authorized": false,
+    "stimulation_enabled": false,
+    "runtime_transduction_enabled": false,
+    "runtime_gating_authorized": false,
+    "neural_payload_promotion_authorized": false
+  }
+}
