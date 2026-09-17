@@ -1,0 +1,43 @@
+{
+  "schema": "neurofly-proprioception-engineering-proxy-characterization-v0.1",
+  "status": "REVIEW_REQUIRED",
+  "scope": "engineering-proxy-characterization-only",
+  "upstream_boundary": {
+    "pull_request": 79,
+    "head_sha": "4fb65959ea180bdaeec35d53b680a60e325bd5f2",
+    "state": "FROZEN_PENDING_DIRECT_TYPE_LEVEL_EVIDENCE"
+  },
+  "expected_model": "neurofly-feco-motion-proxy-v0.1",
+  "expected_encoding": "virtual-joint-motion-only-proxy",
+  "joint_delta_sweep": [-2.0, -1.0, -0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75, 1.0, 2.0],
+  "vibration_sweep": [0.0, 0.25, 0.5, 1.0, 2.0],
+  "required_properties": {
+    "neutral_zero": true,
+    "hook_mutual_exclusion": true,
+    "directional_magnitude_symmetry": true,
+    "club_motion_equals_directional_magnitude": true,
+    "bounded_unit_interval": true,
+    "magnitude_monotonic_nondecreasing": true,
+    "saturates_at_unit_magnitude": true,
+    "vibration_does_not_change_joint_motion_channels": true,
+    "joint_delta_does_not_change_vibration_channel": true
+  },
+  "biological_claims": {
+    "systematic_type_identity_resolved": false,
+    "biological_current_calibrated": false,
+    "biological_latency_calibrated": false,
+    "step_cycle_phase_resolved": false,
+    "predictive_inhibition_kernel_resolved": false
+  },
+  "hard_locks": {
+    "direct_crosswalk_found": false,
+    "polarity_resolved": false,
+    "current_calibration_authorized": false,
+    "stimulation_enabled": false,
+    "runtime_transduction_enabled": false,
+    "runtime_gating_authorized": false,
+    "systematic_type_mapping_exposed": false,
+    "neural_payload_eligible": false,
+    "promotion_ready": false
+  }
+}
