@@ -1,0 +1,91 @@
+{
+  "schema": "neurofly-proprioception-polarity-boundary-freeze-v0.1",
+  "status": "FROZEN_PENDING_DIRECT_TYPE_LEVEL_EVIDENCE",
+  "scope": "snpp39-snpp41-hook-polarity-evidence-boundary",
+  "upstream": {
+    "pull_request": 78,
+    "head_sha": "c8d4e7ace04d75dc0e9e696b8b5826fc67c73092"
+  },
+  "primary_physiology": {
+    "source": "https://doi.org/10.1016/j.neuron.2023.07.009",
+    "hook_flexion": {
+      "ad": "VT038873-p65ADZ",
+      "dbd": "R32H08-GAL4.DBD",
+      "systematic_type_named_in_source": false
+    },
+    "hook_extension": {
+      "ad": "VT018774-p65ADZ",
+      "dbd": "VT040547-GAL4.DBD",
+      "systematic_type_named_in_source": false
+    }
+  },
+  "authenticated_curated_ui_observations": {
+    "provenance_class": "authorized-neuronbridge-session-ui-observation",
+    "immutable_api_receipt_present": false,
+    "snpp39": {
+      "confident_vnc_matches": [
+        {
+          "line": "SS57886",
+          "confidence": "Confident",
+          "region": "vnc",
+          "annotator": "Claire Managan",
+          "cell_type": "SNpp39",
+          "public_line_ad": "R23G05-p65ADZp",
+          "public_line_dbd": "R41A08-ZpGdbd",
+          "matches_hook_extension_functional_driver": false,
+          "matches_hook_flexion_functional_driver": false
+        }
+      ]
+    },
+    "snpp41": {
+      "confident_vnc_match_count": 0,
+      "candidate_vnc_matches": [
+        "SS00359",
+        "SS02407",
+        "SS45467",
+        "SS46317",
+        "SS58881"
+      ],
+      "candidate_matches_are_promotion_evidence": false
+    }
+  },
+  "systematic_annotation_context": {
+    "source": "https://elifesciences.org/reviewed-preprints/97766",
+    "snpp39_hook_identity_supported": true,
+    "snpp41_hook_identity_supported": true,
+    "exact_flexion_extension_polarity_named_by_authors": false,
+    "circuit_level_polarity_inference_only": true
+  },
+  "crosswalk_audit": {
+    "functional_driver_to_snpp39_exact": false,
+    "functional_driver_to_snpp41_exact": false,
+    "direct_type_level_polarity_crosswalk_found": false,
+    "best_supported_mapping": {
+      "SNpp39": "extension",
+      "SNpp41": "flexion"
+    },
+    "mapping_strength": "PHYSIOLOGY_SUPPORTED_INFERENCE",
+    "promotion_blocker": "No direct author-level or immutable independently validated functional-driver-to-systematic-type bridge for both hook directions."
+  },
+  "promotion_requirements_unchanged": [
+    "explicit author source mapping hook flexion/extension to SNpp39/SNpp41",
+    "or exact independently validated functional-driver to systematic-type morphology crosswalk with immutable receipt",
+    "or equivalent direct type-level evidence covering both hook directions"
+  ],
+  "do_not_treat_as_direct_crosswalk": [
+    "circuit sign inference",
+    "raw morphology similarity",
+    "NeuronBridge Candidate annotations",
+    "SNpp39 Confident curated identity without equivalence to the physiology driver",
+    "legacy MANC claw/club subclass labels"
+  ],
+  "direct_crosswalk_found": false,
+  "polarity_resolved": false,
+  "current_calibration_authorized": false,
+  "stimulation_enabled": false,
+  "runtime_transduction_enabled": false,
+  "runtime_gating_authorized": false,
+  "systematic_type_mapping_exposed": false,
+  "neural_payload_eligible": false,
+  "promotion_ready": false
+}
