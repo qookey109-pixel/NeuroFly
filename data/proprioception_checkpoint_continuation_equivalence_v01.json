@@ -1,0 +1,34 @@
+{
+  "schema": "neurofly-proprioception-checkpoint-continuation-equivalence-v0.1",
+  "status": "REVIEW_REQUIRED",
+  "scope": "representative-joint-checkpoint-continuation-only",
+  "upstream": {
+    "pull_request": 81,
+    "head_sha": "1d01ab056f9053ab7d4986db55ea1f467f87dadd",
+    "turn_laterality_invariance_verified": true
+  },
+  "execution_alphabet": ["HOLD", "FORWARD", "TURN_LEFT", "TURN_RIGHT"],
+  "exhaustive_max_sequence_length": 5,
+  "checkpoint_every_split_point": true,
+  "required_properties": {
+    "restored_private_state_matches_checkpoint": true,
+    "post_restore_receptor_continuation_matches_uninterrupted": true,
+    "post_restore_private_mechanics_match_uninterrupted": true,
+    "checkpoint_boundary_injects_no_extra_receptor_event": true,
+    "receptor_payload_passes_unprivileged_sensory_guard": true
+  },
+  "interpretation": {
+    "checkpoint_is_private_state_only": true,
+    "checkpoint_is_not_neural_input": true,
+    "history_replay_into_neural_payload": false,
+    "biological_memory_claimed": false
+  },
+  "hard_locks": {
+    "systematic_type_mapping_exposed": false,
+    "current_calibration_authorized": false,
+    "stimulation_enabled": false,
+    "runtime_transduction_enabled": false,
+    "runtime_gating_authorized": false,
+    "neural_payload_promotion_authorized": false
+  }
+}
