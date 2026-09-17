@@ -1,0 +1,42 @@
+{
+  "schema": "neurofly-proprioception-curated-identity-evidence-review-preparation-v0.1",
+  "status": "REVIEW_REQUIRED",
+  "state": "WAITING_FOR_VALIDATED_RECEIPT",
+  "observed_at": "2026-09-17",
+  "scope": "machine-classification-of-validated-curated-receipt-only",
+  "upstream_intake": {
+    "pull_request": 77,
+    "head_sha": "e65738731c44f831eb50a8e8ee102b0da8014a2a",
+    "validation_schema": "neurofly-proprioception-curated-identity-receipt-validation-v0.1"
+  },
+  "accepted_validation_states": [
+    "VALID_RECEIPT_REVIEW_REQUIRED",
+    "VALID_RECEIPT_CONFLICT_REVIEW_REQUIRED"
+  ],
+  "current_hypothesis": {
+    "hook_extension": "SNpp39",
+    "hook_flexion": "SNpp41",
+    "strength": "PHYSIOLOGY_SUPPORTED_INFERENCE"
+  },
+  "classification_policy": {
+    "structural_receipt_validation_required": true,
+    "all_upstream_validation_gates_must_pass": true,
+    "all_upstream_record_results_must_pass": true,
+    "candidate_mapping_bijection_rechecked": true,
+    "validation_state_must_match_hypothesis_agreement": true,
+    "validation_report_top_level_exact_allowlist_required": true,
+    "synthetic_receipts_are_evidence": false,
+    "human_science_review_required": true,
+    "automatic_polarity_promotion_forbidden": true,
+    "automatic_runtime_mapping_forbidden": true
+  },
+  "evidence_review_input": null,
+  "direct_crosswalk_found": false,
+  "polarity_resolved": false,
+  "current_calibration_authorized": false,
+  "stimulation_enabled": false,
+  "runtime_transduction_enabled": false,
+  "runtime_gating_authorized": false,
+  "neural_payload_eligible": false,
+  "promotion_ready": false
+}
