@@ -1,0 +1,82 @@
+{
+  "schema": "neurofly-learning-mechanism-diagnostic-v0.1",
+  "status": "EXPLORATORY_DIAGNOSTIC_ONLY",
+  "scope": "real-malecns-temporal-credit-and-plastic-drift-diagnostic",
+  "design_origin": {
+    "remediation_run_id": 35336398252,
+    "remediation_receipt_sha256": "aeccbbdeedc93799d3d97fbf765b4d1b7796e64ff903228835a83015f20f5b23",
+    "remediation_execution_valid": true,
+    "observed_learning_true_minus_frozen_true_mean_reward_effect": -4,
+    "post_hoc_mechanism_diagnostic": true
+  },
+  "fixed_runtime": {
+    "decision_synchronous_world": true,
+    "training_steps": 60,
+    "evaluation_steps_per_seed": 20
+  },
+  "arms": [
+    {
+      "name": "learning_true",
+      "learning": true,
+      "sensory_mode": "normal",
+      "reinforcement_mode": "true"
+    },
+    {
+      "name": "learning_none",
+      "learning": true,
+      "sensory_mode": "normal",
+      "reinforcement_mode": "none"
+    },
+    {
+      "name": "frozen_true",
+      "learning": false,
+      "sensory_mode": "normal",
+      "reinforcement_mode": "true"
+    }
+  ],
+  "replicates": [
+    {
+      "id": "D1",
+      "training_seed": 1409,
+      "held_out_seeds": [
+        1451,
+        1453
+      ]
+    },
+    {
+      "id": "D2",
+      "training_seed": 1423,
+      "held_out_seeds": [
+        1459,
+        1471
+      ]
+    },
+    {
+      "id": "D3",
+      "training_seed": 1427,
+      "held_out_seeds": [
+        1481,
+        1483
+      ]
+    }
+  ],
+  "required_observations": [
+    "per_decision_previous_outcome",
+    "per_decision_scheduled_reinforcement",
+    "per_decision_delivered_reinforcement",
+    "per_decision_frame_digest",
+    "per_decision_decoder",
+    "per_decision_dan_spikes",
+    "per_decision_memory_before_after",
+    "post_training_checkpoint_memory_roundtrip",
+    "frozen_held_out_evaluation"
+  ],
+  "claim_policy": {
+    "learning_validated": false,
+    "temporal_credit_defect_confirmed": false,
+    "unreinforced_plastic_drift_causal": false,
+    "causal_learning_claim_authorized": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
