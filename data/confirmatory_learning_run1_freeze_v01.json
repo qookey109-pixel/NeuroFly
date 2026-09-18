@@ -1,0 +1,87 @@
+{
+  "schema": "neurofly-confirmatory-run-freeze-v0.1",
+  "frozen_at_utc": "2026-09-18T08:47:20Z",
+  "source": {
+    "workflow_run_id": 35323343414,
+    "workflow_run_number": 1,
+    "head_sha": "65f6d5aa7b2df186f03802b3214cf65bb77f7afd",
+    "artifact_id": 10538298687,
+    "artifact_digest": "sha256:a85d16c080c5c9bbf6a39a7ac8c07419c7a3d9cbc89dca5baa699494f0228d52",
+    "receipt_sha256": "610b28444c8d3481397b6a56500e9f4cd17f66e059ce4c3c9cb73ba9fe636b8c"
+  },
+  "raw_result": {
+    "workflow_conclusion": "success",
+    "execution_valid": true,
+    "status": "CONFIRMATORY_FAIL",
+    "confirmatory_primary_pass": false,
+    "sensory_dependence_supported": false,
+    "learning_validated": false,
+    "within_task_heldout_generalization_supported": false,
+    "causal_learning_claim_authorized": false,
+    "co_primary": {
+      "learning_true_minus_frozen_true": {
+        "mean_reward_effect": -4,
+        "positive_reward_replicates": 0,
+        "total_replicates": 8,
+        "required_mean_reward_effect": 1,
+        "required_positive_replicates": 7,
+        "passed": false
+      },
+      "learning_true_minus_learning_scrambled": {
+        "mean_reward_effect": -0.875,
+        "positive_reward_replicates": 0,
+        "total_replicates": 8,
+        "required_mean_reward_effect": 1,
+        "required_positive_replicates": 7,
+        "passed": false
+      }
+    },
+    "supportive_sensory_dependence": {
+      "mean_reward_effect": 0,
+      "positive_reward_replicates": 0,
+      "total_replicates": 8,
+      "required_positive_replicates": 5,
+      "passed": false
+    }
+  },
+  "post_run_diagnostic": {
+    "status": "EXPLORATORY_DIAGNOSIS",
+    "historical_receipt_mutated": false,
+    "replicate_independence_supported": false,
+    "held_out_seed_effectiveness_supported": false,
+    "mechanism": [
+      "The v0.1 study created GoalMazeSession with world_tick_seconds=3600.0.",
+      "GoalMazeSession applied agent decisions with move_enemies=False.",
+      "Maze seed only affects the RNG path used by enemy movement.",
+      "Therefore the intended training and held-out seed perturbations were not consumed during the 60/20-decision study windows."
+    ],
+    "observed_uniqueness_across_8_replicates": {
+      "learning_true": {
+        "unique_training_metric_signatures": 1,
+        "unique_post_training_checkpoint_shas": 1,
+        "unique_evaluation_aggregate_signatures": 1
+      },
+      "frozen_true": {
+        "unique_training_metric_signatures": 1,
+        "unique_post_training_checkpoint_shas": 1,
+        "unique_evaluation_aggregate_signatures": 1
+      },
+      "learning_sensory_off": {
+        "unique_training_metric_signatures": 1,
+        "unique_post_training_checkpoint_shas": 1,
+        "unique_evaluation_aggregate_signatures": 1
+      },
+      "learning_scrambled": {
+        "unique_training_metric_signatures": 8,
+        "unique_post_training_checkpoint_shas": 8,
+        "unique_evaluation_aggregate_signatures": 8
+      }
+    },
+    "interpretation": [
+      "The negative raw outcome is preserved exactly as observed.",
+      "The v0.1 execution_valid flag remains a statement about the preregistered contract gates that existed at execution time.",
+      "The run cannot be used as evidence for independent replicate or held-out seed generalization claims because seed effectiveness was not gated.",
+      "A replacement confirmatory study must use a new preregistration and an explicit seed-effectiveness gate."
+    ]
+  }
+}
