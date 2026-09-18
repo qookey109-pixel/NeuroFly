@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 
 from neurofly.brain_runtime import BrainDecision
+from neurofly.cli import build_parser
 from neurofly.environment_adapter import (
     ENVIRONMENT_ADAPTER_SCHEMA,
     EnvironmentSession,
@@ -246,3 +247,27 @@ def test_factory_exposes_supported_environment_names_and_fails_closed() -> None:
 
     with pytest.raises(ValueError):
         make_environment_adapter("teleport-arena")
+
+
+def test_generic_cli_exposes_environment_choice_without_world_truth_options() -> None:
+    args = build_parser().parse_args(
+        [
+            "env-run",
+            "--environment",
+            "light",
+            "--brain",
+            "demo",
+            "--steps",
+            "2",
+            "--interval",
+            "0",
+        ]
+    )
+
+    assert args.command == "env-run"
+    assert args.environment == "light"
+    assert args.brain == "demo"
+    assert args.steps == 2
+    assert not hasattr(args, "target_x")
+    assert not hasattr(args, "target_y")
+    assert not hasattr(args, "goal_direction")
