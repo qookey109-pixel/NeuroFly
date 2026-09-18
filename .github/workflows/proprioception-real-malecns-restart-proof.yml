@@ -1,0 +1,116 @@
+name: NeuroFly Real MaleCNS Restart Proof
+
+on:
+  workflow_dispatch:
+    inputs:
+      phase_a_steps:
+        description: "Real MaleCNS decisions before the process boundary"
+        required: false
+        default: "1"
+      phase_b_steps:
+        description: "Real MaleCNS decisions after restoring in a new process"
+        required: false
+        default: "1"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: neurofly-real-malecns-restart-proof
+  cancel-in-progress: false
+
+jobs:
+  real-restart-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      SOURCE_STATE: runs/free-malecns
+      PROOF_STATE: runs/restart-proof
+      PROOF_CHECKPOINT: runs/restart-proof/brain.npz
+      PHASE_A_RECEIPT: runs/restart-proof/phase-a-self-training-receipt.json
+      PHASE_B_RECEIPT: runs/restart-proof/phase-b-self-training-receipt.json
+      PROOF_RECEIPT: runs/restart-proof/real-malecns-restart-proof.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+
+      - name: Restore latest production checkpoint read-only source
+        uses: actions/cache/restore@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-v06-state-restart-proof-${{ github.run_id }}
+          restore-keys: |
+            neurofly-v06-state-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare and verify MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$SOURCE_STATE" "$PROOF_STATE"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+          python -m neurofly host-preflight | tee "$PROOF_STATE/preflight.json"
+
+      - name: Copy coordinated production checkpoint into isolated proof state
+        run: |
+          test -f "$SOURCE_STATE/brain.npz"
+          test -f "$SOURCE_STATE/brain.maze.json"
+          cp "$SOURCE_STATE/brain.npz" "$PROOF_CHECKPOINT"
+          cp "$SOURCE_STATE/brain.maze.json" "$PROOF_STATE/brain.maze.json"
+          test "$(realpath "$SOURCE_STATE/brain.npz")" != "$(realpath "$PROOF_CHECKPOINT")"
+
+      - name: Execute real two-process MaleCNS restart proof
+        env:
+          PHASE_A_STEPS: ${{ inputs.phase_a_steps }}
+          PHASE_B_STEPS: ${{ inputs.phase_b_steps }}
+        run: |
+          python -m neurofly.proprioception_real_malecns_restart_proof             --curriculum             --phase-a-steps "$PHASE_A_STEPS"             --phase-b-steps "$PHASE_B_STEPS"             --checkpoint "$PROOF_CHECKPOINT"             --production-checkpoint-source "$SOURCE_STATE/brain.npz"             --phase-a-receipt "$PHASE_A_RECEIPT"             --phase-b-receipt "$PHASE_B_RECEIPT"             --output "$PROOF_RECEIPT"
+
+      - name: Validate real restart receipt
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          receipt = json.loads(Path("runs/restart-proof/real-malecns-restart-proof.json").read_text())
+          assert receipt["schema"] == "neurofly-proprioception-real-malecns-restart-receipt-v0.1"
+          assert receipt["status"] == "PASS"
+          assert receipt["passed"] is True
+          assert receipt["actual_malecns_process_restart_executed"] is True
+          assert receipt["malecns_checkpoint_file_continuity_verified"] is True
+          assert receipt["proprioception_first_handoff_continuity_verified"] is True
+          assert receipt["biological_memory_equivalence_proven"] is False
+          assert receipt["snpp39_snpp41_polarity_resolved"] is False
+          assert all(receipt["invariants"].values())
+          print(
+              "REAL_MALECNS_RESTART_PROPRIOCEPTION_PASS",
+              receipt["receipt_sha256"],
+              receipt["phase_processes"],
+          )
+          PY
+
+      - name: Publish compact proof evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-real-malecns-restart-proof-${{ github.run_id }}
+          path: |
+            runs/restart-proof/preflight.json
+            runs/restart-proof/phase-a-self-training-receipt.json
+            runs/restart-proof/phase-b-self-training-receipt.json
+            runs/restart-proof/real-malecns-restart-proof.json
+          if-no-files-found: error
+          retention-days: 1
