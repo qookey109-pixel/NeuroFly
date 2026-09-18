@@ -15,7 +15,9 @@
     "status": "PASS",
     "passed": true,
     "steps": 3,
-    "action_counts": {"TURN_LEFT": 3},
+    "action_counts": {
+      "TURN_LEFT": 3
+    },
     "total_reward": -0.03,
     "total_lights": 0,
     "learning_enabled": false,
@@ -58,7 +60,11 @@
     "passed_execution_gate": true,
     "train_steps": 60,
     "evaluation_steps_per_seed": 20,
-    "held_out_seeds": [701, 709, 719],
+    "held_out_seeds": [
+      701,
+      709,
+      719
+    ],
     "arm_aggregates": {
       "learning_true": {
         "mean_hold_fraction": 0.5,
@@ -92,24 +98,24 @@
     "descriptive_effects": {
       "learning_true_minus_frozen_true": {
         "mean_hold_fraction": -0.25,
-        "mean_total_clears": 0.0,
-        "mean_total_deaths": 0.0,
-        "mean_total_food": 3.0,
-        "mean_total_reward": 3.0
+        "mean_total_clears": 0,
+        "mean_total_deaths": 0,
+        "mean_total_food": 3,
+        "mean_total_reward": 3
       },
       "learning_true_minus_learning_scrambled": {
         "mean_hold_fraction": -0.3,
-        "mean_total_clears": 0.0,
-        "mean_total_deaths": 0.0,
-        "mean_total_food": 3.0,
-        "mean_total_reward": 3.0
+        "mean_total_clears": 0,
+        "mean_total_deaths": 0,
+        "mean_total_food": 3,
+        "mean_total_reward": 3
       },
       "learning_true_minus_learning_sensory_off": {
         "mean_hold_fraction": -0.05,
-        "mean_total_clears": 0.0,
-        "mean_total_deaths": 0.0,
-        "mean_total_food": 2.0,
-        "mean_total_reward": 2.0
+        "mean_total_clears": 0,
+        "mean_total_deaths": 0,
+        "mean_total_food": 2,
+        "mean_total_reward": 2
       }
     },
     "learning_validated": false,
@@ -117,7 +123,15 @@
     "causal_learning_claim_authorized": false,
     "behavioral_promotion_authorized": false,
     "production_checkpoint_mutated": false,
-    "all_execution_gates_passed": true
+    "all_execution_gates_passed": true,
+    "methodological_limitations": {
+      "legacy_goal_maze_session_used": true,
+      "sensory_only_adapter_used": false,
+      "world_side_context_may_reach_brain": true,
+      "world_tick_seconds": 3600,
+      "held_out_seed_independence_established": false,
+      "confirmatory_learning_evidence": false
+    }
   },
   "v1_claims_now_supported": {
     "real_malecns_runs_second_game_via_sensory_adapter": true,
@@ -132,6 +146,7 @@
     "causal_learning_claim_authorized": false,
     "twenty_four_hour_soak_validated": false,
     "zero_data_loss_claimed": false,
-    "snpp39_snpp41_polarity_resolved": false
+    "snpp39_snpp41_polarity_resolved": false,
+    "sensory_only_confirmatory_learning_validated": false
   }
 }
