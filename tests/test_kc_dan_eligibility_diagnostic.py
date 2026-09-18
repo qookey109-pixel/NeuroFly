@@ -45,14 +45,28 @@ def test_intervention_freeze_matches_frozen_baseline() -> None:
     assert _digest_json(list(BASELINE_HZ)) == BASELINE_DIGEST
 
 
-def test_rule_tracer_restores_monkeypatch_without_execution() -> None:
-    import stonkfly.neural.rule as rule
+def test_rule_tracer_restores_monkeypatch_without_optional_dependency(monkeypatch) -> None:
+    import sys
+    import types
 
-    original = rule.advance
+    stonkfly = types.ModuleType("stonkfly")
+    neural = types.ModuleType("stonkfly.neural")
+    rule = types.ModuleType("stonkfly.neural.rule")
+
+    def original_advance(*args, **kwargs):
+        return None
+
+    rule.advance = original_advance
+    neural.rule = rule
+    stonkfly.neural = neural
+    monkeypatch.setitem(sys.modules, "stonkfly", stonkfly)
+    monkeypatch.setitem(sys.modules, "stonkfly.neural", neural)
+    monkeypatch.setitem(sys.modules, "stonkfly.neural.rule", rule)
+
     with RuleAdvanceTracer() as tracer:
-        assert rule.advance != original
+        assert rule.advance != original_advance
         assert tracer.rows == []
-    assert rule.advance == original
+    assert rule.advance == original_advance
 
 
 def test_workflow_is_manual_read_only_and_non_promotional() -> None:
