@@ -1,0 +1,38 @@
+{
+  "schema": "neurofly-stonkfly-plasticity-audit-v0.1",
+  "pinned_repository": "nftechie/stonkfly",
+  "pinned_commit": "78ef3e05ab0fa086032098558d893667068944a0",
+  "observations": {
+    "rate_bin_ms_max": 10,
+    "kc_trace_seconds": 1,
+    "dan_trace_seconds": 1,
+    "memory_decay_seconds": 1800,
+    "weight_filter_seconds": 0.05,
+    "eta_default": 0.001,
+    "dan_baseline_hz_default": "zero vector",
+    "learning_updates_every_rate_bin_when_learning_true": true,
+    "external_reinforcement_required_for_weight_update": false,
+    "checkpoint_persists": [
+      "weight",
+      "memory_u",
+      "memory_w",
+      "rate_kc",
+      "rate_dan",
+      "eligibility",
+      "modulation"
+    ],
+    "reward_cells": "PAM11",
+    "aversive_cells": "PPL101",
+    "plastic_edges": "existing KC->MBON07/MBON11"
+  },
+  "neurofly_timing_observation": {
+    "current_semantics": "outcome from decision N schedules reinforcement into decision N+1",
+    "plasticity_pairing": "scheduled reinforcement is co-simulated with decision N+1 sensory frame",
+    "interpretation": "diagnostic target; not yet a causal defect verdict"
+  },
+  "claim_limits": {
+    "temporal_credit_defect_confirmed": false,
+    "unreinforced_plastic_drift_causal": false,
+    "learning_validated": false
+  }
+}
