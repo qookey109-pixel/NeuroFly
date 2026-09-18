@@ -26,6 +26,7 @@
   ],
   "required_evidence": {
     "same_initial_checkpoint_sha256": true,
+    "source_checkpoint_unchanged": true,
     "all_four_arms_executed": true,
     "training_real_malecns_verified": true,
     "evaluation_real_malecns_verified": true,
