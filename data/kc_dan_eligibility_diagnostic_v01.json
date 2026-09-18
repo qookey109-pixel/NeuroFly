@@ -1,0 +1,70 @@
+{
+  "schema": "neurofly-kc-dan-eligibility-diagnostic-v0.1",
+  "status": "EXPLORATORY_DIAGNOSTIC_ONLY",
+  "scope": "real-malecns-kc-dan-temporal-drive-diagnostic",
+  "origin": {
+    "intervention_run_id": 35348834258,
+    "intervention_receipt_sha256": "7a679541962dc5cac24b63aeb62a172a71d0875fc9171cc49ac5df29d3eec907",
+    "baseline_digest": "1fd69ded16a400e9a00e1265e8264aeafe7d402fa1819fc412df041fa7f205f9"
+  },
+  "runtime": {
+    "decision_synchronous_world": true,
+    "decisions_per_arm": 60,
+    "neural_ms_per_decision": 50,
+    "rate_bin_ms": 10,
+    "expected_bins_per_decision": 5,
+    "external_reinforcement": "none"
+  },
+  "arms": [
+    {
+      "name": "learning_none_zero_baseline",
+      "learning": true,
+      "baseline_mode": "zero"
+    },
+    {
+      "name": "learning_none_calibrated_baseline",
+      "learning": true,
+      "baseline_mode": "frozen_intervention_vector"
+    },
+    {
+      "name": "frozen_none_zero_baseline",
+      "learning": false,
+      "baseline_mode": "zero"
+    }
+  ],
+  "replicates": [
+    {
+      "id": "E1",
+      "training_seed": 1709
+    },
+    {
+      "id": "E2",
+      "training_seed": 1721
+    },
+    {
+      "id": "E3",
+      "training_seed": 1723
+    }
+  ],
+  "required_observations": [
+    "per_bin_kc_rate",
+    "per_bin_dan_residual",
+    "per_bin_kc_trace_midpoint",
+    "per_bin_dan_trace_midpoint",
+    "per_bin_kc_x_dan_trace_term",
+    "per_bin_dan_x_kc_trace_term",
+    "per_bin_net_drive",
+    "per_bin_delta_u",
+    "per_bin_delta_w",
+    "initial_rate_traces",
+    "decision_memory_drift"
+  ],
+  "claim_policy": {
+    "learning_validated": false,
+    "kc_dan_temporal_drive_causal": false,
+    "dan_trace_state_mismatch_causal": false,
+    "causal_learning_claim_authorized": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
