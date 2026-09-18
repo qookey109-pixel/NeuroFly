@@ -158,6 +158,44 @@ Therefore the following remain false:
 - causal_learning_claim_authorized
 - behavioral_promotion_authorized
 
+
+## Important methodological limitation of the exploratory learning study
+
+The 2026-09-18 learning-control run is preserved as exploratory evidence only.
+
+It used the legacy `GoalMazeSession` path rather than the newer shared
+`EnvironmentSession + MazeChaseAdapter` sensory-only boundary.
+
+That legacy path builds brain context from the environment snapshot and can
+therefore include world-side simulator metadata that is not eligible under the
+current NeuroFly v1 sensory-only architecture.
+
+The study also set:
+
+`world_tick_seconds = 3600`
+
+while `GoalMazeSession` applies agent decisions with enemy movement disabled
+and relies on the separate world clock for predator motion. During short
+20-decision held-out evaluations, the three nominal environment seeds therefore
+do not establish independent stochastic trajectories.
+
+This means the run is useful for:
+
+- proving that four real-MaleCNS study arms execute;
+- proving checkpoint isolation;
+- showing an exploratory treatment-control performance signal.
+
+It is not eligible to establish:
+
+- sensory-only learning;
+- independent held-out-seed generalization;
+- confirmatory learning validation;
+- causal learning authorization.
+
+The confirmatory study must use the shared sensory-only environment adapter and
+an execution regime in which preregistered seeds actually affect environment
+dynamics.
+
 ## What is now supported for NeuroFly v1
 
 The evidence set supports three narrow statements:
