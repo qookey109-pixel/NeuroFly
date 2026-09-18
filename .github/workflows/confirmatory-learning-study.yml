@@ -1,0 +1,126 @@
+name: NeuroFly Confirmatory Learning Study
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: neurofly-confirmatory-learning-study
+  cancel-in-progress: false
+
+jobs:
+  confirmatory-learning:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      SOURCE_STATE: runs/free-malecns
+      STUDY_DIR: runs/confirmatory-learning-study
+      BASE_CHECKPOINT: runs/confirmatory-learning-study/base-brain.npz
+      RECEIPT: runs/confirmatory-learning-study/confirmatory-learning-study-receipt.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+
+      - name: Restore latest production checkpoint read-only source
+        uses: actions/cache/restore@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-v06-state-confirmatory-learning-${{ github.run_id }}
+          restore-keys: |
+            neurofly-v06-state-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare and verify MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$STUDY_DIR"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+          python -m neurofly host-preflight | tee "$STUDY_DIR/preflight.json"
+
+      - name: Copy production brain into isolated confirmatory baseline
+        run: |
+          test -f "$SOURCE_STATE/brain.npz"
+          cp "$SOURCE_STATE/brain.npz" "$BASE_CHECKPOINT"
+          test "$(realpath "$SOURCE_STATE/brain.npz")" != "$(realpath "$BASE_CHECKPOINT")"
+          sha256sum "$SOURCE_STATE/brain.npz" "$BASE_CHECKPOINT"
+
+      - name: Execute locked confirmatory study
+        run: |
+          python -m neurofly.confirmatory_learning_study             --base-checkpoint "$BASE_CHECKPOINT"             --output-dir "$STUDY_DIR/replicates"             --receipt "$RECEIPT"
+
+      - name: Validate confirmatory receipt without forcing a positive result
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          receipt = json.loads(
+              Path(
+                  "runs/confirmatory-learning-study/"
+                  "confirmatory-learning-study-receipt.json"
+              ).read_text()
+          )
+          assert receipt["schema"] == "neurofly-confirmatory-learning-study-receipt-v0.1"
+          assert receipt["status"] in {
+              "CONFIRMATORY_PASS",
+              "CONFIRMATORY_FAIL",
+          }
+          assert receipt["execution_valid"] is True
+          assert all(receipt["contract_gates"].values())
+          assert all(receipt["evidence_gates"].values())
+          assert receipt["generalization_validated"] is False
+          assert receipt["behavioral_promotion_authorized"] is False
+          assert receipt["production_checkpoint_mutated"] is False
+
+          if receipt["confirmatory_primary_pass"]:
+              assert receipt["status"] == "CONFIRMATORY_PASS"
+              assert receipt["learning_validated"] is True
+              assert (
+                  receipt["within_task_heldout_generalization_supported"]
+                  is True
+              )
+          else:
+              assert receipt["status"] == "CONFIRMATORY_FAIL"
+              assert receipt["learning_validated"] is False
+
+          assert receipt["causal_learning_claim_authorized"] is (
+              receipt["confirmatory_primary_pass"]
+              and receipt["sensory_dependence_supported"]
+          )
+
+          print(
+              "CONFIRMATORY_LEARNING_EXECUTION_VALID",
+              receipt["status"],
+              receipt["receipt_sha256"],
+              receipt["co_primary_results"],
+              "sensory_support=",
+              receipt["sensory_dependence_supported"],
+          )
+          PY
+
+      - name: Publish confirmatory evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-confirmatory-learning-${{ github.run_id }}
+          path: |
+            runs/confirmatory-learning-study/preflight.json
+            runs/confirmatory-learning-study/confirmatory-learning-study-receipt.json
+          if-no-files-found: error
+          retention-days: 7
