@@ -1,0 +1,53 @@
+{
+  "schema": "neurofly-v1-platform-integration-candidate-v0.1",
+  "status": "REVIEW_REQUIRED",
+  "goal": "long-running sensory-driven playable learnable verifiable connectome-agent platform",
+  "source_prs": {
+    "thermosensation": 86,
+    "light_chase": 87,
+    "learning_controls": 88,
+    "forced_crash_recovery": 89,
+    "environment_adapter": 90,
+    "platform_dashboard": 91,
+    "real_light_chase_smoke": 92
+  },
+  "included_capabilities": {
+    "thermosensation_engineering_proxy": true,
+    "virtual_thermal_field": true,
+    "second_playable_environment_light_chase": true,
+    "shared_environment_adapter": true,
+    "shared_environment_session": true,
+    "shared_multi_environment_cli": true,
+    "multi_environment_dashboard": true,
+    "learning_control_study_machinery": true,
+    "forced_crash_recovery_machinery": true,
+    "real_light_chase_execution_machinery": true
+  },
+  "preserved_legacy_paths": {
+    "maze_run": true,
+    "maze_server": true,
+    "legacy_site_index": true,
+    "cloud_server": true
+  },
+  "not_included": {
+    "snpp39_snpp41_research_stack": true,
+    "proprioception_science_promotion": true,
+    "automatic_behavioral_promotion": true,
+    "production_state_replacement": true
+  },
+  "claims_locked_false": {
+    "snpp39_snpp41_polarity_resolved": false,
+    "thermosensation_biological_current_calibrated": false,
+    "learning_validated": false,
+    "generalization_validated": false,
+    "light_seeking_behavior_validated": false,
+    "light_chase_learning_validated": false,
+    "twenty_four_hour_soak_validated": false,
+    "zero_data_loss_claimed": false,
+    "production_checkpoint_mutated": false
+  },
+  "merge_policy": {
+    "merge_main_authorized": false,
+    "real_execution_receipts_required_after_authority_integration": true
+  }
+}
