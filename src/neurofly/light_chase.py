@@ -228,6 +228,7 @@ class LightChaseEnvironment:
         if direction not in _DIRECTIONS:
             raise ValueError("Invalid Light Chase direction")
 
+        self.seed = int(payload.get("seed", self.seed))
         self.agent = {
             "x": int(agent["x"]),
             "y": int(agent["y"]),
