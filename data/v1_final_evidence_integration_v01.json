@@ -1,0 +1,36 @@
+{
+  "schema": "neurofly-v1-final-evidence-integration-v0.1",
+  "status": "REVIEW_REQUIRED",
+  "source_prs": {
+    "real_execution_evidence_freeze": 94,
+    "confirmatory_learning_validation": 97,
+    "segmented_runtime_soak_evidence": 98
+  },
+  "verified_now": {
+    "real_malecns_second_game_execution": true,
+    "forced_crash_recovery": true,
+    "controlled_exploratory_learning_execution": true,
+    "segmented_runtime_24h_soak": true,
+    "segmented_runtime_observed_hours": 37.28
+  },
+  "pending_after_authority_integration": {
+    "confirmatory_learning_execution": true
+  },
+  "claims_locked_until_confirmatory_receipt": {
+    "learning_validated": false,
+    "causal_learning_claim_authorized": false,
+    "within_task_heldout_generalization_supported": false
+  },
+  "claims_remaining_false_even_if_confirmatory_passes": {
+    "broad_generalization_validated": false,
+    "behavioral_promotion_authorized": false,
+    "continuous_single_process_uptime_validated": false,
+    "zero_data_loss_claimed": false,
+    "snpp39_snpp41_polarity_resolved": false
+  },
+  "merge_policy": {
+    "merge_main_authorized": false,
+    "confirmatory_workflow_requires_authority_branch": true,
+    "final_v1_release_not_yet_authorized": true
+  }
+}
