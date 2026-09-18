@@ -21,17 +21,18 @@ def _contract() -> dict:
 def test_self_training_restart_orchestration_contract_passes() -> None:
     report = audit_self_training_restart_contract(_contract())
 
-    assert report["schema"] == REPORT_SCHEMA
-    assert report["status"] == STATUS
-    assert report["passed"] is True
+    diagnostics = json.dumps(report, indent=2, sort_keys=True)
+    assert report["schema"] == REPORT_SCHEMA, diagnostics
+    assert report["status"] == STATUS, diagnostics
+    assert report["passed"] is True, diagnostics
     assert report["coverage"] == {
         "sequence_count": 92,
         "restart_cases": 360,
         "post_restart_step_comparisons": 556,
-    }
-    assert all(report["contract_gates"].values())
-    assert all(report["coverage_gates"].values())
-    assert all(report["invariants"].values())
+    }, diagnostics
+    assert all(report["contract_gates"].values()), diagnostics
+    assert all(report["coverage_gates"].values()), diagnostics
+    assert all(report["invariants"].values()), diagnostics
 
 
 def test_report_does_not_overclaim_real_malecns_restart() -> None:
