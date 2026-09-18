@@ -1,0 +1,39 @@
+{
+  "schema": "neurofly-proprioception-real-malecns-restart-proof-v0.1",
+  "status": "EXECUTION_REQUIRED",
+  "scope": "real-malecns-process-restart-proprioception-continuity",
+  "upstream": {
+    "pull_request": 84,
+    "head_sha": "84489b1c732fa53591c936183a8db6947f753611"
+  },
+  "proof_mode": "two-sequential-real-malecns-python-processes",
+  "production_state_mutated": false,
+  "required_invariants": {
+    "phase_a_real_malecns_receipt_verified": true,
+    "phase_b_real_malecns_receipt_verified": true,
+    "two_separate_python_processes_observed": true,
+    "phase_a_checkpoint_exists": true,
+    "checkpoint_unchanged_between_processes": true,
+    "pending_proprioception_matches_phase_b_first_handoff": true,
+    "phase_b_first_handoff_unprivileged": true,
+    "clears_resume_monotonically": true,
+    "deaths_resume_monotonically": true,
+    "world_ticks_resume_monotonically": true,
+    "production_checkpoint_copy_isolated": true
+  },
+  "claim_limits": {
+    "snpp39_snpp41_polarity_resolved": false,
+    "biological_current_calibrated": false,
+    "biological_latency_resolved": false,
+    "biological_memory_equivalence_proven": false,
+    "continuous_single_process_24_7_claimed": false
+  },
+  "hard_locks": {
+    "systematic_type_mapping_exposed": false,
+    "current_calibration_authorized": false,
+    "stimulation_enabled": false,
+    "runtime_transduction_enabled": false,
+    "runtime_gating_authorized": false,
+    "neural_payload_promotion_authorized": false
+  }
+}
