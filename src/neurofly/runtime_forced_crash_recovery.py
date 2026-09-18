@@ -227,7 +227,8 @@ def evaluate_forced_crash_evidence(
         for cycle in cycles
     )
     recovery_verified = all(
-        int(cycle.get("recovery_returncode") or 1) == 0
+        cycle.get("recovery_returncode") is not None
+        and int(cycle.get("recovery_returncode")) == 0
         and _verified_training_receipt(cycle.get("recovery_receipt") or {})
         for cycle in cycles
     )
