@@ -19,15 +19,15 @@
     "single_process_uptime_required": false
   },
   "observed": {
-    "first_run_number": 226,
-    "first_run_id": 35131704900,
-    "first_created_at": "2026-09-16T18:00:40Z",
+    "first_run_number": 225,
+    "first_run_id": 35131079927,
+    "first_created_at": "2026-09-16T17:54:34Z",
     "last_run_number": 458,
     "last_run_id": 35317484236,
     "last_updated_at": "2026-09-18T07:11:19Z",
-    "run_count": 233,
-    "wall_clock_seconds": 133839,
-    "wall_clock_hours": 37.18,
+    "run_count": 234,
+    "wall_clock_seconds": 134205,
+    "wall_clock_hours": 37.28,
     "all_runs_success": true,
     "consecutive_run_numbers": true,
     "maximum_positive_handoff_idle_gap_seconds": 0,
@@ -47,6 +47,17 @@
     "forced_crash_recovery_evidence_separate": true
   },
   "runs": [
+    {
+      "run_number": 225,
+      "run_id": 35131079927,
+      "event": "workflow_dispatch",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-16T17:54:34Z",
+      "run_started_at": "2026-09-16T17:54:34Z",
+      "updated_at": "2026-09-16T18:00:43Z",
+      "head_sha": "8f8af2d8d86366991ecbe0bdcd28e61d7e54f389"
+    },
     {
       "run_number": 226,
       "run_id": 35131704900,
