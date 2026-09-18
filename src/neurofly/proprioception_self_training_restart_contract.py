@@ -104,6 +104,10 @@ class _StableTrainingEnvironment(GoalMazeEnvironment):
         for y in range(1, self.rows - 1):
             for x in range(1, self.cols - 1):
                 self.grid[y][x] = " "
+        # Keep one distant food cell so the short proprioception fixture cannot
+        # auto-clear the maze and introduce wall-clock clear timing into a
+        # restart-equivalence comparison.
+        self.grid[1][1] = "."
         self.fly = {"x": self.cols // 2, "y": self.rows // 2, "dir": "RIGHT"}
         self.enemies = [{"x": self.cols - 2, "y": self.rows - 2}]
 
