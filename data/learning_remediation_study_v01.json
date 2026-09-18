@@ -1,0 +1,93 @@
+{
+  "schema": "neurofly-learning-remediation-study-v0.1",
+  "status": "EXPLORATORY_ONLY",
+  "scope": "real-malecns-seed-effectiveness-remediation",
+  "design_origin": {
+    "confirmatory_run_id": 35323343414,
+    "confirmatory_receipt_sha256": "610b28444c8d3481397b6a56500e9f4cd17f66e059ce4c3c9cb73ba9fe636b8c",
+    "failure_result_preserved": true,
+    "seed_effectiveness_issue_discovered_post_run": true
+  },
+  "world_mode": {
+    "decision_synchronous_world": true,
+    "rationale": "consume seeded enemy-movement RNG exactly once per agent decision; avoid wall-clock race and 3600s seed starvation",
+    "seed_probe_steps": 12,
+    "require_unique_probe_digest_for_every_configured_seed": true
+  },
+  "arms": [
+    {
+      "name": "learning_true",
+      "learning": true,
+      "sensory_mode": "normal",
+      "reinforcement_mode": "true"
+    },
+    {
+      "name": "frozen_true",
+      "learning": false,
+      "sensory_mode": "normal",
+      "reinforcement_mode": "true"
+    },
+    {
+      "name": "learning_scrambled",
+      "learning": true,
+      "sensory_mode": "normal",
+      "reinforcement_mode": "scrambled"
+    },
+    {
+      "name": "learning_sensory_off",
+      "learning": true,
+      "sensory_mode": "off",
+      "reinforcement_mode": "true"
+    }
+  ],
+  "training_steps": 60,
+  "evaluation_steps_per_seed": 20,
+  "replicates": [
+    {
+      "id": "E1",
+      "training_seed": 1201,
+      "held_out_seeds": [
+        1301,
+        1303
+      ]
+    },
+    {
+      "id": "E2",
+      "training_seed": 1213,
+      "held_out_seeds": [
+        1307,
+        1319
+      ]
+    },
+    {
+      "id": "E3",
+      "training_seed": 1217,
+      "held_out_seeds": [
+        1321,
+        1327
+      ]
+    },
+    {
+      "id": "E4",
+      "training_seed": 1223,
+      "held_out_seeds": [
+        1361,
+        1367
+      ]
+    }
+  ],
+  "exploratory_outputs": [
+    "seed_probe_digests",
+    "training_metrics",
+    "held_out_evaluation_metrics",
+    "descriptive_effects"
+  ],
+  "claim_policy": {
+    "learning_validated": false,
+    "within_task_heldout_generalization_supported": false,
+    "causal_learning_claim_authorized": false,
+    "broad_generalization_validated": false,
+    "behavioral_promotion_authorized": false,
+    "replacement_confirmatory_authorized": false
+  }
+}

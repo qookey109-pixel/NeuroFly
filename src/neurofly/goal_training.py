@@ -217,6 +217,7 @@ class GoalMazeSession:
         seed: int = 109,
         world_tick_seconds: float = 0.5,
         environment: GoalMazeEnvironment | None = None,
+        decision_synchronous_world: bool = False,
     ) -> None:
         if world_tick_seconds <= 0:
             raise ValueError("world_tick_seconds must be > 0")
@@ -225,6 +226,7 @@ class GoalMazeSession:
         self.checkpoint = Path(checkpoint) if checkpoint else None
         self.checkpoint_every = float(checkpoint_every)
         self.world_tick_seconds = float(world_tick_seconds)
+        self.decision_synchronous_world = bool(decision_synchronous_world)
         self.last_checkpoint = time.monotonic()
         self.last_decision: BrainDecision | None = None
         self.pending_reinforcement = "none"
@@ -355,22 +357,27 @@ class GoalMazeSession:
             self.pending_reinforcement = "none"
 
         stop_event = threading.Event()
-        world_thread = threading.Thread(
-            target=self._run_world_clock,
-            kwargs={
-                "observed_episode": observed_episode,
-                "stop_event": stop_event,
-                "on_world_tick": on_world_tick,
-            },
-            name="neurofly-world-clock",
-            daemon=True,
-        )
-        world_thread.start()
+        world_thread: threading.Thread | None = None
+        if not self.decision_synchronous_world:
+            world_thread = threading.Thread(
+                target=self._run_world_clock,
+                kwargs={
+                    "observed_episode": observed_episode,
+                    "stop_event": stop_event,
+                    "on_world_tick": on_world_tick,
+                },
+                name="neurofly-world-clock",
+                daemon=True,
+            )
+            world_thread.start()
         try:
             decision = self.brain.decide(frame, reinforcement, context=context)
         finally:
-            stop_event.set()
-            world_thread.join(timeout=max(1.0, self._effective_world_tick_seconds() * 3))
+            if world_thread is not None:
+                stop_event.set()
+                world_thread.join(
+                    timeout=max(1.0, self._effective_world_tick_seconds() * 3)
+                )
 
         with self._lock:
             self.last_decision = decision
@@ -384,7 +391,10 @@ class GoalMazeSession:
                 self._checkpoint_if_due()
                 return state
 
-            result = self.environment.agent_step(decision.action, move_enemies=False)
+            result = self.environment.agent_step(
+                decision.action,
+                move_enemies=self.decision_synchronous_world,
+            )
             self.pending_reinforcement = _reinforcement_for_reward(result.reward)
             terminal_snapshot = self._snapshot_locked(
                 decision=decision,

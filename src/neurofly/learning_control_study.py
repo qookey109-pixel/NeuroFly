@@ -292,6 +292,7 @@ def _run_training_arm(
     train_seed: int,
     train_steps: int,
     scramble_seed: int,
+    decision_synchronous_world: bool = False,
 ) -> dict[str, Any]:
     shutil.copy2(initial_checkpoint, arm_checkpoint)
     start_sha = _sha256_file(arm_checkpoint)
@@ -317,6 +318,7 @@ def _run_training_arm(
         environment=GoalMazeEnvironment(seed=train_seed),
         checkpoint=None,
         world_tick_seconds=3600.0,
+        decision_synchronous_world=decision_synchronous_world,
     )
     states = _run_steps(session, train_steps)
     controlled.save(arm_checkpoint)
@@ -341,6 +343,7 @@ def _evaluate_arm(
     arm_checkpoint: Path,
     held_out_seeds: tuple[int, ...],
     eval_steps: int,
+    decision_synchronous_world: bool = False,
 ) -> dict[str, Any]:
     per_seed = []
 
@@ -364,6 +367,7 @@ def _evaluate_arm(
             environment=GoalMazeEnvironment(seed=seed),
             checkpoint=None,
             world_tick_seconds=3600.0,
+            decision_synchronous_world=decision_synchronous_world,
         )
         states = _run_steps(session, eval_steps)
         per_seed.append(
