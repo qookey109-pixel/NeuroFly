@@ -1,0 +1,47 @@
+{
+  "schema": "neurofly-proprioception-session-checkpoint-continuity-v0.1",
+  "status": "REVIEW_REQUIRED",
+  "scope": "session-level-proprioception-checkpoint-continuity-only",
+  "upstream": {
+    "pull_request": 82,
+    "head_sha": "0ff85ce5396f500307429fd1d0f023c45e209a54"
+  },
+  "action_alphabet": ["HOLD", "FORWARD", "TURN_LEFT", "TURN_RIGHT"],
+  "exhaustive_max_length": 3,
+  "stress_sequences": [
+    ["FORWARD", "TURN_LEFT", "FORWARD", "TURN_RIGHT", "HOLD"],
+    ["TURN_LEFT", "TURN_RIGHT", "TURN_LEFT", "TURN_RIGHT", "FORWARD"],
+    ["FORWARD", "FORWARD", "TURN_LEFT", "FORWARD", "HOLD"],
+    ["HOLD", "FORWARD", "TURN_RIGHT", "FORWARD", "TURN_LEFT"],
+    ["TURN_RIGHT", "FORWARD", "TURN_RIGHT", "FORWARD", "HOLD"],
+    ["TURN_LEFT", "FORWARD", "TURN_LEFT", "FORWARD", "HOLD"],
+    ["HOLD", "HOLD", "FORWARD", "TURN_LEFT", "FORWARD"],
+    ["FORWARD", "HOLD", "TURN_RIGHT", "HOLD", "FORWARD"]
+  ],
+  "expected_coverage": {
+    "sequence_count": 92,
+    "checkpoint_restore_cases": 360,
+    "continuation_handoff_comparisons": 556
+  },
+  "required_invariants": {
+    "pending_proprioception_persisted_exactly": true,
+    "virtual_body_state_persisted_exactly": true,
+    "restored_handoff_matches_uninterrupted": true,
+    "restored_body_continuation_matches_uninterrupted": true,
+    "temporal_history_not_persisted": true,
+    "last_observed_diagnostics_not_persisted": true,
+    "restore_emits_no_receptor_event": true,
+    "restored_recorder_restarts_from_empty": true,
+    "restored_recorder_restarts_sequence_at_one": true,
+    "human_diagnostics_never_enter_neural_context": true,
+    "restored_handoffs_pass_unprivileged_guard": true
+  },
+  "hard_locks": {
+    "systematic_type_mapping_exposed": false,
+    "current_calibration_authorized": false,
+    "stimulation_enabled": false,
+    "runtime_transduction_enabled": false,
+    "runtime_gating_authorized": false,
+    "neural_payload_promotion_authorized": false
+  }
+}
