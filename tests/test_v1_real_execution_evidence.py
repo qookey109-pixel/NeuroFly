@@ -66,3 +66,15 @@ def test_exploratory_learning_effects_are_preserved_without_promotion() -> None:
 def test_claim_locks_remain_closed() -> None:
     payload = _evidence()
     assert all(value is False for value in payload["claims_still_locked"].values())
+
+
+def test_exploratory_learning_limitations_are_explicit() -> None:
+    learning = _evidence()["learning_control_study"]
+    limits = learning["methodological_limitations"]
+
+    assert limits["legacy_goal_maze_session_used"] is True
+    assert limits["sensory_only_adapter_used"] is False
+    assert limits["world_side_context_may_reach_brain"] is True
+    assert limits["world_tick_seconds"] == 3600.0
+    assert limits["held_out_seed_independence_established"] is False
+    assert limits["confirmatory_learning_evidence"] is False
