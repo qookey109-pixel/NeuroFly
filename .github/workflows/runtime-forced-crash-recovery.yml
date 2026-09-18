@@ -1,0 +1,124 @@
+name: NeuroFly Forced Crash Recovery Proof
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: "Number of forced-crash / recovery cycles"
+        required: false
+        default: "3"
+      crash_steps:
+        description: "Verified real MaleCNS decisions before forced crash"
+        required: false
+        default: "1"
+      recovery_steps:
+        description: "Verified decisions after restoring the persisted checkpoint"
+        required: false
+        default: "1"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: neurofly-forced-crash-recovery-proof
+  cancel-in-progress: false
+
+jobs:
+  forced-crash-recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      SOURCE_STATE: runs/free-malecns
+      PROOF_STATE: runs/forced-crash-recovery
+      SOURCE_CHECKPOINT: runs/free-malecns/brain.npz
+      PROOF_CHECKPOINT: runs/forced-crash-recovery/brain.npz
+      PROOF_RECEIPT: runs/forced-crash-recovery/forced-crash-recovery-receipt.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+
+      - name: Restore latest production checkpoint read-only source
+        uses: actions/cache/restore@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-v06-state-forced-crash-${{ github.run_id }}
+          restore-keys: |
+            neurofly-v06-state-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare and verify MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$PROOF_STATE"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+          python -m neurofly host-preflight | tee "$PROOF_STATE/preflight.json"
+
+      - name: Verify coordinated production source exists
+        run: |
+          test -f "$SOURCE_CHECKPOINT"
+          test -f "$SOURCE_STATE/brain.maze.json"
+          sha256sum "$SOURCE_CHECKPOINT" "$SOURCE_STATE/brain.maze.json"
+
+      - name: Run isolated forced-crash recovery proof
+        env:
+          CYCLES: ${{ inputs.cycles }}
+          CRASH_STEPS: ${{ inputs.crash_steps }}
+          RECOVERY_STEPS: ${{ inputs.recovery_steps }}
+        run: |
+          python -m neurofly.runtime_forced_crash_recovery run             --source-checkpoint "$SOURCE_CHECKPOINT"             --proof-checkpoint "$PROOF_CHECKPOINT"             --output-dir "$PROOF_STATE/evidence"             --output "$PROOF_RECEIPT"             --cycles "$CYCLES"             --crash-steps "$CRASH_STEPS"             --recovery-steps "$RECOVERY_STEPS"
+
+      - name: Validate narrow crash-recovery receipt
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          receipt = json.loads(
+              Path("runs/forced-crash-recovery/forced-crash-recovery-receipt.json").read_text()
+          )
+          assert receipt["schema"] == "neurofly-runtime-forced-crash-recovery-receipt-v0.1"
+          assert receipt["status"] == "PASS"
+          assert receipt["passed"] is True
+          assert receipt["forced_crash_recovery_execution_verified"] is True
+          assert all(receipt["contract_gates"].values())
+          assert all(receipt["invariants"].values())
+          assert receipt["zero_data_loss_claimed"] is False
+          assert receipt["unsaved_work_preserved_claimed"] is False
+          assert receipt["actual_watchdog_dispatch_tested"] is False
+          assert receipt["twenty_four_hour_soak_validated"] is False
+          assert receipt["continuous_single_process_uptime_validated"] is False
+          assert receipt["production_checkpoint_mutated"] is False
+          print(
+              "FORCED_CRASH_RECOVERY_PASS",
+              receipt["receipt_sha256"],
+              "cycles=",
+              receipt["cycles_completed"],
+          )
+          PY
+
+      - name: Publish compact crash-recovery evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-forced-crash-recovery-${{ github.run_id }}
+          path: |
+            runs/forced-crash-recovery/preflight.json
+            runs/forced-crash-recovery/forced-crash-recovery-receipt.json
+            runs/forced-crash-recovery/evidence/cycle-*-crash.json
+            runs/forced-crash-recovery/evidence/cycle-*-recovery.json
+          if-no-files-found: error
+          retention-days: 1
