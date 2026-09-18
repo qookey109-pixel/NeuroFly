@@ -1,0 +1,46 @@
+{
+  "schema": "neurofly-learning-control-study-v0.1",
+  "status": "EXECUTION_REQUIRED",
+  "scope": "real-malecns-controlled-learning-evaluation",
+  "study_version": "v0.1",
+  "arms": [
+    {"name":"learning_true","learning":true,"sensory_mode":"normal","reinforcement_mode":"true"},
+    {"name":"frozen_true","learning":false,"sensory_mode":"normal","reinforcement_mode":"true"},
+    {"name":"learning_scrambled","learning":true,"sensory_mode":"normal","reinforcement_mode":"scrambled"},
+    {"name":"learning_sensory_off","learning":true,"sensory_mode":"off","reinforcement_mode":"true"}
+  ],
+  "training": {"seed":109,"default_steps":60},
+  "evaluation": {
+    "learning": false,
+    "reinforcement_mode": "none",
+    "sensory_mode": "normal",
+    "held_out_seeds": [701,709,719],
+    "default_steps_per_seed": 20
+  },
+  "primary_descriptive_metrics": [
+    "mean_total_reward",
+    "mean_total_clears",
+    "mean_total_food",
+    "mean_total_deaths",
+    "mean_hold_fraction"
+  ],
+  "required_evidence": {
+    "same_initial_checkpoint_sha256": true,
+    "all_four_arms_executed": true,
+    "training_real_malecns_verified": true,
+    "evaluation_real_malecns_verified": true,
+    "held_out_seeds_exact": true,
+    "evaluation_learning_disabled": true,
+    "evaluation_reinforcement_disabled": true,
+    "evaluation_normal_sensory_restored": true,
+    "arm_checkpoints_isolated": true,
+    "effect_estimates_reported_without_auto_verdict": true
+  },
+  "claim_limits": {
+    "learning_validated": false,
+    "generalization_validated": false,
+    "causal_learning_claim_authorized": false,
+    "behavioral_promotion_authorized": false,
+    "production_checkpoint_mutated": false
+  }
+}
