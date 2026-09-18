@@ -224,6 +224,7 @@ def audit_self_training_restart_contract(contract: dict[str, Any]) -> dict[str, 
     invariants = {key: True for key in EXPECTED_INVARIANTS}
     invariants["production_public_projection_used"] = True
     invariants["production_neural_verification_used"] = True
+    first_public_state_mismatch: dict[str, Any] | None = None
 
     with tempfile.TemporaryDirectory(prefix="neurofly-training-restart-") as tmpdir:
         root = Path(tmpdir)
@@ -392,6 +393,7 @@ def audit_self_training_restart_contract(contract: dict[str, Any]) -> dict[str, 
         "contract_gates": contract_gates,
         "coverage_gates": coverage_gates,
         "invariants": invariants,
+        "first_public_state_mismatch": first_public_state_mismatch,
         "actual_malecns_process_restart_executed": False,
         "malecns_brain_checkpoint_equivalence_proven": False,
         "biological_restart_memory_claimed": False,
