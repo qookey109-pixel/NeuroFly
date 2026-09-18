@@ -99,6 +99,20 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, bool]:
     }
 
 
+def _verified_crash_receipt(receipt: dict[str, Any]) -> bool:
+    supplied = receipt.get("receipt_sha256")
+    digest_payload = copy.deepcopy(receipt)
+    digest_payload.pop("receipt_sha256", None)
+    return (
+        receipt.get("schema") == WORKER_SCHEMA
+        and receipt.get("neural_activity_verified") is True
+        and receipt.get("checkpoint_save_called") is False
+        and receipt.get("unsaved_work_expected_to_be_lost") is True
+        and isinstance(supplied, str)
+        and supplied == _digest_json(digest_payload)
+    )
+
+
 def _verified_training_receipt(receipt: dict[str, Any]) -> bool:
     supplied = receipt.get("receipt_sha256")
     digest_payload = copy.deepcopy(receipt)
@@ -199,9 +213,7 @@ def evaluate_forced_crash_evidence(
         for cycle in cycles
     )
     crash_verified = all(
-        (cycle.get("crash_receipt") or {}).get("neural_activity_verified") is True
-        and (cycle.get("crash_receipt") or {}).get("checkpoint_save_called") is False
-        and (cycle.get("crash_receipt") or {}).get("unsaved_work_expected_to_be_lost") is True
+        _verified_crash_receipt(cycle.get("crash_receipt") or {})
         for cycle in cycles
     )
     unchanged_by_crash = all(
