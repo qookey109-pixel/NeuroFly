@@ -1,0 +1,29 @@
+{
+  "schema": "neurofly-runtime-forced-crash-recovery-v0.1",
+  "status": "EXECUTION_REQUIRED",
+  "scope": "isolated-real-malecns-forced-crash-recovery",
+  "default_cycles": 3,
+  "default_crash_steps": 1,
+  "default_recovery_steps": 1,
+  "expected_crash_exit_code": 86,
+  "required_invariants": {
+    "source_checkpoint_isolated": true,
+    "source_checkpoint_unchanged": true,
+    "crash_process_exits_nonzero": true,
+    "crash_process_neural_activity_verified": true,
+    "checkpoint_pair_unchanged_by_unsaved_crash": true,
+    "recovery_process_is_distinct": true,
+    "recovery_real_malecns_verified": true,
+    "recovery_resumes_persisted_counters": true,
+    "checkpoint_pair_exists_after_recovery": true,
+    "all_cycles_completed": true
+  },
+  "claim_limits": {
+    "zero_data_loss_claimed": false,
+    "unsaved_work_preserved_claimed": false,
+    "actual_watchdog_dispatch_tested": false,
+    "twenty_four_hour_soak_validated": false,
+    "continuous_single_process_uptime_validated": false,
+    "production_checkpoint_mutated": false
+  }
+}
