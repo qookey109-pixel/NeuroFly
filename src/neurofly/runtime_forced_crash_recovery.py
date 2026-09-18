@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from .brain_runtime import MaleCNSBrain
+from .curriculum import CurriculumMazeEnvironment
 from .goal_training import GoalMazeSession
 from .smoke import _digest_json, _neural_decision_verified
 
@@ -147,6 +148,7 @@ def run_crash_worker(
         checkpoint=checkpoint,
         checkpoint_every=10**12,
         world_tick_seconds=3600.0,
+        environment=CurriculumMazeEnvironment(seed=109),
     )
 
     states = []
