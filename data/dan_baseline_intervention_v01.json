@@ -1,0 +1,98 @@
+{
+  "schema": "neurofly-dan-baseline-intervention-v0.1",
+  "status": "EXPLORATORY_INTERVENTION_ONLY",
+  "scope": "real-malecns-task-conditioned-dan-baseline-intervention",
+  "design_origin": {
+    "diagnostic_run_id": 35343487907,
+    "diagnostic_receipt_sha256": "8f1e34f5fd4795869c8d4251eccd12a196e2c14e5d56118fb810078972142db2",
+    "diagnostic_execution_valid": true,
+    "observed_learning_none_memory_changed_steps_per_replicate": 60,
+    "observed_learning_none_mean_efficacy_delta": -0.009343703588,
+    "observed_learning_none_minus_frozen_eval_reward": -2.83333334
+  },
+  "calibration": {
+    "interpretation": "task-conditioned endogenous DAN firing baseline; not a biological resting-rate claim",
+    "seeds": [
+      1601,
+      1607,
+      1609
+    ],
+    "steps_per_seed": 60,
+    "reinforcement_mode": "none",
+    "learning": false,
+    "sensory_mode": "normal",
+    "estimator": "per-cell mean firing rate in Hz across all 50 ms decisions"
+  },
+  "arms": [
+    {
+      "name": "learning_none_zero_baseline",
+      "learning": true,
+      "reinforcement_mode": "none",
+      "dan_baseline_mode": "zero"
+    },
+    {
+      "name": "learning_none_calibrated_baseline",
+      "learning": true,
+      "reinforcement_mode": "none",
+      "dan_baseline_mode": "task_conditioned"
+    },
+    {
+      "name": "frozen_none_zero_baseline",
+      "learning": false,
+      "reinforcement_mode": "none",
+      "dan_baseline_mode": "zero"
+    }
+  ],
+  "replicates": [
+    {
+      "id": "B1",
+      "training_seed": 1613,
+      "held_out_seeds": [
+        1619,
+        1621
+      ]
+    },
+    {
+      "id": "B2",
+      "training_seed": 1627,
+      "held_out_seeds": [
+        1637,
+        1657
+      ]
+    },
+    {
+      "id": "B3",
+      "training_seed": 1663,
+      "held_out_seeds": [
+        1667,
+        1669
+      ]
+    },
+    {
+      "id": "B4",
+      "training_seed": 1693,
+      "held_out_seeds": [
+        1697,
+        1699
+      ]
+    }
+  ],
+  "runtime": {
+    "decision_synchronous_world": true,
+    "training_steps": 60,
+    "evaluation_steps_per_seed": 20
+  },
+  "primary_descriptive_endpoints": [
+    "memory_changed_steps",
+    "final_mean_efficacy_delta",
+    "evaluation_mean_total_reward"
+  ],
+  "claim_policy": {
+    "learning_validated": false,
+    "task_conditioned_dan_baseline_causal": false,
+    "biological_dan_resting_rate_established": false,
+    "causal_learning_claim_authorized": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
