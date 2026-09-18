@@ -1,0 +1,67 @@
+{
+  "schema": "neurofly-learning-mechanism-diagnostic-run1-freeze-v0.1",
+  "run_id": 35343487907,
+  "head_sha": "46d14bd1f481ecb8a1e3f20ce7927f8316930cba",
+  "artifact_id": 10546243015,
+  "artifact_digest": "sha256:6b874ee6ff813c209baeb4bf69d65ddb93ae7b7cede5cafe382598ae31e8db62",
+  "receipt_sha256": "8f1e34f5fd4795869c8d4251eccd12a196e2c14e5d56118fb810078972142db2",
+  "execution_valid": true,
+  "aggregate": {
+    "frozen_true": {
+      "mean_eval_reward": -4.03333333,
+      "mean_eval_hold_fraction": 0.875,
+      "mean_final_efficacy_delta": 0,
+      "mean_memory_changed_steps": 0
+    },
+    "learning_none": {
+      "mean_eval_reward": -6.86666667,
+      "mean_eval_hold_fraction": 0.85,
+      "mean_final_efficacy_delta": -0.009343703588,
+      "mean_memory_changed_steps": 60,
+      "mean_memory_changed_none_steps": 60,
+      "mean_none_steps_with_endogenous_dan_spikes": 60
+    },
+    "learning_true": {
+      "mean_eval_reward": -4.86666667,
+      "mean_eval_hold_fraction": 0.89166667,
+      "mean_final_efficacy_delta": -0.011216402054,
+      "mean_memory_changed_steps": 60
+    },
+    "descriptive_contrasts": {
+      "learning_none_minus_frozen_true_eval_reward": -2.83333334,
+      "learning_true_minus_frozen_true_eval_reward": -0.83333334,
+      "learning_true_minus_learning_none_eval_reward": 2
+    }
+  },
+  "per_replicate_learning_none": [
+    {
+      "id": "D1",
+      "mean_aversive_spikes_on_none_steps": 13.08333333,
+      "mean_reward_spikes_on_none_steps": 0.01666667,
+      "efficacy_delta": -0.015778303147,
+      "eval_reward": -5.2
+    },
+    {
+      "id": "D2",
+      "mean_aversive_spikes_on_none_steps": 12.76666667,
+      "mean_reward_spikes_on_none_steps": 0,
+      "efficacy_delta": -0.008064031601,
+      "eval_reward": -5.2
+    },
+    {
+      "id": "D3",
+      "mean_aversive_spikes_on_none_steps": 12.73333333,
+      "mean_reward_spikes_on_none_steps": 0,
+      "efficacy_delta": -0.004188776017,
+      "eval_reward": -10.2
+    }
+  ],
+  "interpretation_limits": {
+    "checkpoint_defect_supported": false,
+    "temporal_credit_lag_observed": true,
+    "temporal_credit_defect_confirmed": false,
+    "unreinforced_plastic_drift_observed": true,
+    "unreinforced_plastic_drift_causal": false,
+    "biological_dan_resting_rate_established": false
+  }
+}
