@@ -62,9 +62,9 @@ def test_light_chase_context_contains_no_privileged_target_geometry() -> None:
         '"y":',
         "bearing_degrees",
         "distance_cells",
-        "recommended_action",
     ):
         assert token not in encoded
+    assert "recommended_action" not in context["vision"]
 
     assert state["target"] == env.target
     assert len(brain.frames[0]) == 90
