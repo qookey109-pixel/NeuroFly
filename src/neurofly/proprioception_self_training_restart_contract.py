@@ -313,12 +313,28 @@ def audit_self_training_restart_contract(contract: dict[str, Any]) -> dict[str, 
                         == baseline_diag.get("proprioception")
                     )
 
+                    restored_stable = _stable_public_state(public)
+                    baseline_stable = _stable_public_state(baseline_public_state)
+                    stable_matches = restored_stable == baseline_stable
                     invariants[
                         "post_restart_stable_public_gameplay_state_matches_uninterrupted"
-                    ] &= (
-                        _stable_public_state(public)
-                        == _stable_public_state(baseline_public_state)
-                    )
+                    ] &= stable_matches
+                    if not stable_matches and first_public_state_mismatch is None:
+                        keys = sorted(set(restored_stable) | set(baseline_stable))
+                        differing = {
+                            key: {
+                                "baseline": baseline_stable.get(key),
+                                "restored": restored_stable.get(key),
+                            }
+                            for key in keys
+                            if baseline_stable.get(key) != restored_stable.get(key)
+                        }
+                        first_public_state_mismatch = {
+                            "sequence": list(sequence),
+                            "split": split,
+                            "absolute_index": absolute_index,
+                            "differing_top_level_fields": differing,
+                        }
 
                     temporal = public_diag.get("proprioception_temporal")
                     expected_sequence = suffix_index + 1
