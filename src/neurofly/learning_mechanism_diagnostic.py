@@ -241,6 +241,7 @@ def _run_diagnostic_arm(
         decision_synchronous_world=True,
     )
 
+    initial_memory = _memory_snapshot(inner)
     rows: list[dict[str, Any]] = []
     previous_outcome: dict[str, Any] | None = None
 
@@ -317,6 +318,7 @@ def _run_diagnostic_arm(
         "reinforcement_mode": reinforcement_mode,
         "initial_checkpoint_sha256": start_sha,
         "post_training_checkpoint_sha256": checkpoint_sha,
+        "initial_memory": initial_memory,
         "trace": rows,
         "trace_summary": _trace_summary(rows),
         "memory_before_save": memory_before_save,
@@ -369,13 +371,18 @@ def _aggregate(replicates: list[dict[str, Any]]) -> dict[str, Any]:
                 ),
                 8,
             ),
-            "mean_final_efficacy": round(
-                mean(item["memory_before_save"]["mean_efficacy"] for item in rows),
+            "mean_final_efficacy_delta": round(
+                mean(
+                    item["memory_before_save"]["mean_efficacy"]
+                    - item["initial_memory"]["mean_efficacy"]
+                    for item in rows
+                ),
                 12,
             ),
-            "mean_changed_edges": round(
-                mean(item["memory_before_save"]["changed_edges"] for item in rows),
-                8,
+            "memory_sha_changed_replicates": sum(
+                item["memory_before_save"]["sha256"]
+                != item["initial_memory"]["sha256"]
+                for item in rows
             ),
         }
 
@@ -502,7 +509,8 @@ def run_learning_mechanism_diagnostic(
         ),
         "frozen_memory_unchanged": all(
             arm["trace_summary"]["memory_changed_steps"] == 0
-            and arm["memory_before_save"]["changed_edges"] == 0
+            and arm["memory_before_save"]["sha256"]
+            == arm["initial_memory"]["sha256"]
             for arm in frozen_arms
         ),
         "learning_arm_memory_observed": all(
