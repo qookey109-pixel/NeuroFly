@@ -9,6 +9,7 @@ from .environment_adapter import EnvironmentSession, make_environment_adapter
 from .experiments import list_experiments
 from .light_chase import LightChaseSession
 from .maze_runtime import MazeSession
+from .platform_server import run_platform_server
 from .preflight import collect_preflight
 from .server import run_cloud_server, run_server
 from .site_state import publish_site_state
@@ -175,6 +176,21 @@ def _environment_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _platform_server(args: argparse.Namespace) -> int:
+    run_platform_server(
+        environment=args.environment,
+        brain=args.brain,
+        host=args.host,
+        port=args.port,
+        tick_seconds=args.tick_seconds,
+        checkpoint=args.checkpoint,
+        checkpoint_every=args.checkpoint_every,
+        seed=args.seed,
+        site_dir=args.site_dir,
+    )
+    return 0
+
+
 def _maze_server(args: argparse.Namespace) -> int:
     run_server(
         brain=args.brain,
@@ -266,6 +282,24 @@ def build_parser() -> argparse.ArgumentParser:
     environment.add_argument("--checkpoint-every", type=float, default=300.0)
     environment.add_argument("--seed", type=int, default=109)
 
+    platform = subparsers.add_parser(
+        "platform-server",
+        help="serve the environment-agnostic NeuroFly platform dashboard",
+    )
+    platform.add_argument(
+        "--environment",
+        choices=("maze", "light"),
+        required=True,
+    )
+    platform.add_argument("--brain", choices=("demo", "malecns"), default="demo")
+    platform.add_argument("--host", default="127.0.0.1")
+    platform.add_argument("--port", type=int, default=8877)
+    platform.add_argument("--tick-seconds", type=float, default=0.6)
+    platform.add_argument("--checkpoint", default="runs/platform-fly-001/brain.npz")
+    platform.add_argument("--checkpoint-every", type=float, default=300.0)
+    platform.add_argument("--seed", type=int, default=109)
+    platform.add_argument("--site-dir", default="site")
+
     server = subparsers.add_parser("maze-server", help="serve the visualizer plus persistent Maze API")
     server.add_argument("--brain", choices=("demo", "malecns"), default="demo")
     server.add_argument("--host", default="127.0.0.1")
@@ -306,6 +340,8 @@ def main(argv: list[str] | None = None) -> int:
         return _light_run(args)
     if args.command == "env-run":
         return _environment_run(args)
+    if args.command == "platform-server":
+        return _platform_server(args)
     if args.command == "maze-server":
         return _maze_server(args)
     if args.command == "cloud-server":
