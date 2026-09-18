@@ -163,7 +163,7 @@ def seed_probe(seed: int, *, steps: int = EXPECTED_SEED_PROBE_STEPS) -> dict[str
         )
         if result.terminal:
             env.reset(result.event or "terminal")
-    digest = _digest_json({"seed": int(seed), "trace": trace})
+    digest = _digest_json({"trace": trace})
     return {
         "seed": int(seed),
         "steps": int(steps),
@@ -286,7 +286,18 @@ def run_learning_remediation_study(
             and tuple(item["replicate_id"] for item in replicate_results)
             == tuple(item[0] for item in EXPECTED_REPLICATES)
         ),
-        "all_arm_checkpoints_isolated": len(arm_paths) == len(set(arm_paths)),
+        "all_arms_start_from_source_checkpoint": all(
+            arm["training"]["initial_checkpoint_sha256"] == source_sha_before
+            for replicate in replicate_results
+            for arm in replicate["arm_results"].values()
+        ),
+        "all_arm_checkpoints_isolated": (
+            len(arm_paths) == len(set(arm_paths))
+            and all(
+                Path(path).resolve() != base_checkpoint.resolve()
+                for path in arm_paths
+            )
+        ),
         "training_real_malecns_verified": all(
             arm["training"]["training_metrics"]["neural_activity_verified"]
             for replicate in replicate_results
@@ -305,6 +316,15 @@ def run_learning_remediation_study(
         ),
         "evaluation_reinforcement_disabled": all(
             arm["evaluation"]["reinforcement_mode"] == "none"
+            and all(
+                set(seed_result["delivered_reinforcement"]) <= {"none"}
+                for seed_result in arm["evaluation"]["per_seed"]
+            )
+            for replicate in replicate_results
+            for arm in replicate["arm_results"].values()
+        ),
+        "evaluation_normal_sensory_restored": all(
+            arm["evaluation"]["sensory_mode"] == "normal"
             for replicate in replicate_results
             for arm in replicate["arm_results"].values()
         ),
