@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any
 
 
-SCHEMA = "neurofly-segmented-runtime-soak-evidence-v0.1"
+SCHEMA = "neurofly-segmented-runtime-soak-evidence-v0.2"
 
 
 def _timestamp(value: str) -> datetime:
