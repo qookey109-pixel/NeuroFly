@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="description" content="NeuroFly 多環境 connectome agent 平台監控台" />
+  <title>NeuroFly Platform</title>
+  <link rel="stylesheet" href="platform.css?v=1" />
+</head>
+<body>
+  <main class="platform-shell">
+    <header class="platform-header">
+      <div>
+        <p class="eyebrow">NEUROFLY · CONNECTOME AGENT PLATFORM</p>
+        <h1>多環境神經代理監控台</h1>
+      </div>
+      <div class="header-meta">
+        <span id="connectionState" class="pill">連線中</span>
+        <span id="environmentName" class="pill secondary">—</span>
+        <span id="brainBackend" class="pill secondary">—</span>
+      </div>
+    </header>
+
+    <section class="dashboard-grid">
+      <section class="world-card">
+        <div class="card-heading">
+          <div>
+            <span>PUBLIC / EVALUATION VIEW</span>
+            <h2 id="worldTitle">Environment</h2>
+          </div>
+          <span id="runtimeState">等待狀態</span>
+        </div>
+        <canvas id="worldCanvas" width="900" height="620"></canvas>
+        <div class="world-caption">
+          此畫面可顯示 simulator world truth；神經端只接收 adapter 產生的 sensory observation。
+        </div>
+      </section>
+
+      <aside class="rail">
+        <section class="panel">
+          <span class="panel-label">CURRENT STEP</span>
+          <div class="metric-grid">
+            <div><span>Episode</span><strong id="episode">—</strong></div>
+            <div><span>Action</span><strong id="action">—</strong></div>
+            <div><span>Reward</span><strong id="reward">—</strong></div>
+            <div><span>Event</span><strong id="eventName">—</strong></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <span class="panel-label">NEURAL TELEMETRY</span>
+          <div class="metric-grid">
+            <div><span>Brain ms</span><strong id="brainMs">—</strong></div>
+            <div><span>Compute</span><strong id="computeSeconds">—</strong></div>
+            <div><span>Total spikes</span><strong id="totalSpikes">—</strong></div>
+            <div><span>Gate spikes</span><strong id="gateSpikes">—</strong></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <span class="panel-label">SENSORY CONTRACT</span>
+          <div id="sensorySummary" class="sensory-summary">等待 sensory observation…</div>
+        </section>
+
+        <section class="panel">
+          <span class="panel-label">RUNTIME</span>
+          <div class="metric-grid">
+            <div><span>Running</span><strong id="running">—</strong></div>
+            <div><span>Tick</span><strong id="tickSeconds">—</strong></div>
+            <div><span>Persistent</span><strong id="persistent">—</strong></div>
+            <div><span>Phase</span><strong id="phase">—</strong></div>
+          </div>
+        </section>
+      </aside>
+    </section>
+  </main>
+  <script src="platform.js?v=1"></script>
+</body>
+</html>
