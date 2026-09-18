@@ -483,6 +483,9 @@ def _run_arm(
         "final_memory": final_memory,
         "restored_memory": restored_memory,
         "checkpoint_memory_roundtrip_exact": roundtrip_exact,
+        "training_delivered_reinforcement": dict(
+            sorted(controlled.delivered_reinforcement.items())
+        ),
         "trace_summary": _trace_summary(rows),
         "trace": rows,
         "final_mean_efficacy_delta": round(
@@ -615,8 +618,11 @@ def run_dan_baseline_intervention(
             for arm in rep["arm_results"].values()
         ),
         "all_external_reinforcement_suppressed": all(
-            set(arm["evaluation"]["per_seed"][0]["delivered_reinforcement"]) <= {"none"}
-            and set(arm["evaluation"]["per_seed"][1]["delivered_reinforcement"]) <= {"none"}
+            set(arm["training_delivered_reinforcement"]) <= {"none"}
+            and all(
+                set(seed_result["delivered_reinforcement"]) <= {"none"}
+                for seed_result in arm["evaluation"]["per_seed"]
+            )
             for rep in replicate_results
             for arm in rep["arm_results"].values()
         ),
