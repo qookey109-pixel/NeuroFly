@@ -326,6 +326,7 @@ def _run_training_arm(
         "sensory_mode": sensory_mode,
         "reinforcement_mode": reinforcement_mode,
         "initial_checkpoint_sha256": start_sha,
+        "arm_checkpoint_path": str(arm_checkpoint),
         "post_training_checkpoint_sha256": _sha256_file(arm_checkpoint),
         "delivered_reinforcement": dict(
             sorted(controlled.delivered_reinforcement.items())
@@ -439,10 +440,17 @@ def run_learning_control_study(
             ),
         }
 
+    base_sha_after = _sha256_file(base_checkpoint)
+    arm_paths = [
+        result["training"]["arm_checkpoint_path"]
+        for result in arm_results.values()
+    ]
+
     evidence_gates = {
         "same_initial_checkpoint_sha256": (
             len(set(initial_hashes)) == 1 and initial_hashes[0] == base_sha
         ),
+        "source_checkpoint_unchanged": base_sha_after == base_sha,
         "all_four_arms_executed": tuple(arm_results) == tuple(
             arm[0] for arm in EXPECTED_ARMS
         ),
@@ -476,15 +484,16 @@ def run_learning_control_study(
             result["evaluation"]["sensory_mode"] == "normal"
             for result in arm_results.values()
         ),
-        "arm_checkpoints_isolated": len(
-            [
-                result["training"]["post_training_checkpoint_sha256"]
-                for result in arm_results.values()
-            ]
-        )
-        == 4,
+        "arm_checkpoints_isolated": (
+            len(set(arm_paths)) == 4
+            and all(Path(path).resolve() != base_checkpoint.resolve() for path in arm_paths)
+        ),
         "effect_estimates_reported_without_auto_verdict": True,
     }
+
+    required_evidence_keys = set(contract["required_evidence"])
+    if set(evidence_gates) != required_evidence_keys:
+        raise RuntimeError("Study evidence gate set drifted from preregistration")
 
     execution_complete = all(evidence_gates.values())
     body: dict[str, Any] = {
@@ -495,6 +504,7 @@ def run_learning_control_study(
         "contract_gates": contract_gates,
         "evidence_gates": evidence_gates,
         "base_checkpoint_sha256": base_sha,
+        "base_checkpoint_sha256_after": base_sha_after,
         "train_steps": train_steps,
         "evaluation_steps_per_seed": eval_steps,
         "arm_results": arm_results,
