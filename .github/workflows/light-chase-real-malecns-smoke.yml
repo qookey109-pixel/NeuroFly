@@ -1,0 +1,119 @@
+name: NeuroFly Light Chase Real MaleCNS Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      steps:
+        description: "Verified Light Chase decisions"
+        required: false
+        default: "3"
+      seed:
+        description: "Light Chase environment seed"
+        required: false
+        default: "109"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: neurofly-light-chase-real-malecns-smoke
+  cancel-in-progress: false
+
+jobs:
+  real-light-chase-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      SOURCE_STATE: runs/free-malecns
+      SOURCE_CHECKPOINT: runs/free-malecns/brain.npz
+      PROOF_DIR: runs/light-chase-real-smoke
+      PROOF_CHECKPOINT: runs/light-chase-real-smoke/brain.npz
+      RECEIPT: runs/light-chase-real-smoke/light-chase-real-smoke-receipt.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+
+      - name: Restore latest production brain as read-only source
+        uses: actions/cache/restore@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-v06-state-light-smoke-${{ github.run_id }}
+          restore-keys: |
+            neurofly-v06-state-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare and verify MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$PROOF_DIR"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+          python -m neurofly host-preflight | tee "$PROOF_DIR/preflight.json"
+
+      - name: Verify source checkpoint exists
+        run: |
+          test -f "$SOURCE_CHECKPOINT"
+          sha256sum "$SOURCE_CHECKPOINT"
+
+      - name: Execute real MaleCNS in Light Chase
+        env:
+          STEPS: ${{ inputs.steps }}
+          LIGHT_SEED: ${{ inputs.seed }}
+        run: |
+          python -m neurofly.light_chase_real_smoke             --source-checkpoint "$SOURCE_CHECKPOINT"             --proof-checkpoint "$PROOF_CHECKPOINT"             --receipt "$RECEIPT"             --steps "$STEPS"             --seed "$LIGHT_SEED"
+
+      - name: Validate narrow execution receipt
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          receipt = json.loads(
+              Path("runs/light-chase-real-smoke/light-chase-real-smoke-receipt.json").read_text()
+          )
+          assert receipt["schema"] == "neurofly-light-chase-real-malecns-smoke-receipt-v0.1"
+          assert receipt["status"] == "PASS"
+          assert receipt["passed"] is True
+          assert receipt["environment_model"] == "neurofly-light-chase-v0.1"
+          assert receipt["neural_activity_verified"] is True
+          assert receipt["learning_enabled"] is False
+          assert receipt["light_seeking_behavior_validated"] is False
+          assert receipt["light_chase_learning_validated"] is False
+          assert receipt["generalization_validated"] is False
+          assert receipt["production_checkpoint_mutated"] is False
+          assert receipt["behavioral_promotion_authorized"] is False
+          assert all(receipt["contract_gates"].values())
+          assert all(receipt["invariants"].values())
+          print(
+              "REAL_MALECNS_LIGHT_CHASE_EXECUTION_PASS",
+              receipt["receipt_sha256"],
+              "steps=",
+              receipt["steps"],
+              "actions=",
+              receipt["action_counts"],
+          )
+          PY
+
+      - name: Publish compact Light Chase evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-light-chase-real-smoke-${{ github.run_id }}
+          path: |
+            runs/light-chase-real-smoke/preflight.json
+            runs/light-chase-real-smoke/light-chase-real-smoke-receipt.json
+          if-no-files-found: error
+          retention-days: 1
