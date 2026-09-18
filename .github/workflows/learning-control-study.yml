@@ -1,0 +1,126 @@
+name: NeuroFly Learning Control Study
+
+on:
+  workflow_dispatch:
+    inputs:
+      train_steps:
+        description: "Training decisions per arm"
+        required: false
+        default: "60"
+      eval_steps:
+        description: "Frozen evaluation decisions per held-out seed"
+        required: false
+        default: "20"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: neurofly-learning-control-study
+  cancel-in-progress: false
+
+jobs:
+  controlled-learning-study:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      SOURCE_STATE: runs/free-malecns
+      STUDY_DIR: runs/learning-control-study
+      BASE_CHECKPOINT: runs/learning-control-study/base-brain.npz
+      RECEIPT: runs/learning-control-study/learning-control-study-receipt.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+
+      - name: Restore latest production checkpoint read-only source
+        uses: actions/cache/restore@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-v06-state-learning-study-${{ github.run_id }}
+          restore-keys: |
+            neurofly-v06-state-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare and verify MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$STUDY_DIR"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+          python -m neurofly host-preflight | tee "$STUDY_DIR/preflight.json"
+
+      - name: Copy production brain into isolated study baseline
+        run: |
+          test -f "$SOURCE_STATE/brain.npz"
+          cp "$SOURCE_STATE/brain.npz" "$BASE_CHECKPOINT"
+          test "$(realpath "$SOURCE_STATE/brain.npz")" != "$(realpath "$BASE_CHECKPOINT")"
+          sha256sum "$SOURCE_STATE/brain.npz" "$BASE_CHECKPOINT"
+
+      - name: Execute preregistered four-arm study
+        env:
+          TRAIN_STEPS: ${{ inputs.train_steps }}
+          EVAL_STEPS: ${{ inputs.eval_steps }}
+        run: |
+          python -m neurofly.learning_control_study \
+            --base-checkpoint "$BASE_CHECKPOINT" \
+            --output-dir "$STUDY_DIR/arms" \
+            --receipt "$RECEIPT" \
+            --train-steps "$TRAIN_STEPS" \
+            --eval-steps "$EVAL_STEPS"
+
+      - name: Validate non-promotional learning evidence receipt
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          receipt = json.loads(
+              Path("runs/learning-control-study/learning-control-study-receipt.json").read_text()
+          )
+          assert receipt["schema"] == "neurofly-learning-control-study-receipt-v0.1"
+          assert receipt["status"] == "HUMAN_REVIEW_REQUIRED"
+          assert receipt["passed_execution_gate"] is True
+          assert receipt["learning_validated"] is False
+          assert receipt["generalization_validated"] is False
+          assert receipt["causal_learning_claim_authorized"] is False
+          assert receipt["behavioral_promotion_authorized"] is False
+          assert receipt["production_checkpoint_mutated"] is False
+          assert receipt["human_science_review_required"] is True
+          assert all(receipt["contract_gates"].values())
+          assert all(receipt["evidence_gates"].values())
+          assert set(receipt["arm_results"]) == {
+              "learning_true",
+              "frozen_true",
+              "learning_scrambled",
+              "learning_sensory_off",
+          }
+          print(
+              "LEARNING_CONTROL_STUDY_EVIDENCE_READY",
+              receipt["receipt_sha256"],
+              receipt["descriptive_effects"],
+          )
+          PY
+
+      - name: Publish compact study evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-learning-control-study-${{ github.run_id }}
+          path: |
+            runs/learning-control-study/preflight.json
+            runs/learning-control-study/learning-control-study-receipt.json
+          if-no-files-found: error
+          retention-days: 1
