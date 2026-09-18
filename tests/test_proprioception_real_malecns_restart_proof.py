@@ -4,7 +4,7 @@ import copy
 import json
 from pathlib import Path
 
-from neurofly.proprioception import neutral_proprioception
+from neurofly.proprioception import feco_motion_proprioception
 from neurofly.proprioception_real_malecns_restart_proof import (
     RECEIPT_SCHEMA,
     evaluate_restart_evidence,
@@ -21,7 +21,7 @@ def _contract() -> dict:
 
 
 def _training_receipt(*, clears_before: int, clears_after: int, ticks: int) -> dict:
-    proprioception = neutral_proprioception()
+    proprioception = feco_motion_proprioception(joint_delta=0.0, vibration=0.0)
     state = {
         "total_clears": clears_after,
         "total_deaths": 2,
