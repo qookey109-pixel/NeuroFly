@@ -6,6 +6,7 @@ import time
 
 from .brain_runtime import DemoBrain, MaleCNSBrain, brain_status
 from .experiments import list_experiments
+from .light_chase import LightChaseSession
 from .maze_runtime import MazeSession
 from .preflight import collect_preflight
 from .server import run_cloud_server, run_server
@@ -105,6 +106,38 @@ def _maze_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _light_run(args: argparse.Namespace) -> int:
+    brain = _build_brain(args.brain, args.checkpoint)
+    session = LightChaseSession(
+        brain,
+        checkpoint=args.checkpoint,
+        checkpoint_every=args.checkpoint_every,
+        seed=args.seed,
+    )
+    steps = 0
+    try:
+        while args.steps <= 0 or steps < args.steps:
+            state = session.tick()
+            steps += 1
+            summary = {
+                "step": steps,
+                "episode": state["episode"],
+                "action": state["last_action"],
+                "reward": state["last_reward"],
+                "lights": state["total_lights"],
+                "event": state.get("last_event"),
+                "brain": state["brain"]["backend"],
+            }
+            print(json.dumps(summary, separators=(",", ":")), flush=True)
+            if args.interval > 0:
+                time.sleep(args.interval)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        session.save()
+    return 0
+
+
 def _maze_server(args: argparse.Namespace) -> int:
     run_server(
         brain=args.brain,
@@ -169,6 +202,17 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--checkpoint-every", type=float, default=300.0)
     run.add_argument("--seed", type=int, default=109)
 
+    light = subparsers.add_parser(
+        "light-run",
+        help="run the sensory-driven Light Chase environment without a browser",
+    )
+    light.add_argument("--brain", choices=("demo", "malecns"), default="demo")
+    light.add_argument("--steps", type=int, default=0, help="0 means run until interrupted")
+    light.add_argument("--interval", type=float, default=0.6, help="wall seconds between decisions")
+    light.add_argument("--checkpoint", default="runs/light-fly-001/brain.npz")
+    light.add_argument("--checkpoint-every", type=float, default=300.0)
+    light.add_argument("--seed", type=int, default=109)
+
     server = subparsers.add_parser("maze-server", help="serve the visualizer plus persistent Maze API")
     server.add_argument("--brain", choices=("demo", "malecns"), default="demo")
     server.add_argument("--host", default="127.0.0.1")
@@ -205,6 +249,8 @@ def main(argv: list[str] | None = None) -> int:
         return _publish_site_state(args)
     if args.command == "maze-run":
         return _maze_run(args)
+    if args.command == "light-run":
+        return _light_run(args)
     if args.command == "maze-server":
         return _maze_server(args)
     if args.command == "cloud-server":
