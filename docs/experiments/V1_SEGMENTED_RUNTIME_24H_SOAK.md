@@ -5,81 +5,82 @@
 NeuroFly's zero-cost long-running mode is intentionally segmented across
 bounded GitHub-hosted runners.
 
-It is not a single operating-system process that remains alive for 24 hours.
+It is not one operating-system process that remains alive for 24 hours.
 
-The release question for this mode is therefore:
+The relevant v1 release question is whether the real MaleCNS production runtime
+can remain continuously covered by successful checkpointed runner lifecycles
+for at least 24 wall-clock hours.
 
-Can the real MaleCNS runtime continue through a checkpointed bounded-run chain
-for at least 24 wall-clock hours without a failed curriculum run or a broken
-run-number sequence?
+## Frozen production evidence
 
-## Frozen evidence window
+The upgraded evidence snapshot covers:
 
-This evidence snapshot covers:
-
-- first run number: 225
-- first run ID: 35131079927
-- first created: 2026-09-16T17:54:34Z
-- last run number: 458
-- last run ID: 35317484236
-- last updated: 2026-09-18T07:11:19Z
+- first run number: 159
+- first run ID: 35067765930
+- first created: 2026-09-16T07:17:21Z
+- last run number: 461
+- last run ID: 35319851297
+- last updated: 2026-09-18T07:43:05Z
 
 Observed:
 
-- 234 consecutive NeuroFly Curriculum Training runs
-- all 234 completed successfully
+- 303 consecutive NeuroFly Curriculum Training runs
+- 303 / 303 completed successfully
 - no missing run number
-- wall-clock span: 134205 seconds
-- wall-clock span: 37.28 hours
-- maximum positive handoff idle gap from GitHub run metadata: 0 seconds
+- wall-clock span: 174344 seconds
+- wall-clock span: 48.428889 hours
+- maximum positive handoff idle gap: 0 seconds
+- maximum raw handoff gap: -2 seconds
 
-The raw handoff gap can be negative because the next workflow is dispatched and
-queued before the previous workflow finishes its final cleanup. Negative values
-therefore represent overlap in GitHub run lifecycle metadata, not time travel
-or a continuity defect.
+A negative raw handoff gap means the next workflow was already dispatched and
+started before the previous workflow finished its final cleanup. It is overlap,
+not an error.
 
 ## Acceptance rule
 
-The frozen release rule is:
+For this frozen evidence, PASS requires:
 
 - at least 24 wall-clock hours;
-- consecutive run numbers;
-- every completed run successful;
-- no positive handoff idle gap above 1200 seconds;
-- a single uninterrupted operating-system process is not required.
+- exact consecutive run numbers;
+- every recorded run completed with conclusion success;
+- no positive gap between adjacent runner lifecycles;
+- no requirement that a single Python or operating-system process survive for
+  the whole interval.
 
-The observed window passes every rule.
+The observed 48.43-hour window passes every rule.
 
-## Why workflow success matters
+## Why a successful curriculum run is meaningful
 
-The NeuroFly Curriculum Training workflow does not treat training or checkpoint
-persistence as optional.
+The production NeuroFly Curriculum Training workflow treats both real MaleCNS
+training and checkpoint persistence as required operations.
 
-A successful workflow requires:
+A successful run requires the real MaleCNS training step to complete. The
+training code rejects any decision that lacks verifiable neural activity.
 
-1. real MaleCNS curriculum training to complete;
-2. the isolated brain and curriculum state to be saved through
-   actions/cache/save.
+After successful training, the coordinated brain and curriculum state is saved
+with actions/cache/save. That state-cache step is not configured as
+continue-on-error.
 
-Publishing the viewer state and continuation dispatch have separate resilience
-behavior, but failure to train or persist the state is not silently converted
-into a successful run.
+Therefore the frozen chain is not simply 303 green scheduler pings: it is a
+sequence of successful real-MaleCNS training executions with persisted state
+handoff.
 
-The workflow also uses one concurrency group so curriculum runners do not race
-each other as independent training authorities.
+Viewer-state publishing and continuation dispatch have separate resilience
+behavior, so they do not change the authority of the safely persisted brain.
 
 ## Relationship to forced-crash evidence
 
 The segmented soak and the forced-crash proof answer different questions.
 
-The 37.28-hour soak demonstrates sustained bounded-run operation and repeated
-handoff.
+The 48.43-hour soak demonstrates sustained bounded-run operation with
+continuous runner-lifecycle coverage and repeated checkpoint handoff.
 
-The separate forced-crash evidence demonstrates that an unsaved crashing
-process does not modify the last coordinated checkpoint and that a distinct
-real MaleCNS process can recover from it.
+The separate forced-crash proof demonstrates that unsaved process failure does
+not modify the last persisted checkpoint and that a distinct real MaleCNS
+process can recover from it.
 
-Together they provide stronger long-running evidence than either result alone.
+Together they support the v1 long-running platform requirement more strongly
+than either result alone.
 
 ## Claim boundary
 
@@ -98,13 +99,10 @@ It does not support:
 - storage_corruption_immunity_claimed
 - every_unsaved_decision_preserved_claimed
 
-Those stronger statements remain false.
-
-## Source of truth
-
-The full run metadata used for this evidence is frozen in:
+The full per-run metadata is frozen in:
 
 data/v1_segmented_runtime_soak_20260918.json
 
-CI recomputes continuity, success status, wall-clock span and handoff-gap bounds
-from the individual run records rather than trusting only the stored summary.
+CI recomputes run-number continuity, success status, wall-clock span and
+handoff-gap bounds from the individual records rather than trusting only the
+stored summary.
