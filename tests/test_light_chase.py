@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 
 from neurofly.brain_runtime import BrainDecision
+from neurofly.cli import build_parser
 from neurofly.light_chase import (
     LIGHT_CHASE_MODEL,
     LIGHT_CHASE_VISION_MODEL,
@@ -178,3 +179,16 @@ def test_invalid_action_fails_closed() -> None:
     env = LightChaseEnvironment(seed=31)
     with pytest.raises(ValueError):
         env.step("TELEPORT")
+
+
+def test_cli_exposes_light_run_without_privileged_options() -> None:
+    args = build_parser().parse_args(
+        ["light-run", "--brain", "demo", "--steps", "3", "--interval", "0"]
+    )
+
+    assert args.command == "light-run"
+    assert args.brain == "demo"
+    assert args.steps == 3
+    assert args.interval == 0.0
+    assert not hasattr(args, "target_x")
+    assert not hasattr(args, "target_y")
