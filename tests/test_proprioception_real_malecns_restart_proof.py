@@ -130,7 +130,7 @@ def test_gate_fails_if_first_handoff_does_not_match_pending_receptor() -> None:
     a = _training_receipt(clears_before=3, clears_after=4, ticks=20)
     b = _training_receipt(clears_before=4, clears_after=4, ticks=21)
     pending = copy.deepcopy(a["trajectory"][0]["human_diagnostics"]["proprioception"])
-    pending["channels"]["hook_extension"]["level"] = 0.5
+    pending["channels"]["hook_extension"] = 0.5
 
     report = evaluate_restart_evidence(
         _contract(),
@@ -174,4 +174,5 @@ def test_manual_workflow_is_isolated_and_does_not_mutate_production_state() -> N
     assert "git push" not in workflow
     assert "Continue NeuroFly" not in workflow
     assert "runs/restart-proof" in workflow
-    assert "runs/free-malecns/brain.npz" in workflow
+    assert "SOURCE_STATE: runs/free-malecns" in workflow
+    assert "PROOF_CHECKPOINT: runs/restart-proof/brain.npz" in workflow
