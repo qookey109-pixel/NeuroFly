@@ -1,0 +1,22 @@
+{
+  "schema": "neurofly-environment-adapter-contract-v0.1",
+  "status": "PLATFORM_CONTRACT",
+  "adapter_schema": "neurofly-environment-adapter-v0.1",
+  "required_environments": [
+    "neurofly-maze-chase-v0.1",
+    "neurofly-light-chase-v0.1"
+  ],
+  "required_actions": ["TURN_LEFT", "TURN_RIGHT", "FORWARD", "HOLD"],
+  "required_properties": {
+    "shared_session_orchestration": true,
+    "sensory_only_neural_context": true,
+    "egocentric_visual_input": true,
+    "privileged_world_geometry_not_in_neural_context": true,
+    "olfactory_source_coordinates_not_in_neural_context": true,
+    "environment_public_state_separate_from_neural_context": true,
+    "environment_checkpoint_restartable": true,
+    "pending_reinforcement_restartable": true,
+    "brain_backend_interface_reused": true,
+    "legacy_environment_commands_preserved": true
+  }
+}

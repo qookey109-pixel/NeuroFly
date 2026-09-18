@@ -1,0 +1,27 @@
+{
+  "schema": "neurofly-light-chase-real-malecns-smoke-v0.1",
+  "status": "EXECUTION_REQUIRED",
+  "scope": "real-malecns-light-chase-sensory-execution",
+  "environment_model": "neurofly-light-chase-v0.1",
+  "default_steps": 3,
+  "learning_enabled": false,
+  "required_invariants": {
+    "source_checkpoint_isolated": true,
+    "source_checkpoint_unchanged": true,
+    "real_malecns_backend": true,
+    "all_steps_neural_activity_verified": true,
+    "all_steps_use_light_chase_environment": true,
+    "all_steps_sensory_context_unprivileged": true,
+    "all_actions_valid": true,
+    "proof_brain_checkpoint_saved": true,
+    "proof_environment_checkpoint_saved": true,
+    "learning_disabled": true
+  },
+  "claim_limits": {
+    "light_seeking_behavior_validated": false,
+    "light_chase_learning_validated": false,
+    "generalization_validated": false,
+    "production_checkpoint_mutated": false,
+    "behavioral_promotion_authorized": false
+  }
+}

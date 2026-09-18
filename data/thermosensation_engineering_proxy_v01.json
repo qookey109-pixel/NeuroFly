@@ -1,0 +1,36 @@
+{
+  "schema": "neurofly-thermosensation-engineering-proxy-v0.1",
+  "status": "ENGINEERING_PROXY_ONLY",
+  "model": "neurofly-thermal-change-proxy-v0.1",
+  "encoding": "virtual-ambient-temperature-change-only-proxy",
+  "step_scale_c": 1.0,
+  "required_channels": ["warming", "cooling", "thermal_change"],
+  "required_properties": {
+    "neutral_zero": true,
+    "warming_cooling_mutually_exclusive": true,
+    "directional_magnitude_symmetric": true,
+    "thermal_change_equals_directional_magnitude": true,
+    "bounded_unit_interval": true,
+    "monotonic_nondecreasing_with_delta_magnitude": true,
+    "saturates_at_step_scale": true,
+    "absolute_temperature_not_exposed": true,
+    "target_temperature_not_exposed": true,
+    "source_location_not_exposed": true,
+    "reward_not_exposed": true,
+    "action_not_exposed": true,
+    "first_observation_neutral": true,
+    "private_history_restartable": true
+  },
+  "biological_claims": {
+    "exact_thermoreceptor_type_mapping_resolved": false,
+    "biological_current_calibrated": false,
+    "biological_latency_calibrated": false,
+    "thermal_preference_setpoint_calibrated": false,
+    "noxious_heat_pathway_modeled": false
+  },
+  "runtime_authority": {
+    "neural_context_integration_authorized": false,
+    "stimulation_current_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
