@@ -1,0 +1,137 @@
+{
+  "schema": "neurofly-v1-real-execution-evidence-v0.1",
+  "status": "EVIDENCE_FROZEN",
+  "captured_at_utc": "2026-09-18T06:37:37Z",
+  "workflow_head_sha": "35341d96843d846388ace5520569187c0521ade3",
+  "shared_source_checkpoint_sha256": "afbe266465e0b14c4a353f2ee7123c4a2cc85835bf3db90b1b8cd9b60e366ddd",
+  "shared_preflight_sha256": "3c4d2a5af2487b5fb67039a4fee9667f193dbe052127f3a8c39db3c27502938b",
+  "light_chase_real_malecns": {
+    "run_id": 35315244715,
+    "run_number": 1,
+    "artifact_id": 10535365177,
+    "artifact_zip_sha256": "7dae01b31d8b67785fd4f857ac02c41a6a71896955ac3ff3619adaa1ecb9552d",
+    "receipt_sha256": "cbcb0543946ec8e18fb8a2574221c51df26335b3f3e5f1adf88fe59d024125ea",
+    "schema": "neurofly-light-chase-real-malecns-smoke-receipt-v0.1",
+    "status": "PASS",
+    "passed": true,
+    "steps": 3,
+    "action_counts": {"TURN_LEFT": 3},
+    "total_reward": -0.03,
+    "total_lights": 0,
+    "learning_enabled": false,
+    "neural_activity_verified": true,
+    "proof_checkpoint_sha256": "2590b87c0f5c8dd0c02a42241872350cf69ccb8dae10071adf0c32d535ed1b1e",
+    "proof_environment_checkpoint_sha256": "b3a11c15e94cfbd1440b9f46f5694900a4b3ea69a83bd5fc544a7ca4f646114d",
+    "all_invariants_passed": true
+  },
+  "forced_crash_recovery": {
+    "run_id": 35315253949,
+    "run_number": 1,
+    "artifact_id": 10534831331,
+    "artifact_zip_sha256": "42f52768f706dfb67846dc04771e95148b8ea9d5210988243eb1f5b7b35b3700",
+    "receipt_sha256": "df516cc8802fbd1816ba7d49fcd163bd167c01edd7f3163d29ebd98ff6aa7aea",
+    "schema": "neurofly-runtime-forced-crash-recovery-receipt-v0.1",
+    "status": "PASS",
+    "passed": true,
+    "cycles_completed": 3,
+    "expected_cycles": 3,
+    "source_maze_checkpoint_sha256": "745100c2b263eb143d9370a81ec9518af41845333f1ef537795d629828cefa0c",
+    "source_checkpoint_unchanged": true,
+    "checkpoint_pair_unchanged_by_unsaved_crash": true,
+    "crash_process_neural_activity_verified": true,
+    "recovery_process_is_distinct": true,
+    "recovery_real_malecns_verified": true,
+    "recovery_resumes_persisted_counters": true,
+    "production_checkpoint_mutated": false,
+    "zero_data_loss_claimed": false,
+    "twenty_four_hour_soak_validated": false,
+    "all_invariants_passed": true
+  },
+  "learning_control_study": {
+    "run_id": 35315263154,
+    "run_number": 1,
+    "artifact_id": 10534855900,
+    "artifact_zip_sha256": "bfa34601243feb74db113509dfeffb5f719357ec8fa814c01c9091f607890419",
+    "receipt_sha256": "d14be40f2dc3f589548e9e36e453090a2db0605124b5b690d8779b1ff1d958bc",
+    "schema": "neurofly-learning-control-study-receipt-v0.1",
+    "status": "HUMAN_REVIEW_REQUIRED",
+    "passed_execution_gate": true,
+    "train_steps": 60,
+    "evaluation_steps_per_seed": 20,
+    "held_out_seeds": [701, 709, 719],
+    "arm_aggregates": {
+      "learning_true": {
+        "mean_hold_fraction": 0.5,
+        "mean_total_clears": 0,
+        "mean_total_deaths": 0,
+        "mean_total_food": 3,
+        "mean_total_reward": 2.8
+      },
+      "frozen_true": {
+        "mean_hold_fraction": 0.75,
+        "mean_total_clears": 0,
+        "mean_total_deaths": 0,
+        "mean_total_food": 0,
+        "mean_total_reward": -0.2
+      },
+      "learning_scrambled": {
+        "mean_hold_fraction": 0.8,
+        "mean_total_clears": 0,
+        "mean_total_deaths": 0,
+        "mean_total_food": 0,
+        "mean_total_reward": -0.2
+      },
+      "learning_sensory_off": {
+        "mean_hold_fraction": 0.55,
+        "mean_total_clears": 0,
+        "mean_total_deaths": 0,
+        "mean_total_food": 1,
+        "mean_total_reward": 0.8
+      }
+    },
+    "descriptive_effects": {
+      "learning_true_minus_frozen_true": {
+        "mean_hold_fraction": -0.25,
+        "mean_total_clears": 0.0,
+        "mean_total_deaths": 0.0,
+        "mean_total_food": 3.0,
+        "mean_total_reward": 3.0
+      },
+      "learning_true_minus_learning_scrambled": {
+        "mean_hold_fraction": -0.3,
+        "mean_total_clears": 0.0,
+        "mean_total_deaths": 0.0,
+        "mean_total_food": 3.0,
+        "mean_total_reward": 3.0
+      },
+      "learning_true_minus_learning_sensory_off": {
+        "mean_hold_fraction": -0.05,
+        "mean_total_clears": 0.0,
+        "mean_total_deaths": 0.0,
+        "mean_total_food": 2.0,
+        "mean_total_reward": 2.0
+      }
+    },
+    "learning_validated": false,
+    "generalization_validated": false,
+    "causal_learning_claim_authorized": false,
+    "behavioral_promotion_authorized": false,
+    "production_checkpoint_mutated": false,
+    "all_execution_gates_passed": true
+  },
+  "v1_claims_now_supported": {
+    "real_malecns_runs_second_game_via_sensory_adapter": true,
+    "isolated_forced_crash_recovery_verified": true,
+    "controlled_real_malecns_learning_comparison_executed": true
+  },
+  "claims_still_locked": {
+    "light_seeking_behavior_validated": false,
+    "light_chase_learning_validated": false,
+    "learning_validated": false,
+    "generalization_validated": false,
+    "causal_learning_claim_authorized": false,
+    "twenty_four_hour_soak_validated": false,
+    "zero_data_loss_claimed": false,
+    "snpp39_snpp41_polarity_resolved": false
+  }
+}
