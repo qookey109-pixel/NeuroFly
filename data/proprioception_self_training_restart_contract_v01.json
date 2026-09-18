@@ -1,0 +1,53 @@
+{
+  "schema": "neurofly-proprioception-self-training-restart-contract-v0.1",
+  "status": "REVIEW_REQUIRED",
+  "scope": "production-self-training-orchestration-restart-contract-only",
+  "upstream": {
+    "pull_request": 83,
+    "head_sha": "fa06b584eb8edd39672a1c4a7aae77613d9a7714"
+  },
+  "action_alphabet": ["HOLD", "FORWARD", "TURN_LEFT", "TURN_RIGHT"],
+  "exhaustive_max_length": 3,
+  "stress_sequences": [
+    ["FORWARD", "TURN_LEFT", "FORWARD", "TURN_RIGHT", "HOLD"],
+    ["TURN_LEFT", "TURN_RIGHT", "TURN_LEFT", "TURN_RIGHT", "FORWARD"],
+    ["FORWARD", "FORWARD", "TURN_LEFT", "FORWARD", "HOLD"],
+    ["HOLD", "FORWARD", "TURN_RIGHT", "FORWARD", "TURN_LEFT"],
+    ["TURN_RIGHT", "FORWARD", "TURN_RIGHT", "FORWARD", "HOLD"],
+    ["TURN_LEFT", "FORWARD", "TURN_LEFT", "FORWARD", "HOLD"],
+    ["HOLD", "HOLD", "FORWARD", "TURN_LEFT", "FORWARD"],
+    ["FORWARD", "HOLD", "TURN_RIGHT", "HOLD", "FORWARD"]
+  ],
+  "expected_coverage": {
+    "sequence_count": 92,
+    "restart_cases": 360,
+    "post_restart_step_comparisons": 556
+  },
+  "required_invariants": {
+    "production_public_projection_used": true,
+    "production_neural_verification_used": true,
+    "post_restart_neural_proprioception_matches_uninterrupted": true,
+    "post_restart_public_current_proprioception_matches_uninterrupted": true,
+    "post_restart_stable_public_gameplay_state_matches_uninterrupted": true,
+    "temporal_history_is_process_local_after_restart": true,
+    "temporal_sequence_restarts_at_one": true,
+    "temporal_latest_sample_matches_current_handoff": true,
+    "private_checkpoint_state_not_public": true,
+    "human_diagnostics_not_in_neural_context": true,
+    "restored_handoffs_pass_unprivileged_guard": true
+  },
+  "proof_limitations": {
+    "actual_malecns_process_restart_executed": false,
+    "malecns_brain_checkpoint_equivalence_proven": false,
+    "biological_restart_memory_claimed": false,
+    "production_orchestration_contract_only": true
+  },
+  "hard_locks": {
+    "systematic_type_mapping_exposed": false,
+    "current_calibration_authorized": false,
+    "stimulation_enabled": false,
+    "runtime_transduction_enabled": false,
+    "runtime_gating_authorized": false,
+    "neural_payload_promotion_authorized": false
+  }
+}
