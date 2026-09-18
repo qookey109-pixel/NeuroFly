@@ -300,6 +300,7 @@ def _run_training_arm(
         checkpoint=arm_checkpoint,
         learning=learning,
     )
+    inner.brain.weights_frozen = not learning
     if bool(inner.learning) is not bool(learning):
         raise RuntimeError("MaleCNS learning mode mismatch")
     if bool(inner.brain.weights_frozen) is not (not learning):
@@ -348,6 +349,7 @@ def _evaluate_arm(
             checkpoint=arm_checkpoint,
             learning=False,
         )
+        inner.brain.weights_frozen = True
         if inner.learning or not inner.brain.weights_frozen:
             raise RuntimeError("Held-out evaluation must run frozen")
 
