@@ -1,0 +1,80 @@
+{
+  "schema": "neurofly-dan-baseline-intervention-run1-freeze-v0.1",
+  "run_id": 35348834258,
+  "head_sha": "4cad75ab00490fa21ae210b7801e2714b98f20c0",
+  "artifact_id": 10549342294,
+  "artifact_digest": "sha256:651913a8940d7520f44cae10b74f52797fabcdf29d321360a08e0a9a93145a9d",
+  "receipt_sha256": "7a679541962dc5cac24b63aeb62a172a71d0875fc9171cc49ac5df29d3eec907",
+  "execution_valid": true,
+  "calibration": {
+    "interpretation": "task-conditioned endogenous DAN firing baseline; not a biological resting-rate claim",
+    "dan_ids": [
+      "114661",
+      "119763",
+      "137539",
+      "138822",
+      "139706",
+      "145749",
+      "147857",
+      "157016",
+      "204930",
+      "215931",
+      "224500",
+      "238644",
+      "273182",
+      "319321",
+      "520616",
+      "11327",
+      "11900"
+    ],
+    "reward_cell_count": 15,
+    "aversive_cell_count": 2,
+    "values_hz": [
+      0,
+      0,
+      0.11111111,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      123,
+      130.44444444
+    ],
+    "digest": "1fd69ded16a400e9a00e1265e8264aeafe7d402fa1819fc412df041fa7f205f9",
+    "mean_reward_cell_baseline_hz": 0.00740741,
+    "mean_aversive_cell_baseline_hz": 126.72222222,
+    "nonzero_cells": 3
+  },
+  "aggregate": {
+    "frozen_none_zero_baseline": {
+      "mean_memory_changed_steps": 0,
+      "mean_final_efficacy_delta": 0,
+      "mean_eval_reward": -4.7
+    },
+    "learning_none_zero_baseline": {
+      "mean_memory_changed_steps": 60,
+      "mean_final_efficacy_delta": -0.007285147905,
+      "mean_eval_reward": -5.075
+    },
+    "learning_none_calibrated_baseline": {
+      "mean_memory_changed_steps": 60,
+      "mean_final_efficacy_delta": 0.144373297691,
+      "mean_eval_reward": -3.45
+    }
+  },
+  "interpretation_limits": {
+    "calibrated_baseline_eliminated_drift": false,
+    "calibrated_baseline_reversed_drift_direction": true,
+    "calibrated_baseline_increased_absolute_drift": true,
+    "task_conditioned_dan_baseline_causal": false,
+    "biological_dan_resting_rate_established": false
+  }
+}
