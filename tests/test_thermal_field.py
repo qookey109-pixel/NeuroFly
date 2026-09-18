@@ -31,16 +31,18 @@ def test_moving_toward_heat_source_produces_warming_without_leaking_world_state(
     assert first == {"warming": 0.0, "cooling": 0.0, "thermal_change": 0.0}
     assert levels["warming"] > 0.0
     assert levels["cooling"] == 0.0
+    assert warming["source_location_exposed"] is False
     assert all(
         token not in encoded
         for token in (
             "baseline_c",
             "delta_c",
             "decay_cells",
-            "source",
-            '"x"',
-            '"y"',
+            '"x":',
+            '"y":',
             "ambient_temperature_c",
+            "previous_temperature_c",
+            "_previous_temperature_c",
         )
     )
 
