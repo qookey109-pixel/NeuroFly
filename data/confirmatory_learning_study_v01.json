@@ -1,0 +1,76 @@
+{
+  "schema": "neurofly-confirmatory-learning-study-v0.1",
+  "status": "PREREGISTERED_EXECUTION_REQUIRED",
+  "scope": "real-malecns-confirmatory-learning-validation",
+  "design_origin": {
+    "exploratory_run_id": 35315263154,
+    "exploratory_receipt_sha256": "d14be40f2dc3f589548e9e36e453090a2db0605124b5b690d8779b1ff1d958bc",
+    "exploratory_result_used_for_design_only": true
+  },
+  "arms": [
+    {"name":"learning_true","learning":true,"sensory_mode":"normal","reinforcement_mode":"true"},
+    {"name":"frozen_true","learning":false,"sensory_mode":"normal","reinforcement_mode":"true"},
+    {"name":"learning_scrambled","learning":true,"sensory_mode":"normal","reinforcement_mode":"scrambled"},
+    {"name":"learning_sensory_off","learning":true,"sensory_mode":"off","reinforcement_mode":"true"}
+  ],
+  "training_steps": 60,
+  "evaluation_steps_per_seed": 20,
+  "replicates": [
+    {"id":"R1","training_seed":211,"held_out_seeds":[1009,1013,1019]},
+    {"id":"R2","training_seed":223,"held_out_seeds":[1021,1031,1033]},
+    {"id":"R3","training_seed":227,"held_out_seeds":[1039,1049,1051]},
+    {"id":"R4","training_seed":229,"held_out_seeds":[1061,1063,1069]},
+    {"id":"R5","training_seed":233,"held_out_seeds":[1087,1091,1093]},
+    {"id":"R6","training_seed":239,"held_out_seeds":[1097,1103,1109]},
+    {"id":"R7","training_seed":241,"held_out_seeds":[1117,1123,1129]},
+    {"id":"R8","training_seed":251,"held_out_seeds":[1151,1153,1163]}
+  ],
+  "evaluation": {
+    "learning": false,
+    "weights_frozen": true,
+    "reinforcement_mode": "none",
+    "sensory_mode": "normal"
+  },
+  "primary_endpoint": "mean_total_reward",
+  "co_primary_contrasts": [
+    "learning_true_minus_frozen_true",
+    "learning_true_minus_learning_scrambled"
+  ],
+  "confirmatory_decision_rule": {
+    "minimum_mean_reward_effect": 1.0,
+    "minimum_positive_replicates": 7,
+    "total_replicates": 8,
+    "both_co_primary_contrasts_must_pass": true,
+    "rule_locked_before_execution": true
+  },
+  "supportive_sensory_dependence_rule": {
+    "contrast": "learning_true_minus_learning_sensory_off",
+    "minimum_mean_reward_effect": 0.0,
+    "minimum_positive_replicates": 5,
+    "total_replicates": 8,
+    "required_for_learning_validated": false,
+    "required_for_causal_learning_claim": true
+  },
+  "required_evidence": {
+    "source_checkpoint_unchanged": true,
+    "all_replicates_executed": true,
+    "all_arms_start_from_same_sha_within_replicate": true,
+    "all_arm_checkpoints_isolated": true,
+    "training_real_malecns_verified": true,
+    "evaluation_real_malecns_verified": true,
+    "evaluation_learning_disabled": true,
+    "evaluation_reinforcement_disabled": true,
+    "evaluation_normal_sensory_restored": true,
+    "exploratory_seeds_not_reused": true,
+    "replicate_seed_sets_disjoint": true,
+    "decision_rule_applied_without_mutation": true
+  },
+  "claim_policy": {
+    "learning_validated_only_if_confirmatory_rule_passes": true,
+    "causal_learning_claim_only_if_primary_and_sensory_support_pass": true,
+    "within_task_heldout_generalization_supported_only_if_primary_passes": true,
+    "broad_generalization_validated": false,
+    "behavioral_promotion_authorized": false,
+    "production_checkpoint_mutated": false
+  }
+}
