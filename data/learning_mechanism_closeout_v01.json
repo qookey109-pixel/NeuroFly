@@ -1,0 +1,73 @@
+{
+  "schema": "neurofly-learning-mechanism-closeout-v0.1",
+  "status": "LEARNING_MECHANISM_DIAGNOSTIC_CLOSED",
+  "scope": "current-MaleCNS-maze-learning-mechanism-diagnostic-chain",
+  "closeout_basis": {
+    "original_confirmatory_run": {
+      "run_id": 35323343414,
+      "result": "CONFIRMATORY_FAIL",
+      "receipt_sha256": "610b28444c8d3481397b6a56500e9f4cd17f66e059ce4c3c9cb73ba9fe636b8c"
+    },
+    "counterfactual_rule_replay": {
+      "run_id": 35417521260,
+      "receipt_sha256": "29f704c07380ac615c6e24566fb6ad14539082ce5521f0d8d1a9aec6b4f12581"
+    },
+    "recentered_reinforcement_discrimination": {
+      "run_id": 35419000124,
+      "receipt_sha256": "fad3e8a132ef13e474d7656a99027c41fa068f8d2108174beba9f7684759400d"
+    },
+    "external_reinforcement_increment": {
+      "run_id": 35426688269,
+      "receipt_sha256": "d0f685da13ebcfc805fb954bfd4567d9d41b86932649d31635f5d6c436f63a2f"
+    },
+    "full_network_reinforcement_pulse": {
+      "run_id": 35429987465,
+      "receipt_sha256": "b74c77cd32ce848a923f7a548f043c7dd9bc5fe6ad3c611bd44a365d1a05a001"
+    },
+    "event_local_reinforcement_pulse": {
+      "run_id": 35434647150,
+      "receipt_sha256": "6d7c7fc8c38106e8ceafb8e0346f87a7a6ae71cbfea59b2b3d9e372203e42712"
+    }
+  },
+  "frozen_findings": {
+    "seed_effectiveness_remediated": true,
+    "dan_trace_coordinate_mismatch_isolated_as_large_positive_drift_source": true,
+    "trace_recentering_reduced_that_large_drift": true,
+    "recentered_behavioral_true_vs_controls_aggregate_positive_but_replicate_inconsistent": true,
+    "rule_input_external_increment_mean_efficacy_effect": -0.000952124579,
+    "full_network_repeated_pulse_mean_efficacy_effect": -0.00227676332,
+    "event_local_all_events": 22,
+    "event_local_negative_events": 22,
+    "event_local_mean_efficacy_effect": -0.000533206896,
+    "event_local_action_divergence_fraction": 0
+  },
+  "interpretation": {
+    "supported": [
+      "The current reinforcement pulse has a measurable full-network DAN response.",
+      "From identical pre-event checkpoints, all 22 observed reward/aversive pulse branches had lower immediate mean efficacy delta than their no-pulse branches under the frozen calibrated-baseline/recentered configuration.",
+      "The large calibrated-unrecentered positive drift was substantially reduced by trace recentering."
+    ],
+    "not_supported": [
+      "validated task learning",
+      "reliable held-out behavioral generalization",
+      "formal causal-learning authorization",
+      "temporal-credit defect confirmation",
+      "replacement confirmatory authorization",
+      "behavioral promotion"
+    ]
+  },
+  "claim_locks": {
+    "learning_validated": false,
+    "true_reinforcement_discriminated": false,
+    "single_event_reinforcement_effect_causal": false,
+    "temporal_credit_defect_confirmed": false,
+    "causal_learning_claim_authorized": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  },
+  "mechanism_branch": {
+    "further_automatic_experiments_authorized": false,
+    "status": "closed_pending_new_preregistered_question_or_explicit_reopen",
+    "tuning_eta_decoder_pulse_or_reward_thresholds_authorized": false
+  }
+}
