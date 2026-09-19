@@ -171,6 +171,7 @@ class CounterfactualReplayTracer(AbstractContextManager["CounterfactualReplayTra
                 "baseline": condition_baseline,
                 "y_kc": brain.rate_kc.copy(),
                 "y_dan": y_dan,
+                "initial_y_dan": y_dan.copy(),
                 "u": brain.memory_u.copy(),
                 "w": brain.memory_w.copy(),
                 "decision_efficacy_delta": [],
@@ -300,9 +301,7 @@ class CounterfactualReplayTracer(AbstractContextManager["CounterfactualReplayTra
         for name, state in self.conditions.items():
             decision = state["decision_efficacy_delta"]
             result[name] = {
-                "initial_y_dan": _summary(
-                    self.conditions[name]["y_dan"] * 0 + 0
-                ),
+                "initial_y_dan": _summary(state["initial_y_dan"]),
                 "first_5_decision_mean_efficacy_delta": round(
                     mean(decision[:5]), 12
                 ),
