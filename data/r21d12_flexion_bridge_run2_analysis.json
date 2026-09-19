@@ -1,0 +1,122 @@
+{
+  "schema": "neurofly-r21d12-flexion-bridge-run2-analysis-v0.1",
+  "status": "EVIDENCE_ANALYSIS_ONLY",
+  "reviewed_at": "2026-09-19",
+  "workflow": {
+    "run_id": 35446074417,
+    "run_number": 2,
+    "head_sha": "ee21ef0475f4c3a12aaf093be84536fb4348bcc8",
+    "artifact_id": 10584904264,
+    "artifact_name": "neuronbridge-r21d12-flexion-bridge",
+    "artifact_digest": "sha256:0e8c329cfbac91572878bf59ebfe6e8cf73494f57d2f52170392d3c4b62534e2",
+    "result": "success"
+  },
+  "source_identity": {
+    "functional_driver": "GMR21D12-GAL4",
+    "neuronbridge_accession": "R21D12",
+    "functional_polarity": "hook_flexion",
+    "vfb_expression_pattern_id": "VFBexp_FBtp0058328",
+    "flybase_construct": "P{GMR21D12-GAL4}",
+    "flybase_id": "FBtp0058328",
+    "bdsc_stock": "48946"
+  },
+  "neuronbridge": {
+    "current_data_version": "v3_10_0",
+    "direct_line_lookup_http_status": 200,
+    "direct_line_lookup_result_count": 81,
+    "forward_cds_match_records_scanned": 16654,
+    "forward_exact_r21d12_hit_count": 15,
+    "reverse_target_hit_count": 24
+  },
+  "forward_body_to_line_best_hits": {
+    "SNpp39:810041": {
+      "rank": 32,
+      "normalizedScore": 33111.457,
+      "lm_image_id": "2749246983674789899"
+    },
+    "SNpp39:913886": {
+      "rank": 143,
+      "normalizedScore": 24719.102,
+      "lm_image_id": "2749246983674789899"
+    },
+    "SNpp41:911942": {
+      "rank": 2,
+      "normalizedScore": 36269.43,
+      "lm_image_id": "2749246983674789899"
+    }
+  },
+  "reverse_line_to_body_best_hits": {
+    "SNpp39:810041": {
+      "rank": 29,
+      "normalizedScore": 33111.457,
+      "lm_image_id": "2749246983674789899"
+    },
+    "SNpp39:913886": {
+      "rank": 32,
+      "normalizedScore": 17415.73,
+      "lm_image_id": "2711773263792439307"
+    },
+    "SNpp41:911942": {
+      "rank": 6,
+      "normalizedScore": 28238.342,
+      "lm_image_id": "2711773160935522315"
+    }
+  },
+  "body_sampling_context": {
+    "hits": {
+      "SNpp39:810041": {
+        "segment": "mesothoracic",
+        "side": "right"
+      },
+      "SNpp39:913886": {
+        "segment": "mesothoracic",
+        "side": "right"
+      },
+      "SNpp41:911942": {
+        "segment": "mesothoracic",
+        "side": "left"
+      }
+    },
+    "no_hits": {
+      "SNpp39:813911": {
+        "segment": "metathoracic",
+        "side": "left"
+      },
+      "SNpp39:814881": {
+        "segment": "metathoracic",
+        "side": "right"
+      },
+      "SNpp41:819524": {
+        "segment": "metathoracic",
+        "side": "right"
+      },
+      "SNpp41:819559": {
+        "segment": "metathoracic",
+        "side": "right"
+      }
+    },
+    "segment_balanced_for_type_inference": false,
+    "note": "All exact R21D12 hits in the frozen target set are mesothoracic; all four metathoracic targets have no exact R21D12 hit. This prevents treating hit frequency as a clean type-level enrichment statistic."
+  },
+  "interpretation": {
+    "functional_driver_polarity_is_direct": true,
+    "driver_to_body_morphology_bridge_is_bidirectional": true,
+    "SNpp41_911942_is_strongest_frozen_target_by_forward_rank": true,
+    "SNpp41_911942_is_strongest_frozen_target_by_reverse_rank": true,
+    "bridge_is_type_exclusive": false,
+    "bridge_is_curated_identity": false,
+    "computed_morphology_is_sufficient_for_exact_polarity": false,
+    "SNpp41_flexion_candidate_strengthened": true,
+    "SNpp39_extension_candidate_unchanged": true,
+    "conclusion": "R21D12 provides the strongest body-level functional-polarity morphology bridge recovered so far and preferentially supports SNpp41:911942 as hook-flexion-like, but the line also matches SNpp39 bodies and the target sampling is segment-confounded. Exact type polarity therefore remains unresolved."
+  },
+  "governance": {
+    "direct_type_to_polarity_source_found": false,
+    "snpp39_snpp41_polarity_resolved": false,
+    "exact_polarity_verified": false,
+    "current_calibration_authorized": false,
+    "runtime_stimulation_authorized": false,
+    "privileged_state_bypass_authorized": false,
+    "next_unlock_condition": "A curated or otherwise independently validated cell-level identity connecting the polarity-verified R21D12 hook-flexion cells to a MaleCNS SNpp type, or an equivalent type-exclusive functional-driver bridge without the current segment/specificity ambiguity."
+  }
+}
