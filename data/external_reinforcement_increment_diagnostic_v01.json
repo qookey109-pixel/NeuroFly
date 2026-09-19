@@ -1,0 +1,67 @@
+{
+  "schema": "neurofly-external-reinforcement-increment-diagnostic-v0.1",
+  "status": "EXPLORATORY_DIAGNOSTIC_ONLY",
+  "scope": "real-malecns-frozen-trajectory-external-reinforcement-increment",
+  "origin": {
+    "recentered_discrimination_run_id": 35419000124,
+    "recentered_discrimination_receipt_sha256": "fad3e8a132ef13e474d7656a99027c41fa068f8d2108174beba9f7684759400d",
+    "counterfactual_rule_replay_run_id": 35417521260,
+    "counterfactual_rule_replay_receipt_sha256": "29f704c07380ac615c6e24566fb6ad14539082ce5521f0d8d1a9aec6b4f12581",
+    "baseline_digest": "1fd69ded16a400e9a00e1265e8264aeafe7d402fa1819fc412df041fa7f205f9"
+  },
+  "runtime": {
+    "decision_synchronous_world": true,
+    "decisions_per_replicate": 60,
+    "neural_ms_per_decision": 50,
+    "rate_bin_ms": 10,
+    "expected_bins_per_decision": 5,
+    "live_neural_weights_frozen": true,
+    "live_external_reinforcement": "none",
+    "baseline_mode": "calibrated",
+    "trace_state_mode": "subtract_baseline"
+  },
+  "shadow_conditions": [
+    {
+      "name": "endogenous_only",
+      "external_reinforcement": "none"
+    },
+    {
+      "name": "true_external",
+      "external_reinforcement": "recorded_true_task_signal"
+    }
+  ],
+  "replicates": [
+    {
+      "id": "R1",
+      "trajectory_seed": 2111
+    },
+    {
+      "id": "R2",
+      "trajectory_seed": 2113
+    },
+    {
+      "id": "R3",
+      "trajectory_seed": 2129
+    },
+    {
+      "id": "R4",
+      "trajectory_seed": 2131
+    }
+  ],
+  "primary_descriptive_endpoints": [
+    "external_reinforced_decisions",
+    "true_minus_endogenous_first_5_decision_mean_efficacy_delta",
+    "true_minus_endogenous_final_mean_efficacy_delta",
+    "true_minus_endogenous_reward_net_drive",
+    "true_minus_endogenous_aversive_net_drive",
+    "live_frozen_memory_delta"
+  ],
+  "claim_policy": {
+    "learning_validated": false,
+    "external_reinforcement_increment_causal": false,
+    "temporal_credit_defect_confirmed": false,
+    "causal_learning_claim_authorized": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
