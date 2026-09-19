@@ -19,6 +19,8 @@ def test_probe_targets_curated_r21d12_fanc_identity() -> None:
     assert probe.FANC_R21D12_TERM == "VFB_001028lx"
     assert probe.FANC_R21D12_NATIVE == "570810"
     assert "R21D12" in probe.SEARCH_QUERIES
+    assert probe.FANC_R21D12_PROVENANCE["direct_fanc_em_cell_identity"] is False
+    assert probe.FANC_R21D12_PROVENANCE["object_kind"] == "light_microscopy_reference_registered_into_fanc_space"
 
 
 def test_probe_checks_both_snpp_systematic_types() -> None:
