@@ -42,3 +42,12 @@ def test_workflow_manual_artifact_only() -> None:
     assert "git push" not in w
     assert "external_reinforcement_increment" in w
     assert "replacement_confirmatory_authorized" in w
+
+
+def test_compact_dan_increment_mapping_is_encoded_in_source() -> None:
+    source=Path("src/neurofly/external_reinforcement_increment.py").read_text()
+    assert "self.dan_count = int(brain.rate_dan.shape[0])" in source
+    assert "np.zeros(self.dan_count" in source
+    assert "current[: self.reward_count] = self.pulse_current" in source
+    assert "current[self.reward_count :] = self.pulse_current" in source
+    assert "self.n = int(brain.n)" not in source
