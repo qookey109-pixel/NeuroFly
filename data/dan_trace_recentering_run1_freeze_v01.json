@@ -1,0 +1,54 @@
+{
+  "schema": "neurofly-dan-trace-recentering-run1-freeze-v0.1",
+  "run_id": 35415979900,
+  "head_sha": "a0a8200719cf5b5e5334b84c509bda45a41ea8c6",
+  "artifact_id": 10576451322,
+  "artifact_digest": "sha256:2eacba9bfcfbb178f144c74da8e9e14c394c241d2508c6b24b9f6ae9f747f23b",
+  "receipt_sha256": "e31b82a1649ee9c4e8d3ac584fc2910d1152f5980ba75116392894184576a589",
+  "execution_valid": true,
+  "aggregate": {
+    "learning_none_calibrated_unrecentered": {
+      "mean_first_5_step_efficacy_delta": 0.014384126663,
+      "mean_final_efficacy_delta": 0.152991831302,
+      "mean_eval_reward": 0.3,
+      "mean_memory_changed_steps": 60
+    },
+    "learning_none_calibrated_recentered": {
+      "mean_first_5_step_efficacy_delta": 0.000255060196,
+      "mean_final_efficacy_delta": -0.00276978314,
+      "mean_eval_reward": -0.95,
+      "mean_memory_changed_steps": 60
+    },
+    "learning_none_zero_baseline": {
+      "mean_first_5_step_efficacy_delta": -0.001786851883,
+      "mean_final_efficacy_delta": -0.01203905046,
+      "mean_eval_reward": -2.7,
+      "mean_memory_changed_steps": 60
+    },
+    "frozen_none_calibrated_recentered": {
+      "mean_first_5_step_efficacy_delta": 0,
+      "mean_final_efficacy_delta": 0,
+      "mean_eval_reward": -0.825,
+      "mean_memory_changed_steps": 0
+    },
+    "descriptive_contrasts": {
+      "absolute_drift_reduction_vs_unrecentered": 0.150222048162,
+      "early_drift_reduction_vs_unrecentered": 0.014129066467,
+      "recentered_minus_unrecentered_final_efficacy_delta": -0.155761614442,
+      "recentered_minus_zero_final_efficacy_delta": 0.00926926732
+    }
+  },
+  "replicate_consistency": {
+    "unrecentered_final_positive_replicates": "4/4",
+    "recentered_final_small_negative_replicates": "4/4",
+    "recentered_early_small_positive_replicates": "4/4"
+  },
+  "interpretation_limits": {
+    "trace_recentering_removed_large_positive_drift": true,
+    "residual_unreinforced_plasticity_observed": true,
+    "heldout_behavioral_improvement_not_established": true,
+    "dan_trace_state_mismatch_causal": false,
+    "trace_recentering_remediation_validated": false,
+    "kc_dan_temporal_drive_causal": false
+  }
+}
