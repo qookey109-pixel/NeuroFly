@@ -1,0 +1,38 @@
+name: Research NeuronBridge FeCO Body Probe
+
+on:
+  pull_request:
+    paths:
+      - "scripts/research_probe_neuronbridge_feco.py"
+      - ".github/workflows/research-neuronbridge-feco-body-probe.yml"
+      - "tests/test_neuronbridge_feco_probe_contract.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  neuronbridge-feco-body-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run read-only NeuronBridge body probe
+        run: |
+          python scripts/research_probe_neuronbridge_feco.py \
+            --output artifacts/neuronbridge_feco_body_probe.json
+
+      - name: Upload evidence receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: neuronbridge-feco-body-probe
+          path: artifacts/neuronbridge_feco_body_probe.json
+          if-no-files-found: error
+          retention-days: 30
