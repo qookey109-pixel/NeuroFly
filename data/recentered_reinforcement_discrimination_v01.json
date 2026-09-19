@@ -1,0 +1,90 @@
+{
+  "schema": "neurofly-recentered-reinforcement-discrimination-v0.1",
+  "status": "EXPLORATORY_INTERVENTION_ONLY",
+  "scope": "real-malecns-recentered-reinforcement-discrimination",
+  "origin": {
+    "counterfactual_run_id": 35417521260,
+    "counterfactual_receipt_sha256": "29f704c07380ac615c6e24566fb6ad14539082ce5521f0d8d1a9aec6b4f12581",
+    "recentering_run_id": 35415979900,
+    "baseline_digest": "1fd69ded16a400e9a00e1265e8264aeafe7d402fa1819fc412df041fa7f205f9"
+  },
+  "runtime": {
+    "decision_synchronous_world": true,
+    "training_steps": 60,
+    "evaluation_steps_per_seed": 20,
+    "sensory_mode": "normal",
+    "baseline_mode": "calibrated",
+    "trace_state_mode": "subtract_baseline"
+  },
+  "arms": [
+    {
+      "name": "learning_true_recentered",
+      "learning": true,
+      "reinforcement_mode": "true"
+    },
+    {
+      "name": "learning_none_recentered",
+      "learning": true,
+      "reinforcement_mode": "none"
+    },
+    {
+      "name": "learning_scrambled_recentered",
+      "learning": true,
+      "reinforcement_mode": "scrambled"
+    },
+    {
+      "name": "frozen_true_recentered",
+      "learning": false,
+      "reinforcement_mode": "true"
+    }
+  ],
+  "replicates": [
+    {
+      "id": "Q1",
+      "training_seed": 2003,
+      "held_out_seeds": [
+        2011,
+        2017
+      ]
+    },
+    {
+      "id": "Q2",
+      "training_seed": 2027,
+      "held_out_seeds": [
+        2029,
+        2039
+      ]
+    },
+    {
+      "id": "Q3",
+      "training_seed": 2053,
+      "held_out_seeds": [
+        2063,
+        2069
+      ]
+    },
+    {
+      "id": "Q4",
+      "training_seed": 2081,
+      "held_out_seeds": [
+        2083,
+        2087
+      ]
+    }
+  ],
+  "primary_descriptive_endpoints": [
+    "final_mean_efficacy_delta",
+    "memory_changed_none_steps",
+    "memory_changed_reinforced_steps",
+    "evaluation_mean_total_reward",
+    "evaluation_mean_hold_fraction"
+  ],
+  "claim_policy": {
+    "learning_validated": false,
+    "true_reinforcement_discriminated": false,
+    "causal_learning_claim_authorized": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false,
+    "production_checkpoint_mutated": false
+  }
+}
