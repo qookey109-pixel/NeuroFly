@@ -33,8 +33,8 @@ def test_probe_uses_public_malecns_v1_dvid_annotations() -> None:
     assert probe.MCNS_DVID_BASE == "https://emdata-mcns.janelia.org"
     assert probe.MCNS_V1_ROOTNODE == "f3969dc575d74e4f922a8966709958c8"
     assert probe.MCNS_ANNOTATION_DATA == "segmentation_annotations"
-    assert probe.dvid_annotation_url(911942).endswith(
-        "/segmentation_annotations/key/911942"
+    assert probe.dvid_annotation_url(911942, "abcdef").endswith(
+        "/abcdef/segmentation_annotations/key/911942"
     )
 
 
