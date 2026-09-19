@@ -30,7 +30,7 @@ MCNS_DVID_BASE = "https://emdata-mcns.janelia.org"
 MCNS_V1_ROOTNODE = "f3969dc575d74e4f922a8966709958c8"
 MCNS_ANNOTATION_DATA = "segmentation_annotations"
 
-USER_AGENT = "NeuroFly-VFB-curated-identity-audit/0.3"
+USER_AGENT = "NeuroFly-VFB-curated-identity-audit/0.4"
 DECISION_POLICY = "evidence_only_no_auto_unlock"
 REQUEST_TIMEOUT_SECONDS = 20
 
@@ -222,9 +222,42 @@ def probe_record(
     }
 
 
-def dvid_annotation_url(body_id: int) -> str:
+def resolve_mcns_head_node() -> tuple[str, dict[str, Any]]:
+    """Mirror malevnc::manc_dvid_node('neutu') for the public snapshot.
+
+    malevnc reads:
+      api/repo/<rootnode>/branch-versions/master
+    and uses the first branch version as the active head.
+    """
+    url = (
+        f"{MCNS_DVID_BASE}/api/repo/{MCNS_V1_ROOTNODE}/"
+        "branch-versions/master"
+    )
+    status, payload, error = fetch_url_json(url)
+    meta = {
+        "url": url,
+        "http_status": status,
+        "error": error,
+        "payload_preview": payload if isinstance(payload, (str, int, float)) else None,
+    }
+    candidates: list[str] = []
+    if isinstance(payload, list):
+        candidates.extend(str(x) for x in payload if isinstance(x, str))
+    elif isinstance(payload, dict):
+        raw = json.dumps(payload)
+        candidates.extend(re.findall(r"\\b[a-f0-9]{32,64}\\b", raw, re.I))
+    elif isinstance(payload, str):
+        candidates.extend(re.findall(r"\\b[a-f0-9]{32,64}\\b", payload, re.I))
+
+    node = candidates[0] if candidates else MCNS_V1_ROOTNODE
+    meta["resolved_node"] = node
+    meta["used_root_fallback"] = not bool(candidates)
+    return node, meta
+
+
+def dvid_annotation_url(body_id: int, node: str) -> str:
     return (
-        f"{MCNS_DVID_BASE}/api/node/{MCNS_V1_ROOTNODE}/"
+        f"{MCNS_DVID_BASE}/api/node/{node}/"
         f"{MCNS_ANNOTATION_DATA}/key/{body_id}"
     )
 
@@ -247,6 +280,7 @@ def main() -> int:
             "base": MCNS_DVID_BASE,
             "rootnode": MCNS_V1_ROOTNODE,
             "annotation_data": MCNS_ANNOTATION_DATA,
+            "branch_head_resolution": {},
         },
         "request_timeout_seconds": REQUEST_TIMEOUT_SECONDS,
         "searches": {},
@@ -268,6 +302,15 @@ def main() -> int:
             "privileged_state_bypass_authorized": False,
         },
     }
+
+    mcns_annotation_node, branch_meta = resolve_mcns_head_node()
+    receipt["mcns_dvid"]["branch_head_resolution"] = branch_meta
+    if branch_meta["error"]:
+        receipt["request_errors"].append({
+            "scope": "malecns-dvid:branch-head",
+            "error": branch_meta["error"],
+            "url": branch_meta["url"],
+        })
 
     for query in SEARCH_QUERIES:
         status, payload, url, error = fetch_vfb("/search", {"query": query, "limit": 100})
@@ -317,7 +360,7 @@ def main() -> int:
             if error:
                 receipt["request_errors"].append({"scope": f"malecns-vfb:{key}", "error": error, "url": url})
 
-            durl = dvid_annotation_url(body_id)
+            durl = dvid_annotation_url(body_id, mcns_annotation_node)
             dstatus, dpayload, derror = fetch_url_json(durl)
             drec = probe_record(dstatus, dpayload, durl, derror, max_records=60)
             drec.update({
@@ -375,6 +418,8 @@ def main() -> int:
         "successful_malecns_dvid_requests": sum(
             1 for rec in receipt["malecns_dvid_annotations"].values() if rec["http_status"] == 200
         ),
+        "mcns_dvid_resolved_node": mcns_annotation_node,
+        "mcns_dvid_used_root_fallback": branch_meta["used_root_fallback"],
         "request_error_count": len(receipt["request_errors"]),
         "curated_r21d12_fanc_hook_identity_found": curated_fanc_hook,
         "curated_fanc_to_malecns_snpp_bridge_found": fanc_to_malecns,
