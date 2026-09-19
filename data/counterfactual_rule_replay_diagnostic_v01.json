@@ -1,0 +1,67 @@
+{
+  "schema": "neurofly-counterfactual-rule-replay-diagnostic-v0.1",
+  "status": "EXPLORATORY_DIAGNOSTIC_ONLY",
+  "scope": "real-malecns-frozen-trajectory-counterfactual-plasticity-replay",
+  "origin": {
+    "recentering_run_id": 35415979900,
+    "recentering_receipt_sha256": "e31b82a1649ee9c4e8d3ac584fc2910d1152f5980ba75116392894184576a589",
+    "baseline_digest": "1fd69ded16a400e9a00e1265e8264aeafe7d402fa1819fc412df041fa7f205f9"
+  },
+  "runtime": {
+    "decision_synchronous_world": true,
+    "decisions_per_replicate": 60,
+    "neural_ms_per_decision": 50,
+    "rate_bin_ms": 10,
+    "expected_bins_per_decision": 5,
+    "external_reinforcement": "none",
+    "neural_weights_frozen": true
+  },
+  "replay_conditions": [
+    {
+      "name": "zero_baseline",
+      "baseline_mode": "zero",
+      "trace_state_mode": "unchanged"
+    },
+    {
+      "name": "calibrated_unrecentered",
+      "baseline_mode": "calibrated",
+      "trace_state_mode": "unchanged"
+    },
+    {
+      "name": "calibrated_recentered",
+      "baseline_mode": "calibrated",
+      "trace_state_mode": "subtract_baseline"
+    }
+  ],
+  "replicates": [
+    {
+      "id": "C1",
+      "trajectory_seed": 1901
+    },
+    {
+      "id": "C2",
+      "trajectory_seed": 1907
+    },
+    {
+      "id": "C3",
+      "trajectory_seed": 1913
+    }
+  ],
+  "primary_descriptive_endpoints": [
+    "first_5_decision_mean_efficacy_delta",
+    "final_mean_efficacy_delta",
+    "mean_aversive_net_drive",
+    "mean_reward_net_drive",
+    "live_frozen_memory_delta"
+  ],
+  "claim_policy": {
+    "learning_validated": false,
+    "dan_trace_state_mismatch_causal": false,
+    "trace_recentering_remediation_validated": false,
+    "baseline_shift_rule_effect_causal": false,
+    "kc_dan_temporal_drive_causal": false,
+    "causal_learning_claim_authorized": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
