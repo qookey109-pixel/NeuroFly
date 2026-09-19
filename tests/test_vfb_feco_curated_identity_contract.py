@@ -28,6 +28,22 @@ def test_probe_checks_both_snpp_systematic_types() -> None:
     assert probe.KNOWN_MALECNS_TERMS["SNpp39"]["810041"] == "VFB_jrmc1720"
 
 
+def test_probe_uses_public_malecns_v1_dvid_annotations() -> None:
+    probe = load_probe()
+    assert probe.MCNS_DVID_BASE == "https://emdata-mcns.janelia.org"
+    assert probe.MCNS_V1_ROOTNODE == "f3969dc575d74e4f922a8966709958c8"
+    assert probe.MCNS_ANNOTATION_DATA == "segmentation_annotations"
+    assert probe.dvid_annotation_url(911942).endswith(
+        "/segmentation_annotations/key/911942"
+    )
+
+
+def test_probe_extracts_exact_manc_body_fields() -> None:
+    probe = load_probe()
+    assert "mancBodyid" in probe.MANC_FIELD_NAMES
+    assert "manc_bodyid" in probe.MANC_FIELD_NAMES
+
+
 def test_probe_is_evidence_only() -> None:
     probe = load_probe()
     assert probe.DECISION_POLICY == "evidence_only_no_auto_unlock"
