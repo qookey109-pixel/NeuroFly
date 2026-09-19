@@ -1,0 +1,55 @@
+{
+  "schema": "neurofly-full-network-reinforcement-pulse-replay-v0.1",
+  "status": "EXPLORATORY_INTERVENTION_ONLY",
+  "scope": "real-malecns-fixed-sensory-trajectory-full-network-reinforcement-pulse",
+  "origin": {
+    "external_increment_run_id": 35426688269,
+    "external_increment_receipt_sha256": "d0f685da13ebcfc805fb954bfd4567d9d41b86932649d31635f5d6c436f63a2f",
+    "external_increment_artifact_digest": "sha256:5870157934a95b89bb1a2f5ec249b49d3dfbbf1d7875161df057108e4fdcecf8",
+    "baseline_digest": "1fd69ded16a400e9a00e1265e8264aeafe7d402fa1819fc412df041fa7f205f9"
+  },
+  "runtime": {
+    "decision_synchronous_world": true,
+    "decisions_per_replicate": 60,
+    "neural_ms_per_decision": 50,
+    "pulse_ms": 20,
+    "pulse_current": 20.0,
+    "trajectory_driver_learning": false,
+    "trajectory_driver_external_reinforcement": "none",
+    "replay_learning": true,
+    "baseline_mode": "calibrated",
+    "trace_state_mode": "subtract_baseline"
+  },
+  "conditions": [
+    {
+      "name": "endogenous_only",
+      "full_network_reinforcement": "none"
+    },
+    {
+      "name": "true_external",
+      "full_network_reinforcement": "recorded_true_task_signal"
+    }
+  ],
+  "replicates": [
+    {"id": "P1", "trajectory_seed": 2141},
+    {"id": "P2", "trajectory_seed": 2143},
+    {"id": "P3", "trajectory_seed": 2153},
+    {"id": "P4", "trajectory_seed": 2161}
+  ],
+  "primary_descriptive_endpoints": [
+    "external_reinforced_decisions",
+    "true_minus_endogenous_final_mean_efficacy_delta",
+    "reward_event_mean_reward_spike_increment",
+    "aversive_event_mean_aversive_spike_increment",
+    "paired_action_divergence_fraction",
+    "trajectory_driver_frozen_memory_delta"
+  ],
+  "claim_policy": {
+    "learning_validated": false,
+    "full_network_reinforcement_pulse_causal": false,
+    "temporal_credit_defect_confirmed": false,
+    "causal_learning_claim_authorized": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
