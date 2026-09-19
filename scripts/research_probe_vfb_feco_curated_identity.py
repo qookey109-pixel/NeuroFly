@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Read-only VFBquery audit for a curated FeCO hook polarity bridge.
+"""Read-only curated-identity audit for the FeCO hook polarity gate.
 
-The audit is intentionally cache-first and failure-tolerant:
-- one slow VFB endpoint must not discard the rest of the evidence receipt;
-- exact MaleCNS -> MANC fields are extracted when exposed;
-- directional SNpp evidence must occur inside an SNpp term payload, not merely
-  somewhere else in the combined receipt.
+Public sources:
+1. VFBquery cached API for curated VFB/FANC/MaleCNS term metadata.
+2. Public MaleCNS v1.0 DVID segmentation_annotations keys for exact
+   MaleCNS -> MANC body/type provenance when exposed.
 
-It never unlocks NeuroFly polarity/calibration/runtime automatically.
+The audit is failure-tolerant and evidence-only. It never unlocks polarity,
+calibration, or runtime stimulation automatically.
 """
 
 from __future__ import annotations
@@ -25,8 +25,12 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 
-BASE = "https://v3-cached.virtualflybrain.org"
-USER_AGENT = "NeuroFly-VFB-curated-identity-audit/0.2"
+VFB_BASE = "https://v3-cached.virtualflybrain.org"
+MCNS_DVID_BASE = "https://emdata-mcns.janelia.org"
+MCNS_V1_ROOTNODE = "f3969dc575d74e4f922a8966709958c8"
+MCNS_ANNOTATION_DATA = "segmentation_annotations"
+
+USER_AGENT = "NeuroFly-VFB-curated-identity-audit/0.3"
 DECISION_POLICY = "evidence_only_no_auto_unlock"
 REQUEST_TIMEOUT_SECONDS = 20
 
@@ -48,7 +52,14 @@ KNOWN_MALECNS_TERMS = {
     },
 }
 
-SEARCH_QUERIES = ["SNpp39", "SNpp41", "R21D12", "570810"]
+SEARCH_QUERIES = [
+    "SNpp39",
+    "SNpp41",
+    "R21D12",
+    "570810",
+    "SNpp39 MaleCNS",
+    "SNpp41 MaleCNS",
+]
 
 KEY_PATTERNS = {
     "snpp39": re.compile(r"SNpp39", re.I),
@@ -77,31 +88,37 @@ MANC_FIELD_NAMES = {
 }
 
 
-def fetch_json(
-    path: str,
-    params: dict[str, Any] | None = None,
+def fetch_url_json(
+    url: str,
     timeout: int = REQUEST_TIMEOUT_SECONDS,
-) -> tuple[int, Any | None, str, str | None]:
-    query = ("?" + urlencode(params, doseq=True)) if params else ""
-    url = f"{BASE}{path}{query}"
+) -> tuple[int, Any | None, str | None]:
     req = Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
     try:
         with urlopen(req, timeout=timeout) as res:
             raw = res.read().decode("utf-8", errors="replace")
-            return int(res.status), json.loads(raw), url, None
+            return int(res.status), json.loads(raw), None
     except HTTPError as exc:
         raw = exc.read().decode("utf-8", errors="replace")
         try:
             payload = json.loads(raw)
         except Exception:
             payload = {"raw": raw[:5000]}
-        return int(exc.code), payload, url, f"HTTPError:{exc.code}"
+        return int(exc.code), payload, f"HTTPError:{exc.code}"
     except (URLError, TimeoutError, socket.timeout) as exc:
-        return 0, None, url, f"{type(exc).__name__}:{exc}"
+        return 0, None, f"{type(exc).__name__}:{exc}"
+
+
+def fetch_vfb(
+    path: str,
+    params: dict[str, Any] | None = None,
+) -> tuple[int, Any | None, str, str | None]:
+    query = ("?" + urlencode(params, doseq=True)) if params else ""
+    url = f"{VFB_BASE}{path}{query}"
+    status, payload, error = fetch_url_json(url)
+    return status, payload, url, error
 
 
 def compact_hits(payload: Any, *, max_records: int = 80) -> list[dict[str, Any]]:
-    """Collect compact JSON subtrees containing a relevant token."""
     out: list[dict[str, Any]] = []
 
     def walk(obj: Any, path: str) -> None:
@@ -117,12 +134,12 @@ def compact_hits(payload: Any, *, max_records: int = 80) -> list[dict[str, Any]]
                     "dataset", "type", "class", "subclass", "synonyms",
                     "mancBodyid", "mancBodyId", "manc_bodyid", "manc_body_id",
                     "mancGroup", "manc_group", "mancType", "manc_type",
-                    "description", "title",
+                    "description", "title", "Comment", "Name", "Types",
                 ):
                     if key in obj and not isinstance(obj[key], (dict, list)):
                         summary[key] = obj[key]
                 if len(summary) <= 2:
-                    summary["preview"] = raw[:900]
+                    summary["preview"] = raw[:1200]
                 out.append(summary)
             for key, value in obj.items():
                 if isinstance(value, (dict, list)):
@@ -142,7 +159,6 @@ def payload_flags(payload: Any) -> dict[str, bool]:
 
 
 def find_named_values(payload: Any, wanted: set[str]) -> list[dict[str, Any]]:
-    """Recursively preserve named annotation fields and their JSON paths."""
     out: list[dict[str, Any]] = []
 
     def walk(obj: Any, path: str) -> None:
@@ -162,8 +178,23 @@ def find_named_values(payload: Any, wanted: set[str]) -> list[dict[str, Any]]:
     return out
 
 
+def parse_manc_fields_from_text(payload: Any) -> list[dict[str, Any]]:
+    """Extract annotation fields embedded in VFB Meta.Comment prose."""
+    raw = json.dumps(payload, ensure_ascii=False)
+    out: list[dict[str, Any]] = []
+    patterns = {
+        "mancType": r"mancType\s*[-:=]\s*([^.,;\"]+)",
+        "mancBodyid": r"mancBody(?:id|Id)\s*[-:=]\s*([0-9]+)",
+        "mancGroup": r"mancGroup\s*[-:=]\s*([^.,;\"]+)",
+    }
+    for field, pattern in patterns.items():
+        vals = sorted({m.group(1).strip() for m in re.finditer(pattern, raw, re.I)})
+        for value in vals:
+            out.append({"field": field, "value": value, "source": "embedded_text"})
+    return out
+
+
 def directional_snpp_annotation(payload: Any, systematic_type: str) -> bool:
-    """Require type and direction words inside the same term payload."""
     raw = json.dumps(payload, sort_keys=True, ensure_ascii=False)
     return bool(
         re.search(re.escape(systematic_type), raw, re.I)
@@ -171,15 +202,31 @@ def directional_snpp_annotation(payload: Any, systematic_type: str) -> bool:
     )
 
 
-def probe_record(status: int, payload: Any | None, url: str, error: str | None, *, max_records: int = 80) -> dict[str, Any]:
+def probe_record(
+    status: int,
+    payload: Any | None,
+    url: str,
+    error: str | None,
+    *,
+    max_records: int = 80,
+) -> dict[str, Any]:
+    structured = find_named_values(payload, MANC_FIELD_NAMES) if payload is not None else []
+    embedded = parse_manc_fields_from_text(payload) if payload is not None else []
     return {
         "http_status": status,
         "url": url,
         "error": error,
         "flags": payload_flags(payload) if payload is not None else {},
-        "manc_fields": find_named_values(payload, MANC_FIELD_NAMES) if payload is not None else [],
+        "manc_fields": structured + embedded,
         "compact_hits": compact_hits(payload, max_records=max_records) if payload is not None else [],
     }
+
+
+def dvid_annotation_url(body_id: int) -> str:
+    return (
+        f"{MCNS_DVID_BASE}/api/node/{MCNS_V1_ROOTNODE}/"
+        f"{MCNS_ANNOTATION_DATA}/key/{body_id}"
+    )
 
 
 def main() -> int:
@@ -191,15 +238,21 @@ def main() -> int:
     args = parser.parse_args()
 
     receipt: dict[str, Any] = {
-        "schema": "neurofly-vfb-curated-identity-audit-v0.2",
+        "schema": "neurofly-vfb-curated-identity-audit-v0.3",
         "status": "EVIDENCE_PROBE_ONLY",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "decision_policy": DECISION_POLICY,
-        "api_base": BASE,
+        "vfb_api_base": VFB_BASE,
+        "mcns_dvid": {
+            "base": MCNS_DVID_BASE,
+            "rootnode": MCNS_V1_ROOTNODE,
+            "annotation_data": MCNS_ANNOTATION_DATA,
+        },
         "request_timeout_seconds": REQUEST_TIMEOUT_SECONDS,
         "searches": {},
         "fanc_r21d12": {},
         "malecns_terms": {},
+        "malecns_dvid_annotations": {},
         "request_errors": [],
         "summary": {},
         "governance": {
@@ -216,59 +269,43 @@ def main() -> int:
         },
     }
 
-    # Cached public search index. No force_refresh: the cached endpoint is the
-    # public production surface and avoids turning one upstream refresh into a
-    # whole-probe failure.
     for query in SEARCH_QUERIES:
-        status, payload, url, error = fetch_json(
-            "/search",
-            {"query": query, "limit": 100},
-        )
+        status, payload, url, error = fetch_vfb("/search", {"query": query, "limit": 100})
         receipt["searches"][query] = probe_record(status, payload, url, error)
         if error:
             receipt["request_errors"].append({"scope": f"search:{query}", "error": error, "url": url})
 
-    # Curated R21D12/FANC identity.
-    status, payload, url, error = fetch_json(
-        "/get_term_info",
-        {"id": FANC_R21D12_TERM},
-    )
-    fanc_term_payload = payload
-    fanc_term = probe_record(status, payload, url, error, max_records=120)
-    receipt["fanc_r21d12"]["term_info"] = fanc_term
+    fanc_payloads: list[Any] = []
+
+    status, payload, url, error = fetch_vfb("/get_term_info", {"id": FANC_R21D12_TERM})
+    fanc_payloads.append(payload)
+    receipt["fanc_r21d12"]["term_info"] = probe_record(status, payload, url, error, max_records=120)
     if error:
         receipt["request_errors"].append({"scope": "fanc:term_info", "error": error, "url": url})
 
-    status, payload, url, error = fetch_json(
-        "/xref",
-        {"id": FANC_R21D12_TERM},
-    )
+    status, payload, url, error = fetch_vfb("/xref", {"id": FANC_R21D12_TERM})
+    fanc_payloads.append(payload)
     receipt["fanc_r21d12"]["xref_by_vfb_id"] = probe_record(status, payload, url, error, max_records=120)
     if error:
         receipt["request_errors"].append({"scope": "fanc:xref_vfb_id", "error": error, "url": url})
 
-    status, payload, url, error = fetch_json(
-        "/xref",
-        {"accession": FANC_R21D12_NATIVE},
-    )
+    status, payload, url, error = fetch_vfb("/xref", {"accession": FANC_R21D12_NATIVE})
+    fanc_payloads.append(payload)
     receipt["fanc_r21d12"]["xref_by_native_accession"] = probe_record(status, payload, url, error, max_records=120)
     if error:
         receipt["request_errors"].append({"scope": "fanc:xref_native", "error": error, "url": url})
 
-    # Known MaleCNS systematic-type bodies. Preserve exact MANC body/group/type
-    # fields when VFB exposes them.
     directional_by_term: dict[str, bool] = {}
     for systematic_type, body_map in KNOWN_MALECNS_TERMS.items():
-        for body_id, vfb_id in body_map.items():
-            status, payload, url, error = fetch_json(
-                "/get_term_info",
-                {"id": vfb_id},
-            )
+        for body_id_s, vfb_id in body_map.items():
+            body_id = int(body_id_s)
             key = f"{systematic_type}:{body_id}"
+
+            status, payload, url, error = fetch_vfb("/get_term_info", {"id": vfb_id})
             rec = probe_record(status, payload, url, error, max_records=100)
             rec.update({
                 "systematic_type": systematic_type,
-                "body_id": int(body_id),
+                "body_id": body_id,
                 "vfb_id": vfb_id,
             })
             receipt["malecns_terms"][key] = rec
@@ -278,31 +315,51 @@ def main() -> int:
                 else False
             )
             if error:
-                receipt["request_errors"].append({"scope": f"malecns:{key}", "error": error, "url": url})
+                receipt["request_errors"].append({"scope": f"malecns-vfb:{key}", "error": error, "url": url})
 
-    fanc_raw = json.dumps(receipt["fanc_r21d12"], sort_keys=True, ensure_ascii=False)
-    curated_fanc_hook = bool(
-        re.search(r"R21D12", fanc_raw, re.I)
-        and re.search(r"hook", fanc_raw, re.I)
-        and re.search(r"570810|VFB_001028lx", fanc_raw, re.I)
+            durl = dvid_annotation_url(body_id)
+            dstatus, dpayload, derror = fetch_url_json(durl)
+            drec = probe_record(dstatus, dpayload, durl, derror, max_records=60)
+            drec.update({
+                "systematic_type": systematic_type,
+                "body_id": body_id,
+            })
+            receipt["malecns_dvid_annotations"][key] = drec
+            if derror:
+                receipt["request_errors"].append({"scope": f"malecns-dvid:{key}", "error": derror, "url": durl})
+
+    # IMPORTANT: evaluate biological bridge flags against original endpoint
+    # payloads/endpoint flags, never against the serialized receipt whose field
+    # names contain words such as "malecns", "snpp39", etc.
+    fanc_endpoint_flags = [
+        payload_flags(p) for p in fanc_payloads if p is not None
+    ]
+    curated_fanc_hook = any(
+        f["r21d12"] and f["fanc570810"] and f["hook"]
+        for f in fanc_endpoint_flags
     )
-    fanc_to_malecns = bool(
-        re.search(r"MaleCNS|male-cns", fanc_raw, re.I)
-        and re.search(r"SNpp39|SNpp41", fanc_raw, re.I)
+    fanc_to_malecns = any(
+        f["malecns"] and (f["snpp39"] or f["snpp41"])
+        for f in fanc_endpoint_flags
     )
     directional_snpp = any(directional_by_term.values())
 
-    malecns_manc_body_fields = {
-        key: [
-            field for field in rec["manc_fields"]
-            if field["field"] in {"mancBodyid", "mancBodyId", "manc_bodyid", "manc_body_id"}
-        ]
-        for key, rec in receipt["malecns_terms"].items()
-    }
-    malecns_manc_body_fields = {
-        key: fields for key, fields in malecns_manc_body_fields.items() if fields
-    }
-    exact_manc_body_fields = bool(malecns_manc_body_fields)
+    exact_body_fields: dict[str, list[dict[str, Any]]] = {}
+    for source_name in ("malecns_terms", "malecns_dvid_annotations"):
+        for key, rec in receipt[source_name].items():
+            fields = [
+                field for field in rec["manc_fields"]
+                if field["field"] in {
+                    "mancBodyid", "mancBodyId", "manc_bodyid", "manc_body_id"
+                }
+                and str(field["value"]).strip() not in {"", "None", "null", "NA"}
+            ]
+            if fields:
+                exact_body_fields.setdefault(key, []).extend(
+                    [{**field, "source_record": source_name} for field in fields]
+                )
+
+    exact_manc_body_fields = bool(exact_body_fields)
 
     receipt["governance"]["curated_r21d12_fanc_hook_identity_found"] = curated_fanc_hook
     receipt["governance"]["curated_fanc_to_malecns_snpp_bridge_found"] = fanc_to_malecns
@@ -312,25 +369,27 @@ def main() -> int:
     receipt["summary"] = {
         "search_query_count": len(SEARCH_QUERIES),
         "malecns_term_count": len(receipt["malecns_terms"]),
-        "successful_malecns_term_requests": sum(
+        "successful_malecns_vfb_requests": sum(
             1 for rec in receipt["malecns_terms"].values() if rec["http_status"] == 200
         ),
+        "successful_malecns_dvid_requests": sum(
+            1 for rec in receipt["malecns_dvid_annotations"].values() if rec["http_status"] == 200
+        ),
         "request_error_count": len(receipt["request_errors"]),
-        "fanc_term_info_http_status": fanc_term["http_status"],
         "curated_r21d12_fanc_hook_identity_found": curated_fanc_hook,
         "curated_fanc_to_malecns_snpp_bridge_found": fanc_to_malecns,
         "curated_directional_snpp_annotation_found": directional_snpp,
         "exact_malecns_to_manc_body_fields_recovered": exact_manc_body_fields,
-        "malecns_to_manc_body_fields": malecns_manc_body_fields,
+        "malecns_to_manc_body_fields": exact_body_fields,
         "directional_snpp_terms": [
             key for key, found in directional_by_term.items() if found
         ],
         "automatic_unlock_performed": False,
         "interpretation": (
-            "The audit is cache-first and failure-tolerant. A curated R21D12/FANC "
-            "hook identity strengthens the chain, but exact SNpp polarity remains "
-            "locked unless an explicit curated FANC-to-MaleCNS SNpp bridge or "
-            "directional SNpp annotation is recovered and independently reviewed."
+            "The audit combines curated VFB/FANC metadata with the public MaleCNS "
+            "v1.0 DVID annotation keys. Exact polarity remains locked unless a "
+            "curated FANC-to-MaleCNS SNpp bridge or explicit directional SNpp "
+            "annotation is recovered and independently reviewed."
         ),
     }
 
