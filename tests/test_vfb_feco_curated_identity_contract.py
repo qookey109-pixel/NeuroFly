@@ -48,4 +48,5 @@ def test_probe_extracts_exact_manc_body_fields() -> None:
 
 def test_probe_is_evidence_only() -> None:
     probe = load_probe()
+    assert probe.RECEIPT_SCHEMA == "neurofly-vfb-curated-identity-audit-v0.4"
     assert probe.DECISION_POLICY == "evidence_only_no_auto_unlock"
