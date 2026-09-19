@@ -36,6 +36,16 @@ REQUEST_TIMEOUT_SECONDS = 20
 
 FANC_R21D12_TERM = "VFB_001028lx"
 FANC_R21D12_NATIVE = "570810"
+FANC_R21D12_PROVENANCE = {
+    "object_kind": "light_microscopy_reference_registered_into_fanc_space",
+    "direct_fanc_em_cell_identity": False,
+    "source_repository": "htem/GridTape_VNC_paper",
+    "source_commit": "5097916fb0d8a0ca627fe4583575ecd6d4cf1ed9",
+    "source_path": (
+        "neuron_reconstructions/skeletons_in_JRC2018_VNC_FEMALE_space/"
+        "sensory_neurons_annotations.json"
+    ),
+}
 
 KNOWN_MALECNS_TERMS = {
     "SNpp39": {
@@ -284,13 +294,14 @@ def main() -> int:
         },
         "request_timeout_seconds": REQUEST_TIMEOUT_SECONDS,
         "searches": {},
-        "fanc_r21d12": {},
+        "fanc_r21d12": {"provenance_guard": FANC_R21D12_PROVENANCE},
         "malecns_terms": {},
         "malecns_dvid_annotations": {},
         "request_errors": [],
         "summary": {},
         "governance": {
             "curated_r21d12_fanc_hook_identity_found": False,
+            "r21d12_registration_is_direct_fanc_em_cell": False,
             "curated_fanc_to_malecns_snpp_bridge_found": False,
             "curated_directional_snpp_annotation_found": False,
             "exact_malecns_to_manc_body_fields_recovered": False,
@@ -422,6 +433,7 @@ def main() -> int:
         "mcns_dvid_used_root_fallback": branch_meta["used_root_fallback"],
         "request_error_count": len(receipt["request_errors"]),
         "curated_r21d12_fanc_hook_identity_found": curated_fanc_hook,
+        "r21d12_registration_is_direct_fanc_em_cell": False,
         "curated_fanc_to_malecns_snpp_bridge_found": fanc_to_malecns,
         "curated_directional_snpp_annotation_found": directional_snpp,
         "exact_malecns_to_manc_body_fields_recovered": exact_manc_body_fields,
@@ -432,9 +444,11 @@ def main() -> int:
         "automatic_unlock_performed": False,
         "interpretation": (
             "The audit combines curated VFB/FANC metadata with the public MaleCNS "
-            "v1.0 DVID annotation keys. Exact polarity remains locked unless a "
-            "curated FANC-to-MaleCNS SNpp bridge or explicit directional SNpp "
-            "annotation is recovered and independently reviewed."
+            "v1.0 DVID annotation keys. The R21D12/570810 object is a light-microscopy "
+            "reference registered into FANC space, not a unique FANC EM-cell identity. "
+            "Exact polarity therefore remains locked unless the LM reference is tied "
+            "to a specific FANC EM hook cell and that cell is independently bridged "
+            "to SNpp39/SNpp41, or an equally strong directional identity source is found."
         ),
     }
 
