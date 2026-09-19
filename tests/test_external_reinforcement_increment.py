@@ -42,3 +42,23 @@ def test_workflow_manual_artifact_only() -> None:
     assert "git push" not in w
     assert "external_reinforcement_increment" in w
     assert "replacement_confirmatory_authorized" in w
+
+
+def test_external_current_matches_compact_dan_rate_shape() -> None:
+    import numpy as np
+    from neurofly.external_reinforcement_increment import ExternalIncrementTracer
+
+    tracer=object.__new__(ExternalIncrementTracer)
+    tracer.dan_count=17
+    tracer.reward_count=15
+    tracer.pulse_current=20.0
+
+    reward=tracer._external_current("reward",0)
+    aversive=tracer._external_current("aversive",0)
+    none=tracer._external_current("none",0)
+
+    assert reward.shape==(17,)
+    assert aversive.shape==(17,)
+    assert np.all(reward[:15]==20.0) and np.all(reward[15:]==0.0)
+    assert np.all(aversive[:15]==0.0) and np.all(aversive[15:]==20.0)
+    assert np.all(none==0.0)
