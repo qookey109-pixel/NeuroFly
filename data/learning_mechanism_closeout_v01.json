@@ -31,7 +31,6 @@
   },
   "frozen_findings": {
     "seed_effectiveness_remediated": true,
-    "dan_trace_coordinate_mismatch_isolated_as_large_positive_drift_source": true,
     "trace_recentering_reduced_that_large_drift": true,
     "recentered_behavioral_true_vs_controls_aggregate_positive_but_replicate_inconsistent": true,
     "rule_input_external_increment_mean_efficacy_effect": -0.000952124579,
@@ -39,7 +38,8 @@
     "event_local_all_events": 22,
     "event_local_negative_events": 22,
     "event_local_mean_efficacy_effect": -0.000533206896,
-    "event_local_action_divergence_fraction": 0
+    "event_local_action_divergence_fraction": 0,
+    "dan_trace_coordinate_mismatch_counterfactual_replay_consistent_with_large_positive_drift": true
   },
   "interpretation": {
     "supported": [
