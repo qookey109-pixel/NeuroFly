@@ -1,0 +1,34 @@
+{
+  "schema": "neurofly-full-network-reinforcement-pulse-run1-freeze-v0.1",
+  "run_id": 35429987465,
+  "head_sha": "02ed7998500ef1aa962461b6d0cffb1e76c11b42",
+  "workflow_run_number": 1,
+  "status": "EXPLORATORY_INTERVENTION_COMPLETE",
+  "execution_valid": true,
+  "artifact_id": 10580706487,
+  "artifact_digest": "sha256:4e7e40ffe8df9f8a83b3b83ba356c0e98c7032bb2aa5c5c1e48c5949179bb207",
+  "receipt_sha256": "b74c77cd32ce848a923f7a548f043c7dd9bc5fe6ad3c611bd44a365d1a05a001",
+  "aggregate": {
+    "endogenous_only_mean_final_efficacy_delta": 0.002529397607,
+    "true_external_mean_final_efficacy_delta": 0.000252634287,
+    "true_minus_endogenous_final_mean_efficacy_delta": -0.00227676332,
+    "reward_event_mean_reward_spike_increment": 20.83,
+    "aversive_event_mean_aversive_spike_increment": 1.375,
+    "paired_action_divergence_fraction": 0.33333333
+  },
+  "replicate_final_efficacy_contrasts": {
+    "P1": -0.000936985015,
+    "P2": -0.006362140179,
+    "P3": 0.001085639,
+    "P4": -0.002893567085
+  },
+  "claim_locks": {
+    "learning_validated": false,
+    "full_network_reinforcement_pulse_causal": false,
+    "temporal_credit_defect_confirmed": false,
+    "causal_learning_claim_authorized": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  },
+  "interpretation_limit": "Paired fixed sensory trajectory, but repeated pulses accumulate neural-state divergence across later decisions."
+}
