@@ -1,0 +1,95 @@
+{
+  "schema": "neurofly-feco-hook-driver-polarity-crosscheck-v0.1",
+  "status": "EVIDENCE_CROSSCHECK_ONLY",
+  "scope": "functional-hook-driver-polarity-to-MaleCNS-systematic-type-bridge",
+  "reviewed_at": "2026-09-19",
+  "direct_functional_polarity_anchors": {
+    "hook_flexion": [
+      {
+        "driver": "VT038873-p65ADZ + R32H08-GAL4.DBD",
+        "support": "Directly labeled and functionally tested as hook flexion in Chen 2021 and Golding et al. 2023."
+      },
+      {
+        "driver": "GMR21D12-GAL4",
+        "support": "Directly used as a hook flexion driver in Dallmann et al. 2024."
+      }
+    ],
+    "hook_extension": [
+      {
+        "driver": "VT018774-p65ADZ + VT040547-GAL4.DBD",
+        "support": "Directly labeled and functionally tested as hook extension in Chen 2021 and Golding et al. 2023."
+      }
+    ]
+  },
+  "em_direction_anchor": {
+    "chen_2021_hook_extension_axon": true,
+    "direct_input_to_13Bb": true,
+    "stable_modern_snpp_type_binding_recovered": false,
+    "note": "Chen 2021 reconstructs a hook-extension FeCO axon that directly synapses onto 13Bb, but the audited paper/supplement does not expose an explicit SNpp39/SNpp41 systematic-type binding for that axon."
+  },
+  "current_malecns_catalog": {
+    "source": "reiserlab/celltype-explorer-drosophila-male-cns",
+    "dataset": "male-cns:v1.0",
+    "SNpp39": {
+      "aka": "FeCO hook",
+      "directional_label_present": false
+    },
+    "SNpp41": {
+      "aka": "FeCO hook",
+      "directional_label_present": false
+    }
+  },
+  "cross_dataset_bridge": {
+    "explicit_driver_to_SNpp39_match_found": false,
+    "explicit_driver_to_SNpp41_match_found": false,
+    "explicit_chen_em_axon_to_SNpp39_match_found": false,
+    "explicit_chen_em_axon_to_SNpp41_match_found": false,
+    "neuronbridge_query_result_used_as_mapping": false,
+    "visual_similarity_used_as_mapping": false,
+    "conclusion": "Functional polarity is directly anchored at the driver/EM-channel level, but the bridge to the MaleCNS systematic types remains unresolved."
+  },
+  "existing_candidate_crosswalk": {
+    "SNpp39": "hook_extension_candidate",
+    "SNpp41": "hook_flexion_candidate",
+    "status": "unchanged_candidate_only"
+  },
+  "sources": [
+    {
+      "id": "chen_2021_functional_architecture",
+      "doi": "10.1016/j.cub.2021.09.035",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8665017/",
+      "role": "direct_hook_flexion_extension_functional_and_EM_anchor"
+    },
+    {
+      "id": "golding_2023_biomechanical_origins",
+      "doi": "10.1016/j.neuron.2023.07.009",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10644877/",
+      "role": "independent_driver_polarity_replication"
+    },
+    {
+      "id": "dallmann_2024_presynaptic_inhibition",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10634730/",
+      "role": "additional_hook_flexion_and_extension_driver_validation"
+    },
+    {
+      "id": "malecns_celltype_explorer_snpp39",
+      "url": "https://reiserlab.github.io/celltype-explorer-drosophila-male-cns/types/SNpp39.html",
+      "role": "current_systematic_type_identity_catalog"
+    },
+    {
+      "id": "malecns_celltype_explorer_snpp41",
+      "url": "https://reiserlab.github.io/celltype-explorer-drosophila-male-cns/types/SNpp41.html",
+      "role": "current_systematic_type_identity_catalog"
+    }
+  ],
+  "governance": {
+    "functional_driver_polarity_verified": true,
+    "direct_type_to_polarity_source_found": false,
+    "snpp39_snpp41_polarity_resolved": false,
+    "exact_polarity_verified": false,
+    "current_calibration_authorized": false,
+    "runtime_stimulation_authorized": false,
+    "privileged_state_bypass_authorized": false,
+    "next_unlock_condition": "An independently auditable driver/EM-neuron-to-MaleCNS mapping that explicitly binds the polarity-verified hook channels to SNpp39 and SNpp41."
+  }
+}
