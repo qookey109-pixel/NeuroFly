@@ -4,8 +4,10 @@ on:
   pull_request:
     paths:
       - "scripts/research_probe_neuronbridge_r21d12.py"
+      - "scripts/research_probe_neuronbridge_r21d12_reverse.py"
       - ".github/workflows/research-r21d12-flexion-bridge.yml"
       - "tests/test_neuronbridge_r21d12_probe_contract.py"
+      - "tests/test_neuronbridge_r21d12_reverse_contract.py"
   workflow_dispatch:
 
 permissions:
@@ -24,15 +26,22 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Run read-only R21D12 body-level probe
+      - name: Run forward body-to-R21D12 probe
         run: |
           python scripts/research_probe_neuronbridge_r21d12.py \
             --output artifacts/neuronbridge_r21d12_flexion_bridge.json
 
-      - name: Upload evidence receipt
+      - name: Run reverse R21D12-to-body probe
+        run: |
+          python scripts/research_probe_neuronbridge_r21d12_reverse.py \
+            --output artifacts/neuronbridge_r21d12_reverse_bridge.json
+
+      - name: Upload evidence receipts
         uses: actions/upload-artifact@v4
         with:
           name: neuronbridge-r21d12-flexion-bridge
-          path: artifacts/neuronbridge_r21d12_flexion_bridge.json
+          path: |
+            artifacts/neuronbridge_r21d12_flexion_bridge.json
+            artifacts/neuronbridge_r21d12_reverse_bridge.json
           if-no-files-found: error
           retention-days: 30
