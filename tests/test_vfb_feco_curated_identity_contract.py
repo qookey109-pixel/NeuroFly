@@ -1,0 +1,33 @@
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
+
+
+SCRIPT = Path("scripts/research_probe_vfb_feco_curated_identity.py")
+
+
+def load_probe():
+    spec = spec_from_file_location("research_probe_vfb_feco_curated_identity", SCRIPT)
+    assert spec is not None
+    assert spec.loader is not None
+    module = module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_probe_targets_curated_r21d12_fanc_identity() -> None:
+    probe = load_probe()
+    assert probe.FANC_R21D12_TERM == "VFB_001028lx"
+    assert probe.FANC_R21D12_NATIVE == "570810"
+    assert "R21D12" in probe.SEARCH_QUERIES
+
+
+def test_probe_checks_both_snpp_systematic_types() -> None:
+    probe = load_probe()
+    assert set(probe.KNOWN_MALECNS_TERMS) == {"SNpp39", "SNpp41"}
+    assert probe.KNOWN_MALECNS_TERMS["SNpp41"]["911942"] == "VFB_jrmc173f"
+    assert probe.KNOWN_MALECNS_TERMS["SNpp39"]["810041"] == "VFB_jrmc1720"
+
+
+def test_probe_is_evidence_only() -> None:
+    probe = load_probe()
+    assert probe.DECISION_POLICY == "evidence_only_no_auto_unlock"
