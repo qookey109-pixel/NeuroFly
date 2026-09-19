@@ -1,0 +1,70 @@
+{
+  "schema": "neurofly-feco-hook-flybase-ontology-bridge-audit-v0.1",
+  "status": "EVIDENCE_CROSSCHECK_ONLY",
+  "reviewed_at": "2026-09-19",
+  "source_repository": "FlyBase/drosophila-anatomy-developmental-ontology",
+  "mapping_file": "src/patterns/robot_template_projects/EM_synonyms/manc_cell_type_fbbt_mapping.tsv",
+  "mapping_file_sha": "56f4a26d7610ebdda202e20908fe05f042cb84e7",
+  "mapping_rows": {
+    "SNpp39": {
+      "systematicType": "SNpp39",
+      "FBbt_id": "FBbt:00049558",
+      "FBbt_name": "femoral chordotonal hook neuron",
+      "specificity": "parent_term"
+    },
+    "SNpp41": {
+      "systematicType": "SNpp41",
+      "FBbt_id": "FBbt:00049558",
+      "FBbt_name": "femoral chordotonal hook neuron",
+      "specificity": "parent_term"
+    }
+  },
+  "directional_child_classes_exist": {
+    "hook_extension": {
+      "FBbt_id": "FBbt:00052632",
+      "name": "femoral chordotonal hook extension neuron",
+      "segment_specific_examples": [
+        "FBbt:00052634",
+        "FBbt:00052635",
+        "FBbt:00052636"
+      ]
+    },
+    "hook_flexion": {
+      "FBbt_id": "FBbt:00052633",
+      "name": "femoral chordotonal hook flexion neuron",
+      "segment_specific_examples": [
+        "FBbt:00052637",
+        "FBbt:00052638",
+        "FBbt:00052639"
+      ]
+    }
+  },
+  "mapping_history": {
+    "first_checked_commit": "28b07750ef977c7400eb5c7da90f24e785f8111f",
+    "latest_checked_update_commit": "ed2fbaff6e31adf5be34c29efe8438fb7edcb881",
+    "latest_checked_update_date": "2026-07-14T18:46:23Z",
+    "snpp39_row_changed_to_directional_class": false,
+    "snpp41_row_changed_to_directional_class": false,
+    "note": "Across the checked 2024, 2025, and 2026 mapping updates, both rows remained mapped to the generic hook parent term."
+  },
+  "interpretation": {
+    "official_manc_to_fbbt_bridge_exists": true,
+    "official_bridge_reaches_directional_subclass": false,
+    "negative_evidence_strength": "strong_current_official_mapping_negative_evidence",
+    "conclusion": "FlyBase currently maps both SNpp39 and SNpp41 to the generic femoral chordotonal hook neuron parent even though dedicated hook extension and hook flexion ontology classes exist."
+  },
+  "existing_candidate_crosswalk": {
+    "SNpp39": "hook_extension_candidate",
+    "SNpp41": "hook_flexion_candidate",
+    "status": "unchanged_candidate_only"
+  },
+  "governance": {
+    "direct_type_to_polarity_source_found": false,
+    "snpp39_snpp41_polarity_resolved": false,
+    "exact_polarity_verified": false,
+    "current_calibration_authorized": false,
+    "runtime_stimulation_authorized": false,
+    "privileged_state_bypass_authorized": false,
+    "next_unlock_condition": "A direct or independently auditable mapping that binds SNpp39/SNpp41 to FBbt:00052632/FBbt:00052633 or equivalent extension/flexion identities."
+  }
+}
