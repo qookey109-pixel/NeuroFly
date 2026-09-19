@@ -1,0 +1,38 @@
+name: Research R21D12 Flexion Bridge
+
+on:
+  pull_request:
+    paths:
+      - "scripts/research_probe_neuronbridge_r21d12.py"
+      - ".github/workflows/research-r21d12-flexion-bridge.yml"
+      - "tests/test_neuronbridge_r21d12_probe_contract.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  r21d12-flexion-bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run read-only R21D12 body-level probe
+        run: |
+          python scripts/research_probe_neuronbridge_r21d12.py \
+            --output artifacts/neuronbridge_r21d12_flexion_bridge.json
+
+      - name: Upload evidence receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: neuronbridge-r21d12-flexion-bridge
+          path: artifacts/neuronbridge_r21d12_flexion_bridge.json
+          if-no-files-found: error
+          retention-days: 30
