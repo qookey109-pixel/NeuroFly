@@ -1,0 +1,110 @@
+name: NeuroFly DAN Trace Recentering Intervention
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: neurofly-dan-trace-recentering-intervention
+  cancel-in-progress: false
+
+jobs:
+  dan-trace-recentering-intervention:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      SOURCE_STATE: runs/free-malecns
+      STUDY_DIR: runs/dan-trace-recentering-intervention
+      BASE_CHECKPOINT: runs/dan-trace-recentering-intervention/base-brain.npz
+      RECEIPT: runs/dan-trace-recentering-intervention/dan-trace-recentering-intervention-receipt.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+
+      - name: Restore latest production checkpoint read-only source
+        uses: actions/cache/restore@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-v06-state-dan-trace-recentering-${{ github.run_id }}
+          restore-keys: |
+            neurofly-v06-state-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare and verify MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$STUDY_DIR"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+          python -m neurofly host-preflight | tee "$STUDY_DIR/preflight.json"
+
+      - name: Copy production brain into isolated intervention baseline
+        run: |
+          test -f "$SOURCE_STATE/brain.npz"
+          cp "$SOURCE_STATE/brain.npz" "$BASE_CHECKPOINT"
+          test "$(realpath "$SOURCE_STATE/brain.npz")" != "$(realpath "$BASE_CHECKPOINT")"
+          sha256sum "$SOURCE_STATE/brain.npz" "$BASE_CHECKPOINT"
+
+      - name: Execute DAN trace-state recentering intervention
+        run: |
+          python -m neurofly.dan_trace_recentering_intervention \
+            --base-checkpoint "$BASE_CHECKPOINT" \
+            --output-dir "$STUDY_DIR/replicates" \
+            --receipt "$RECEIPT"
+
+      - name: Validate intervention receipt without opening claims
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          receipt = json.loads(
+              Path(
+                  "runs/dan-trace-recentering-intervention/"
+                  "dan-trace-recentering-intervention-receipt.json"
+              ).read_text()
+          )
+          assert receipt["schema"] == "neurofly-dan-trace-recentering-intervention-receipt-v0.1"
+          assert receipt["status"] == "EXPLORATORY_INTERVENTION_COMPLETE"
+          assert receipt["execution_valid"] is True
+          assert all(receipt["config_gates"].values())
+          assert all(receipt["evidence_gates"].values())
+          assert receipt["learning_validated"] is False
+          assert receipt["dan_trace_state_mismatch_causal"] is False
+          assert receipt["trace_recentering_remediation_validated"] is False
+          assert receipt["kc_dan_temporal_drive_causal"] is False
+          assert receipt["causal_learning_claim_authorized"] is False
+          assert receipt["replacement_confirmatory_authorized"] is False
+          assert receipt["behavioral_promotion_authorized"] is False
+          print(
+              "DAN_TRACE_RECENTERING_INTERVENTION_VALID",
+              receipt["receipt_sha256"],
+              receipt["aggregate"],
+          )
+          PY
+
+      - name: Publish intervention evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-dan-trace-recentering-${{ github.run_id }}
+          path: |
+            runs/dan-trace-recentering-intervention/preflight.json
+            runs/dan-trace-recentering-intervention/dan-trace-recentering-intervention-receipt.json
+          if-no-files-found: error
+          retention-days: 7

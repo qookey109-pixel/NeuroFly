@@ -1,0 +1,39 @@
+{
+  "schema": "neurofly-kc-dan-eligibility-run1-freeze-v0.1",
+  "run_id": 35413358900,
+  "head_sha": "10b751e015381e56159f3f6676e948521c8d6ad9",
+  "artifact_id": 10575331301,
+  "artifact_digest": "sha256:ff0c1065f49b1ea9937317363714a9dc674d87c52fbbb368a954152f44b7d5b8",
+  "receipt_sha256": "9726a534447246c6de42c33a029132d47dcbcfbcb200a25e5e1c52b0d5060456",
+  "execution_valid": true,
+  "aggregate": {
+    "learning_none_zero_baseline": {
+      "mean_efficacy_delta": -0.00786948204,
+      "mean_first_100ms_aversive_net_drive": -0.056221678144,
+      "mean_full_aversive_net_drive": -0.006199966553,
+      "mean_last_500ms_aversive_net_drive": -0.00039326012,
+      "mean_initial_aversive_rate_trace_hz": 165.718050548575,
+      "mean_initial_aversive_baseline_hz": 0
+    },
+    "learning_none_calibrated_baseline": {
+      "mean_efficacy_delta": 0.157144904137,
+      "mean_first_100ms_aversive_net_drive": 0.242437041581,
+      "mean_full_aversive_net_drive": 0.105762937254,
+      "mean_last_500ms_aversive_net_drive": 0.024340541221,
+      "mean_initial_aversive_rate_trace_hz": 165.718050548575,
+      "mean_initial_aversive_baseline_hz": 126.72222222,
+      "mean_initial_aversive_trace_minus_baseline_hz": 38.995828328575
+    },
+    "frozen_none_zero_baseline": {
+      "mean_efficacy_delta": 0,
+      "mean_memory_changed_decisions": 0
+    }
+  },
+  "interpretation_limits": {
+    "checkpoint_trace_state_mismatch_observed": true,
+    "mismatch_is_not_sufficient_to_explain_full_run": true,
+    "temporal_covariance_persists_late": true,
+    "kc_dan_temporal_drive_causal": false,
+    "dan_trace_state_mismatch_causal": false
+  }
+}

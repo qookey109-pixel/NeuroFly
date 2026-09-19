@@ -1,0 +1,102 @@
+{
+  "schema": "neurofly-dan-trace-recentering-intervention-v0.1",
+  "status": "EXPLORATORY_INTERVENTION_ONLY",
+  "scope": "real-malecns-dan-trace-state-recentering-intervention",
+  "design_origin": {
+    "diagnostic_run_id": 35413358900,
+    "diagnostic_receipt_sha256": "9726a534447246c6de42c33a029132d47dcbcfbcb200a25e5e1c52b0d5060456",
+    "intervention_run_id": 35348834258,
+    "intervention_receipt_sha256": "7a679541962dc5cac24b63aeb62a172a71d0875fc9171cc49ac5df29d3eec907",
+    "observed_initial_aversive_rate_trace_hz": 165.718050548575,
+    "calibrated_aversive_baseline_hz": 126.72222222,
+    "observed_trace_minus_baseline_hz": 38.995828328575,
+    "observed_calibrated_mean_efficacy_delta": 0.157144904137
+  },
+  "baseline": {
+    "digest": "1fd69ded16a400e9a00e1265e8264aeafe7d402fa1819fc412df041fa7f205f9",
+    "interpretation": "task-conditioned endogenous DAN firing baseline; not a biological resting-rate claim",
+    "transform_rule": "For calibrated recentered arms only: after restoring the zero-baseline source checkpoint, set dan_baseline_hz to the frozen vector and transform rate_dan := rate_dan - dan_baseline_hz exactly once."
+  },
+  "runtime": {
+    "decision_synchronous_world": true,
+    "training_steps": 60,
+    "evaluation_steps_per_seed": 20,
+    "reinforcement_mode": "none",
+    "sensory_mode": "normal"
+  },
+  "arms": [
+    {
+      "name": "learning_none_calibrated_unrecentered",
+      "learning": true,
+      "baseline_mode": "calibrated",
+      "trace_state_mode": "unchanged"
+    },
+    {
+      "name": "learning_none_calibrated_recentered",
+      "learning": true,
+      "baseline_mode": "calibrated",
+      "trace_state_mode": "subtract_baseline"
+    },
+    {
+      "name": "learning_none_zero_baseline",
+      "learning": true,
+      "baseline_mode": "zero",
+      "trace_state_mode": "unchanged"
+    },
+    {
+      "name": "frozen_none_calibrated_recentered",
+      "learning": false,
+      "baseline_mode": "calibrated",
+      "trace_state_mode": "subtract_baseline"
+    }
+  ],
+  "replicates": [
+    {
+      "id": "R1",
+      "training_seed": 1801,
+      "held_out_seeds": [
+        1807,
+        1811
+      ]
+    },
+    {
+      "id": "R2",
+      "training_seed": 1823,
+      "held_out_seeds": [
+        1831,
+        1847
+      ]
+    },
+    {
+      "id": "R3",
+      "training_seed": 1861,
+      "held_out_seeds": [
+        1867,
+        1871
+      ]
+    },
+    {
+      "id": "R4",
+      "training_seed": 1873,
+      "held_out_seeds": [
+        1877,
+        1879
+      ]
+    }
+  ],
+  "primary_descriptive_endpoints": [
+    "memory_changed_steps",
+    "final_mean_efficacy_delta",
+    "first_5_step_mean_efficacy_delta",
+    "evaluation_mean_total_reward"
+  ],
+  "claim_policy": {
+    "learning_validated": false,
+    "dan_trace_state_mismatch_causal": false,
+    "trace_recentering_remediation_validated": false,
+    "kc_dan_temporal_drive_causal": false,
+    "causal_learning_claim_authorized": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
