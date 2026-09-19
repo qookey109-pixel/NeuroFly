@@ -30,6 +30,7 @@ MCNS_DVID_BASE = "https://emdata-mcns.janelia.org"
 MCNS_V1_ROOTNODE = "f3969dc575d74e4f922a8966709958c8"
 MCNS_ANNOTATION_DATA = "segmentation_annotations"
 
+RECEIPT_SCHEMA = "neurofly-vfb-curated-identity-audit-v0.4"
 USER_AGENT = "NeuroFly-VFB-curated-identity-audit/0.4"
 DECISION_POLICY = "evidence_only_no_auto_unlock"
 REQUEST_TIMEOUT_SECONDS = 20
@@ -281,7 +282,7 @@ def main() -> int:
     args = parser.parse_args()
 
     receipt: dict[str, Any] = {
-        "schema": "neurofly-vfb-curated-identity-audit-v0.3",
+        "schema": RECEIPT_SCHEMA,
         "status": "EVIDENCE_PROBE_ONLY",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "decision_policy": DECISION_POLICY,
