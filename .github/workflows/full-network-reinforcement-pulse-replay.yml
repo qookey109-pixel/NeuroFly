@@ -1,0 +1,83 @@
+name: NeuroFly Full Network Reinforcement Pulse Replay
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: neurofly-full-network-reinforcement-pulse-replay
+  cancel-in-progress: false
+
+jobs:
+  full-network-reinforcement-pulse-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      SOURCE_STATE: runs/free-malecns
+      STUDY_DIR: runs/full-network-reinforcement-pulse-replay
+      BASE_CHECKPOINT: runs/full-network-reinforcement-pulse-replay/base-brain.npz
+      RECEIPT: runs/full-network-reinforcement-pulse-replay/full-network-reinforcement-pulse-replay-receipt.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Restore prepared MaleCNS cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+      - name: Restore latest production checkpoint read-only source
+        uses: actions/cache/restore@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-v06-state-full-network-pulse-${{ github.run_id }}
+          restore-keys: |
+            neurofly-v06-state-
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+      - name: Prepare and verify MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$STUDY_DIR"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+          python -m neurofly host-preflight | tee "$STUDY_DIR/preflight.json"
+      - name: Copy production brain into isolated diagnostic baseline
+        run: |
+          test -f "$SOURCE_STATE/brain.npz"
+          cp "$SOURCE_STATE/brain.npz" "$BASE_CHECKPOINT"
+          test "$(realpath "$SOURCE_STATE/brain.npz")" != "$(realpath "$BASE_CHECKPOINT")"
+          sha256sum "$SOURCE_STATE/brain.npz" "$BASE_CHECKPOINT"
+      - name: Execute paired full-network reinforcement pulse replay
+        run: |
+          python -m neurofly.full_network_reinforcement_pulse_replay             --base-checkpoint "$BASE_CHECKPOINT"             --output-dir "$STUDY_DIR/replicates"             --receipt "$RECEIPT"
+      - name: Validate intervention receipt without opening claims
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("runs/full-network-reinforcement-pulse-replay/full-network-reinforcement-pulse-replay-receipt.json")
+          r=json.loads(p.read_text())
+          assert r["schema"]=="neurofly-full-network-reinforcement-pulse-replay-receipt-v0.1"
+          assert r["status"]=="EXPLORATORY_INTERVENTION_COMPLETE"
+          assert r["execution_valid"] is True
+          assert all(r["config_gates"].values())
+          assert all(r["evidence_gates"].values())
+          for k in ("learning_validated","full_network_reinforcement_pulse_causal","temporal_credit_defect_confirmed","causal_learning_claim_authorized","replacement_confirmatory_authorized","behavioral_promotion_authorized"):
+              assert r[k] is False
+          print("FULL_NETWORK_REINFORCEMENT_PULSE_REPLAY_VALID",r["receipt_sha256"],r["aggregate"])
+          PY
+      - name: Publish intervention evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-full-network-reinforcement-pulse-replay-${{ github.run_id }}
+          path: |
+            runs/full-network-reinforcement-pulse-replay/preflight.json
+            runs/full-network-reinforcement-pulse-replay/full-network-reinforcement-pulse-replay-receipt.json
+          if-no-files-found: error
+          retention-days: 7
