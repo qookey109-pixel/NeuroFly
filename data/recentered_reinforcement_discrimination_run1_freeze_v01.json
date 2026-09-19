@@ -1,0 +1,26 @@
+{
+  "schema": "neurofly-recentered-reinforcement-discrimination-run1-freeze-v0.1",
+  "run_id": 35419000124,
+  "head_sha": "da98dcd27d3087b96eb31cac10eb5c6d145ee3a4",
+  "artifact_id": 10577855500,
+  "artifact_digest": "sha256:013b75c726b27c3cc4867fae7294b22de0e1ecd99d9572f4371f5dcf01d9392",
+  "receipt_sha256": "fad3e8a132ef13e474d7656a99027c41fa068f8d2108174beba9f7684759400d",
+  "execution_valid": true,
+  "held_out_reward": {
+    "learning_true_recentered": -2.7,
+    "learning_none_recentered": -6.325,
+    "learning_scrambled_recentered": -4.325,
+    "frozen_true_recentered": -4.075
+  },
+  "descriptive_contrasts": {
+    "true_minus_none_eval_reward": 3.625,
+    "true_minus_scrambled_eval_reward": 1.625,
+    "true_minus_frozen_eval_reward": 1.375
+  },
+  "interpretation_limits": {
+    "aggregate_true_above_none_scrambled_and_frozen": true,
+    "replicate_consistency_insufficient": true,
+    "learning_validated": false,
+    "replacement_confirmatory_authorized": false
+  }
+}
