@@ -128,7 +128,7 @@ class ExternalIncrementTracer(AbstractContextManager["ExternalIncrementTracer"])
         self.reward_count = len(brain.circuit["reward"])
         self.reward_indices = np.asarray(brain.circuit["reward"], dtype=np.int64)
         self.aversive_indices = np.asarray(brain.circuit["aversive"], dtype=np.int64)
-        self.n = int(brain.n)
+        self.dan_count = int(brain.rate_dan.shape[0])
         self.pulse_current = float(inner.pulse_current)
         self.dt = float(brain.dt)
         self.initial_w = brain.memory_w.copy()
@@ -185,11 +185,17 @@ class ExternalIncrementTracer(AbstractContextManager["ExternalIncrementTracer"])
 
     def _external_current(self, reinforcement: str, bin_index: int) -> Any:
         import numpy as np
-        current = np.zeros(self.n, dtype=np.float64)
+        current = np.zeros(self.dan_count, dtype=np.float64)
         if reinforcement == "none" or bin_index >= 2:
             return current
-        indices = self.reward_indices if reinforcement == "reward" else self.aversive_indices
-        current[indices] = self.pulse_current
+        # rule.advance() receives a compact 17-element DAN-rate vector ordered
+        # exactly as reward compartments followed by aversive compartments.
+        # The previous implementation incorrectly allocated a whole-brain
+        # 166,700-element vector and therefore could not be added to dan_hz.
+        if reinforcement == "reward":
+            current[: self.reward_count] = self.pulse_current
+        else:
+            current[self.reward_count :] = self.pulse_current
         return current
 
     def _wrapped(
