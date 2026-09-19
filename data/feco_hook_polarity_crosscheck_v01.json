@@ -1,0 +1,100 @@
+{
+  "schema": "neurofly-feco-hook-polarity-crosscheck-v0.1",
+  "status": "EVIDENCE_CROSSCHECK_ONLY",
+  "scope": "MaleCNS-SNpp39-SNpp41-FeCO-hook-directional-polarity",
+  "reviewed_at": "2026-09-19",
+  "sources": [
+    {
+      "id": "manc_systematic_annotation_2024",
+      "title": "Systematic annotation of a complete adult male Drosophila nerve cord connectome reveals principles of functional organisation",
+      "doi": "10.7554/eLife.97766.1",
+      "url": "https://elifesciences.org/reviewed-preprints/97766",
+      "evidence": [
+        "SNpp41 is predicted to inhibit tibia flexor and accessory tibia flexor motor neurons via GABAergic IN19A015 while activating tibia extensor.",
+        "SNpp39 is predicted to inhibit tibia extensor via GABAergic IN19A005; IN19A005 also inhibits IN19A015, disinhibiting tibia flexor and accessory tibia flexor.",
+        "The authors describe the two hook types as exerting opposing effects on tibia extensor versus flexor muscles, consistent with directional tibia responses."
+      ],
+      "role": "signed_premotor_circuit_evidence"
+    },
+    {
+      "id": "chen_2021_functional_architecture",
+      "title": "Functional architecture of neural circuits for leg proprioception in Drosophila",
+      "doi": "10.1016/j.cub.2021.09.035",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8665017/",
+      "evidence": [
+        "8Aa responds to hook flexion and 13Bb responds to hook extension.",
+        "13Bb receives direct synaptic input from hook-extension axons and responds during tibia extension.",
+        "The paper frames these pathways in resistance-reflex control; it notes that 13Ba encodes tibia extension and drives tibia flexion when activated."
+      ],
+      "role": "functional_direction_and_resistance_reflex_anchor"
+    },
+    {
+      "id": "agrawal_2020_central_processing",
+      "title": "Central processing of leg proprioception in Drosophila",
+      "doi": "10.7554/eLife.60299",
+      "url": "https://elifesciences.org/articles/60299",
+      "evidence": [
+        "13Ba neurons encode extension of the femur-tibia joint.",
+        "Optogenetic activation of 13Ba drives femur-tibia flexion, providing an experimentally observed extension-signal-to-opposing-flexion motor relationship."
+      ],
+      "role": "resistance_reflex_sign_support"
+    },
+    {
+      "id": "vfb_malecns_snpp39",
+      "title": "Virtual Fly Brain MaleCNS SNpp39 examples",
+      "url": "https://www.virtualflybrain.org/term/none-malecns903843-vfb_jrmc171p/",
+      "evidence": [
+        "MaleCNS systematic type SNpp39 is classified as a femoral chordotonal hook neuron."
+      ],
+      "role": "current_identity_annotation"
+    },
+    {
+      "id": "vfb_malecns_snpp41",
+      "title": "Virtual Fly Brain MaleCNS SNpp41 examples",
+      "url": "https://www.virtualflybrain.org/term/none-malecns813147-vfb_jrmc1738/",
+      "evidence": [
+        "MaleCNS systematic type SNpp41 is classified as a femoral chordotonal hook neuron."
+      ],
+      "role": "current_identity_annotation"
+    }
+  ],
+  "direct_evidence": {
+    "snpp39_is_feco_hook": true,
+    "snpp41_is_feco_hook": true,
+    "direct_snpp39_extension_label_found": false,
+    "direct_snpp39_flexion_label_found": false,
+    "direct_snpp41_extension_label_found": false,
+    "direct_snpp41_flexion_label_found": false,
+    "direct_type_to_polarity_source_found": false
+  },
+  "circuit_consistency_inference": {
+    "method": "signed_premotor_effect_plus_resistance_reflex_direction",
+    "candidate_crosswalk": {
+      "SNpp39": "hook_extension_candidate",
+      "SNpp41": "hook_flexion_candidate"
+    },
+    "rationale": {
+      "SNpp39": [
+        "Its reconstructed premotor sign inhibits tibia extensor and disinhibits tibia flexors.",
+        "That opposing motor effect is consistent with a resistance-reflex response to sensed tibia extension."
+      ],
+      "SNpp41": [
+        "Its reconstructed premotor sign inhibits tibia flexors and activates tibia extensor.",
+        "That opposing motor effect is consistent with a resistance-reflex response to sensed tibia flexion."
+      ]
+    },
+    "confidence_class": "strong_circuit_consistency_inference_not_direct_annotation",
+    "decisive_hemilineage_crosswalk_used": false,
+    "note": "The 13B/14A downstream-lineage comparison is not used as a direct type-to-polarity mapping because the cited sources do not explicitly equate a MANC systematic hook type with Chen's flexion/extension driver identity."
+  },
+  "governance": {
+    "morphology_and_hook_identity_supported": true,
+    "directional_candidate_crosswalk_supported": true,
+    "exact_polarity_verified": false,
+    "snpp39_snpp41_polarity_resolved": false,
+    "current_calibration_authorized": false,
+    "runtime_stimulation_authorized": false,
+    "privileged_state_bypass_authorized": false,
+    "next_unlock_condition": "A direct type-to-polarity annotation/match, or an independently auditable cross-dataset mapping that explicitly binds SNpp39/SNpp41 to hook extension/flexion identities."
+  }
+}
