@@ -1,0 +1,75 @@
+{
+  "schema": "neurofly-event-local-reinforcement-pulse-run1-freeze-v0.1",
+  "run_id": 35434647150,
+  "head_sha": "55d346b0f0ac01af2ba8473a51a66faaf5e3cdcf",
+  "workflow_run_number": 1,
+  "status": "EXPLORATORY_INTERVENTION_COMPLETE",
+  "execution_valid": true,
+  "artifact_id": 10581628974,
+  "artifact_digest": "sha256:61326964f7e25093a56a21a54f7260899d59c789de7b4310400600487cb38ca2",
+  "receipt_sha256": "6d7c7fc8c38106e8ceafb8e0346f87a7a6ae71cbfea59b2b3d9e372203e42712",
+  "source_checkpoint_sha256": "5d4505ecd4d1b4551169a93e3b5c63e2558e80f8c19c1090074f100a47cd4e60",
+  "aggregate": {
+    "event_count": 22,
+    "reward_event_count": 14,
+    "aversive_event_count": 8,
+    "all_event_true_minus_none_efficacy_delta": -0.000533206896,
+    "reward_event_true_minus_none_efficacy_delta": -0.000570152487,
+    "aversive_event_true_minus_none_efficacy_delta": -0.000468552113,
+    "reward_event_negative_efficacy_events": 14,
+    "reward_event_positive_efficacy_events": 0,
+    "aversive_event_negative_efficacy_events": 8,
+    "aversive_event_positive_efficacy_events": 0,
+    "reward_event_reward_spike_increment": 20.42857143,
+    "aversive_event_aversive_spike_increment": 1,
+    "event_action_divergence_fraction": 0
+  },
+  "replicates": [
+    {
+      "id": "E1",
+      "trajectory_seed": 2179,
+      "event_count": 5,
+      "reward_events": 3,
+      "aversive_events": 2,
+      "negative_events": 5,
+      "mean_true_minus_none_efficacy_delta": -0.000514853001
+    },
+    {
+      "id": "E2",
+      "trajectory_seed": 2183,
+      "event_count": 4,
+      "reward_events": 2,
+      "aversive_events": 2,
+      "negative_events": 4,
+      "mean_true_minus_none_efficacy_delta": -0.000397160649
+    },
+    {
+      "id": "E3",
+      "trajectory_seed": 2203,
+      "event_count": 5,
+      "reward_events": 3,
+      "aversive_events": 2,
+      "negative_events": 5,
+      "mean_true_minus_none_efficacy_delta": -0.000576174259
+    },
+    {
+      "id": "E4",
+      "trajectory_seed": 2207,
+      "event_count": 8,
+      "reward_events": 6,
+      "aversive_events": 2,
+      "negative_events": 8,
+      "mean_true_minus_none_efficacy_delta": -0.000585846603
+    }
+  ],
+  "evidence_gates_all_pass": true,
+  "claim_locks": {
+    "learning_validated": false,
+    "single_event_reinforcement_effect_causal": false,
+    "temporal_credit_defect_confirmed": false,
+    "causal_learning_claim_authorized": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  },
+  "closeout_interpretation": "Under the frozen calibrated-baseline/recentered configuration, every observed single-event full-network reinforcement pulse produced a lower immediate mean efficacy delta than its no-pulse branch from the identical pre-event checkpoint. This closes the current mechanism diagnostic branch without validating task learning or authorizing replacement confirmatory execution."
+}
