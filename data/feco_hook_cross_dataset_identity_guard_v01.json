@@ -1,0 +1,84 @@
+{
+  "schema": "neurofly-feco-hook-cross-dataset-identity-guard-v0.1",
+  "status": "EVIDENCE_CROSSCHECK_ONLY",
+  "reviewed_at": "2026-09-19",
+  "question": "Can matching SNpp39/SNpp41 systematic labels be treated as direct biological identity across MANC and MaleCNS?",
+  "current_malecns_examples": [
+    {
+      "dataset": "male-cns:v1.0",
+      "body_id": 833439,
+      "type": "SNpp39",
+      "classification": "femoral chordotonal hook neuron",
+      "source": "https://www.virtualflybrain.org/term/none-malecns833439-vfb_jrmc171l/"
+    },
+    {
+      "dataset": "male-cns:v1.0",
+      "body_id": 819559,
+      "type": "SNpp41",
+      "classification": "femoral chordotonal hook neuron",
+      "source": "https://www.virtualflybrain.org/term/none-malecns819559-vfb_jrmc173g/"
+    }
+  ],
+  "manc_counterexamples": [
+    {
+      "dataset": "manc:v1.2.1",
+      "body_id": 44595,
+      "systematic_type": "SNpp39",
+      "manc_subclass": "metathoracic leg FeCO club",
+      "classification": "femoral chordotonal club neuron",
+      "source": "https://www.virtualflybrain.org/term/snpp39_metaln_r-manc44595-vfb_jrcv0yer/"
+    },
+    {
+      "dataset": "manc:v1.2.1",
+      "body_id": 177398,
+      "systematic_type": "SNpp41",
+      "manc_subclass": "mesothoracic leg FeCO claw",
+      "classification": "femoral chordotonal claw neuron",
+      "source": "https://www.virtualflybrain.org/term/snpp41_mesoln_l-manc177398-vfb_jrcv3svq/"
+    },
+    {
+      "dataset": "manc:v1.2.1",
+      "body_id": 36039,
+      "systematic_type": "SNpp41",
+      "manc_subclass": "metathoracic leg FeCO hook",
+      "classification": "femoral chordotonal claw neuron",
+      "source": "https://www.virtualflybrain.org/term/snpp41_metaln_r-manc36039-vfb_jrcv0rt3/",
+      "note": "This record is internally inconsistent between the MANC subclass text and ontology classification, so it cannot be used as polarity truth."
+    }
+  ],
+  "interpretation": {
+    "same_systematic_type_name_is_sufficient_cross_dataset_identity": false,
+    "manc_to_malecns_type_name_equivalence_is_safe_for_polarity": false,
+    "vfb_manc_annotation_is_uniform_for_snpp39_snpp41": false,
+    "conclusion": "SNpp39/SNpp41 labels alone are not a sufficient cross-dataset identity bridge. Body-level, dataset-qualified evidence is required before carrying polarity across MANC and MaleCNS."
+  },
+  "neuronbridge_route": {
+    "production_service": "https://neuronbridge.janelia.org/",
+    "male_cns_collection_available": true,
+    "manc_collection_available": true,
+    "open_data_api_documented": true,
+    "api_patterns": [
+      "<VER>/metadata/by_body/<body_id>.json",
+      "<VER>/metadata/by_line/<line_id>.json",
+      "<VER>/metadata/cdsresults/<image_id>.json"
+    ],
+    "accepted_bridge_standard": "A reproducible NeuronBridge or equivalent body-level match from a polarity-verified driver/LM image to a dataset-qualified MaleCNS SNpp39/SNpp41 body, with match metadata and score/provenance preserved.",
+    "direct_driver_to_current_malecns_snpp_match_audited": false
+  },
+  "existing_candidate_crosswalk": {
+    "SNpp39": "hook_extension_candidate",
+    "SNpp41": "hook_flexion_candidate",
+    "status": "unchanged_candidate_only"
+  },
+  "governance": {
+    "cross_dataset_same_name_inference_authorized": false,
+    "body_level_mapping_required": true,
+    "direct_type_to_polarity_source_found": false,
+    "snpp39_snpp41_polarity_resolved": false,
+    "exact_polarity_verified": false,
+    "current_calibration_authorized": false,
+    "runtime_stimulation_authorized": false,
+    "privileged_state_bypass_authorized": false,
+    "next_unlock_condition": "A dataset-qualified body-level match that explicitly connects a polarity-verified hook flexion/extension LM driver or EM identity to current MaleCNS SNpp39/SNpp41 bodies."
+  }
+}
