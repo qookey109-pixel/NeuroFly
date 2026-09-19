@@ -1,0 +1,114 @@
+{
+  "schema": "neurofly-neuronbridge-feco-body-probe-run1-analysis-v0.1",
+  "status": "EVIDENCE_ANALYSIS_ONLY",
+  "reviewed_at": "2026-09-19",
+  "workflow": {
+    "run_id": 35442954845,
+    "run_number": 1,
+    "head_sha": "1a7a2a06f87ec7aae3ab2d1f8b486062da522a0f",
+    "artifact_id": 10584029271,
+    "artifact_name": "neuronbridge-feco-body-probe",
+    "artifact_digest": "sha256:7ec8366393259cc0a8ef336d33a8eb9c297ab48882d2b15984ee3f64d386696d",
+    "result": "success"
+  },
+  "neuronbridge": {
+    "current_data_version": "v3_10_0",
+    "male_cns_vnc_library": "FlyEM_Male_CNS_VNC_v0.9",
+    "male_cns_vnc_published_name_prefix": "male-cns:v0.9",
+    "cds_result_files_fetched": 7,
+    "cds_match_records_scanned": 16654,
+    "exact_driver_component_token_hits": 66
+  },
+  "hit_library_distribution": {
+    "FlyLight Gen1 MCFO": 48,
+    "FlyLight Annotator Gen1 MCFO": 18,
+    "complete_split_gal4_intersection_library_hits": 0
+  },
+  "direct_line_lookups": {
+    "VT018774": {"http_status": 200, "result_count": 42},
+    "VT040547": {"http_status": 200, "result_count": 82},
+    "VT038873": {"http_status": 200, "result_count": 167},
+    "R32H08": {"http_status": 200, "result_count": 79},
+    "GMR21D12": {"http_status": 404, "result_count": null},
+    "VT018774-p65ADZ": {"http_status": 404, "result_count": null},
+    "VT040547-GAL4.DBD": {"http_status": 404, "result_count": null},
+    "VT038873-p65ADZ": {"http_status": 404, "result_count": null},
+    "R32H08-GAL4.DBD": {"http_status": 404, "result_count": null},
+    "GMR21D12-GAL4": {"http_status": 404, "result_count": null}
+  },
+  "best_directional_component_matches_by_body": {
+    "SNpp39": {
+      "810041": {
+        "preferred_by_best_rank": "hook_extension",
+        "hook_extension": {"rank": 115, "normalizedScore": 27594.34, "publishedName": "VT040547"},
+        "hook_flexion": {"rank": 1100, "normalizedScore": 4235.808, "publishedName": "VT038873"}
+      },
+      "813911": {
+        "preferred_by_best_rank": "hook_extension",
+        "hook_extension": {"rank": 873, "normalizedScore": 2339.5962, "publishedName": "VT018774"},
+        "hook_flexion": {"rank": 1354, "normalizedScore": 1072.3925, "publishedName": "VT038873"}
+      },
+      "814881": {
+        "preferred_by_best_rank": "hook_extension",
+        "hook_extension": {"rank": 716, "normalizedScore": 6906.961, "publishedName": "VT018774"},
+        "hook_flexion": {"rank": 1693, "normalizedScore": 1339.9879, "publishedName": "VT038873"}
+      },
+      "913886": {
+        "preferred_by_best_rank": "hook_extension",
+        "hook_extension": {"rank": 69, "normalizedScore": 28651.686, "publishedName": "VT040547"},
+        "hook_flexion": {"rank": 506, "normalizedScore": 11383.21, "publishedName": "VT038873"}
+      }
+    },
+    "SNpp41": {
+      "819524": {
+        "preferred_by_best_rank": "hook_flexion",
+        "hook_extension": {"rank": 967, "normalizedScore": 2591.064, "publishedName": "VT040547"},
+        "hook_flexion": {"rank": 899, "normalizedScore": 2951.1582, "publishedName": "VT038873"}
+      },
+      "819559": {
+        "preferred_by_best_rank": "hook_extension",
+        "hook_extension": {"rank": 833, "normalizedScore": 3761.0112, "publishedName": "VT040547"},
+        "hook_flexion": {"rank": 1105, "normalizedScore": 2220.9492, "publishedName": "VT038873"}
+      },
+      "911942": {
+        "preferred_by_best_rank": "hook_flexion",
+        "hook_extension": {"rank": 409, "normalizedScore": 10702.281, "publishedName": "VT040547"},
+        "hook_flexion": {"rank": 9, "normalizedScore": 31088.082, "publishedName": "R32H08"},
+        "additional_high_rank_flexion_component_hits": [
+          {"rank": 14, "normalizedScore": 29792.746, "publishedName": "R32H08"},
+          {"rank": 16, "normalizedScore": 28497.41, "publishedName": "R32H08"},
+          {"rank": 35, "normalizedScore": 26165.803, "publishedName": "VT038873"}
+        ]
+      }
+    }
+  },
+  "consistency_summary": {
+    "SNpp39_extension_preferred_bodies": 4,
+    "SNpp39_total_bodies": 4,
+    "SNpp41_flexion_preferred_bodies": 2,
+    "SNpp41_total_bodies": 3,
+    "candidate_crosswalk_consistency": "strong_for_SNpp39_mixed_but_supportive_for_SNpp41"
+  },
+  "critical_limitation": {
+    "functional_hook_extension_driver": "VT018774-p65ADZ x VT040547-GAL4.DBD",
+    "functional_hook_flexion_driver": "VT038873-p65ADZ x R32H08-GAL4.DBD",
+    "component_match_equivalent_to_split_intersection": false,
+    "reason": "NeuronBridge Run #1 matched individual Gen1/Annotator Gen1 MCFO component-line images. Functional polarity in the cited experiments is defined by the split-GAL4 intersection, not by either component alone.",
+    "exact_intersection_lookup_recovered": false
+  },
+  "interpretation": {
+    "body_level_morphology_supports_existing_candidate": true,
+    "SNpp39_extension_candidate_strengthened": true,
+    "SNpp41_flexion_candidate_strengthened": true,
+    "direct_type_to_polarity_source_found": false,
+    "exact_polarity_verified": false,
+    "note": "The result is stronger than the prior type-name/circuit-only evidence because it is body-level and directionally patterned, but it is not a direct functional split-line-to-body identity."
+  },
+  "governance": {
+    "snpp39_snpp41_polarity_resolved": false,
+    "current_calibration_authorized": false,
+    "runtime_stimulation_authorized": false,
+    "privileged_state_bypass_authorized": false,
+    "next_unlock_condition": "Recover the complete functional split-GAL4 intersection identity in NeuronBridge/FlyLight or an equivalent independently auditable source, then bind that complete driver identity to current MaleCNS SNpp39/SNpp41 bodies."
+  }
+}
