@@ -28,10 +28,10 @@ def test_event_local_seeds_are_fresh() -> None:
 def test_event_local_pair_rebuilds_identical_pre_event_state() -> None:
     source = SOURCE.read_text()
     assert "trajectory[:event_index]" in source
-    assert 'reinforcement="none"' not in source
-    assert 'reinforcement="none",' not in source
-    assert '_branch_event(' in source
-    assert 'reinforcement="none"' in source or 'reinforcement="none",' in source
+    assert "_build_pre_event_checkpoint(" in source
+    assert "_branch_event(" in source
+    assert 'reinforcement="none"' in source
+    assert "pre-event.npz" in source
 
 
 def test_event_local_pair_uses_real_brain_decide_pulse() -> None:
