@@ -1,0 +1,43 @@
+{
+  "schema": "neurofly-counterfactual-rule-replay-run1-freeze-v0.1",
+  "run_id": 35417521260,
+  "head_sha": "61e5eda7023cba42ff7c0d0e4bc51d02248d5f9c",
+  "artifact_id": 10576217803,
+  "artifact_digest": "sha256:64856bb55871e5421a320165fbbafdcf6a50739eece2dc6454bdd54753720e87",
+  "receipt_sha256": "29f704c07380ac615c6e24566fb6ad14539082ce5521f0d8d1a9aec6b4f12581",
+  "execution_valid": true,
+  "aggregate": {
+    "zero_baseline": {
+      "mean_first_5_decision_efficacy_delta": 0.00001295004,
+      "mean_final_efficacy_delta": -0.004056225286,
+      "mean_aversive_net_drive": -0.002995450591,
+      "mean_reward_net_drive": 0.000475725114
+    },
+    "calibrated_unrecentered": {
+      "mean_first_5_decision_efficacy_delta": 0.016571199561,
+      "mean_final_efficacy_delta": 0.144357713502,
+      "mean_aversive_net_drive": 0.096381863961,
+      "mean_reward_net_drive": 0.000480546098
+    },
+    "calibrated_recentered": {
+      "mean_first_5_decision_efficacy_delta": -0.000234712031,
+      "mean_final_efficacy_delta": 0.000234939941,
+      "mean_aversive_net_drive": -0.000500203944,
+      "mean_reward_net_drive": 0.000476015915
+    }
+  },
+  "replicate_consistency": {
+    "live_frozen_memory_unchanged": "3/3",
+    "independent_trajectory_digests": "3/3 unique",
+    "unrecentered_large_positive_final_drift": "3/3",
+    "recentered_small_final_drift": "3/3"
+  },
+  "interpretation_limits": {
+    "trace_coordinate_mismatch_dominates_large_positive_rule_drift": true,
+    "neural_trajectory_feedback_removed": true,
+    "residual_rule_drift_small": true,
+    "dan_trace_state_mismatch_causal": false,
+    "trace_recentering_remediation_validated": false,
+    "learning_validated": false
+  }
+}
