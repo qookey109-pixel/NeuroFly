@@ -1,0 +1,45 @@
+name: Research Public MANC Sensory Match Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/v1-feco-public-manc-sensory-match-audit
+    paths:
+      - "scripts/research_probe_public_manc_sensory_matches.py"
+      - "tests/test_public_manc_sensory_match_contract.py"
+      - "docs/experiments/V1_PUBLIC_MANC_SENSORY_MATCH_AUDIT.md"
+      - ".github/workflows/research-public-manc-sensory-match-audit.yml"
+  pull_request:
+    paths:
+      - "scripts/research_probe_public_manc_sensory_matches.py"
+      - "tests/test_public_manc_sensory_match_contract.py"
+      - "docs/experiments/V1_PUBLIC_MANC_SENSORY_MATCH_AUDIT.md"
+      - ".github/workflows/research-public-manc-sensory-match-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  public-manc-sensory-match-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Contract test
+        run: python -m pytest -q tests/test_public_manc_sensory_match_contract.py
+      - name: Run public sensory match probe
+        run: |
+          python scripts/research_probe_public_manc_sensory_matches.py \
+            --output artifacts/public_manc_sensory_match_audit.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-manc-sensory-match-audit
+          path: artifacts/public_manc_sensory_match_audit.json
+          if-no-files-found: warn
