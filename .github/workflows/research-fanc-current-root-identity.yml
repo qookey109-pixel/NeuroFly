@@ -1,0 +1,41 @@
+name: Research FANC Current Root Identity Audit
+
+on:
+  pull_request:
+    paths:
+      - "scripts/research_probe_fanc_current_root_identity.py"
+      - ".github/workflows/research-fanc-current-root-identity.yml"
+      - "tests/test_fanc_current_root_identity_contract.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fanc-current-root-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install read-only CAVE client
+        run: python -m pip install --disable-pip-version-check caveclient numpy
+
+      - name: Run FANC legacy-to-current-root audit
+        run: |
+          python scripts/research_probe_fanc_current_root_identity.py \
+            --output artifacts/fanc_current_root_audit.json
+
+      - name: Upload evidence receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: fanc-current-root-identity-audit
+          path: artifacts/fanc_current_root_audit.json
+          if-no-files-found: error
+          retention-days: 30
