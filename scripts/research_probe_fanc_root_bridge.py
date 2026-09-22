@@ -36,9 +36,9 @@ from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 
-RECEIPT_SCHEMA = "neurofly-fanc-root-bridge-audit-v0.1"
+RECEIPT_SCHEMA = "neurofly-fanc-root-bridge-audit-v0.2"
 DECISION_POLICY = "evidence_only_no_auto_unlock"
-USER_AGENT = "NeuroFly-FANC-root-bridge-audit/0.1"
+USER_AGENT = "NeuroFly-FANC-root-bridge-audit/0.2"
 TIMEOUT = 25
 
 GRIDTAPE_REPO = "htem/GridTape_VNC_paper"
@@ -262,7 +262,20 @@ def fanc_root(svid: str) -> tuple[int, str | None, str | None, Any]:
             if key in body and not isinstance(body[key], (dict, list)):
                 root = str(body[key])
                 break
-    return status, root, error, {"url": url, "payload": body}
+    access_redirect = False
+    if isinstance(body, dict):
+        preview = str(body.get("raw_preview") or "")
+        access_redirect = bool(
+            re.search(r"accounts\.google\.com|signin|google accounts", preview, re.I)
+        )
+    if access_redirect:
+        root = None
+        error = "authentication_required_redirect"
+    return status, root, error, {
+        "url": url,
+        "payload": body,
+        "authentication_required_redirect": access_redirect,
+    }
 
 
 def vfb_search(query: str) -> dict[str, Any]:
@@ -301,6 +314,44 @@ def main() -> int:
     args = parser.parse_args()
 
     errors: list[dict[str, Any]] = []
+
+    lee_url = raw_github(LEE_REPO, LEE_COMMIT, LEE_FECO_PATH)
+    lee_status, lee_text, lee_error = fetch_text(lee_url)
+    lee_rows = parse_lee_hook_rows(lee_text or "") if lee_status == 200 else []
+    lee_counts = Counter(row["tuning"] for row in lee_rows)
+    lee_source_valid = (
+        len(lee_rows) == 22
+        and dict(lee_counts) == LEE_EXPECTED_COUNTS
+        and all(row["pt_supervoxel_id"] and row["pt_root_id"] for row in lee_rows)
+    )
+    if not lee_source_valid:
+        errors.append({
+            "scope": "lee_hook_source",
+            "status": lee_status,
+            "error": lee_error or "unexpected_lee_hook_inventory",
+            "counts": dict(lee_counts),
+        })
+
+    # Verify all Lee anchor points against the same public FANC4 supervoxel service.
+    lee_anchor_svid_status = 0
+    lee_anchor_svid_error = None
+    lee_anchor_svids: list[str] = []
+    if lee_rows:
+        lee_anchor_svid_status, anchor_svids, lee_anchor_svid_error, _ = supervoxels(
+            [tuple(row["pt_position"]) for row in lee_rows]
+        )
+        lee_anchor_svids = anchor_svids or []
+    lee_anchor_checks = []
+    for row, observed in zip(lee_rows, lee_anchor_svids):
+        lee_anchor_checks.append({
+            **row,
+            "observed_supervoxel_id": observed,
+            "supervoxel_matches": observed == row["pt_supervoxel_id"],
+        })
+    lee_anchor_validation_pass = (
+        len(lee_anchor_checks) == 22
+        and all(row["supervoxel_matches"] for row in lee_anchor_checks)
+    )
 
     # Independent canary 1: published fancr inverse transform example.
     ts, transformed, terr, tbody = post_transform_map([CANARY_FANC3_NM])
@@ -347,7 +398,14 @@ def main() -> int:
         "expected_root": CANARY_EXPECTED_ROOT,
         "observed_root": observed_root,
         "pass": observed_root == CANARY_EXPECTED_ROOT,
-        "authentication_or_access_blocked": root_canary_status in {401, 403},
+        "authentication_or_access_blocked": (
+            root_canary_status in {401, 403}
+            or root_canary_error == "authentication_required_redirect"
+            or bool(
+                isinstance(root_canary_payload, dict)
+                and root_canary_payload.get("authentication_required_redirect")
+            )
+        ),
         "request": root_canary_payload,
     }
 
@@ -386,6 +444,24 @@ def main() -> int:
         )
         nonzero = [s for s in (target_svids or []) if s not in {"0", "None", "nan"}]
         svid_counts = Counter(nonzero)
+        target_svid_set = set(nonzero)
+        lee_exact_overlaps = [
+            {
+                "tuning": row["tuning"],
+                "pt_supervoxel_id": row["pt_supervoxel_id"],
+                "pt_root_id": row["pt_root_id"],
+                "pt_position": row["pt_position"],
+            }
+            for row in lee_rows
+            if row["pt_supervoxel_id"] in target_svid_set
+        ]
+        overlap_roots = sorted({row["pt_root_id"] for row in lee_exact_overlaps})
+        overlap_tunings = sorted({row["tuning"] for row in lee_exact_overlaps})
+        unique_lee_segmentation_bridge = (
+            lee_anchor_validation_pass
+            and len(overlap_roots) == 1
+            and len(overlap_tunings) == 1
+        )
 
         roots: dict[str, dict[str, Any]] = {}
         root_counts: Counter[str] = Counter()
@@ -412,8 +488,8 @@ def main() -> int:
 
         label = f"left T1 leg nerve hook chordotonal sensory neuron (neuron {skid})"
         vfb = {
-            "by_id": vfb_search(str(skid)),
             "by_exact_label": vfb_search(label),
+            "numeric_id_search_rejected_as_ambiguous": True,
         }
 
         target_results[str(skid)] = {
@@ -441,6 +517,14 @@ def main() -> int:
                     for s, n in svid_counts.most_common(12)
                 ],
             },
+            "lee_functional_segmentation_bridge": {
+                "exact_supervoxel_overlaps": lee_exact_overlaps,
+                "overlap_root_ids": overlap_roots,
+                "overlap_tunings": overlap_tunings,
+                "unique_bridge": unique_lee_segmentation_bridge,
+                "mapped_root_id": overlap_roots[0] if unique_lee_segmentation_bridge else None,
+                "mapped_tuning": overlap_tunings[0] if unique_lee_segmentation_bridge else None,
+            },
             "anonymous_root_lookup": {
                 "attempted": bool(root_canary["pass"]),
                 "per_supervoxel": roots,
@@ -464,6 +548,14 @@ def main() -> int:
         for skid, rec in target_results.items()
         if rec["anonymous_root_lookup"]["dominant_root_id"]
     }
+    lee_bridge_candidates = {
+        skid: {
+            "root_id": rec["lee_functional_segmentation_bridge"]["mapped_root_id"],
+            "tuning": rec["lee_functional_segmentation_bridge"]["mapped_tuning"],
+        }
+        for skid, rec in target_results.items()
+        if rec["lee_functional_segmentation_bridge"]["unique_bridge"]
+    }
 
     receipt = {
         "schema": RECEIPT_SCHEMA,
@@ -480,6 +572,20 @@ def main() -> int:
                 "commit": FANCR_COMMIT,
                 "transform_contract": "R/xform.R::fanc4to3(swap=TRUE)",
                 "identity_contract": "R/ids.R::fanc_xyz2id",
+            },
+            "lee_2024": {
+                "repository": LEE_REPO,
+                "commit": LEE_COMMIT,
+                "path": LEE_FECO_PATH,
+                "url": lee_url,
+                "http_status": lee_status,
+                "hook_count": len(lee_rows),
+                "hook_counts_by_tuning": dict(lee_counts),
+                "source_valid": lee_source_valid,
+                "anchor_supervoxel_http_status": lee_anchor_svid_status,
+                "anchor_supervoxel_error": lee_anchor_svid_error,
+                "anchor_validation_pass": lee_anchor_validation_pass,
+                "anchor_checks": lee_anchor_checks,
             },
             "neck_connective": {
                 "repository": NECK_REPO,
@@ -508,14 +614,19 @@ def main() -> int:
             ),
             "legacy_catmaid_to_current_root_candidates": dominant_candidates,
             "all_five_root_candidates_recovered": len(dominant_candidates) == 5,
+            "lee_anchor_supervoxel_validation_pass": lee_anchor_validation_pass,
+            "legacy_catmaid_to_lee_functional_bridge": lee_bridge_candidates,
+            "all_five_lee_functional_bridges_recovered": len(lee_bridge_candidates) == 5,
             "curated_r21d12_to_specific_fanc_em_identity_found": False,
             "curated_fanc_to_manc_snpp_bridge_found": False,
             "exact_polarity_verified": False,
             "interpretation": (
-                "Coordinate/supervoxel/root recovery can establish a technical "
-                "legacy-FANC segmentation crosswalk. It cannot by itself promote "
-                "the author NBLAST rank-1 hit into a curated R21D12 identity, and "
-                "it cannot establish a curated FANC-to-MANC SNpp41 identity."
+                "An exact overlap between transformed legacy CATMAID skeleton "
+                "supervoxels and Lee_2024's validated FeCO anchor supervoxels can "
+                "establish a technical old-FANC-to-functional-root bridge without "
+                "ChunkedGraph authentication. This still cannot promote the author "
+                "NBLAST rank-1 hit into a curated R21D12 identity, and it cannot "
+                "establish a curated FANC-to-MANC SNpp41 identity."
             ),
         },
         "governance": {
