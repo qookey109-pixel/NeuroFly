@@ -1,0 +1,45 @@
+name: Research FANC Lee Hook Supervoxel Direction Bridge
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/v1-feco-lee-supervoxel-direction-bridge
+    paths:
+      - "scripts/research_probe_fanc_lee_supervoxel_direction_bridge.py"
+      - "tests/test_fanc_lee_supervoxel_direction_bridge_contract.py"
+      - "docs/experiments/V1_FANC_LEE_HOOK_SUPERVOXEL_DIRECTION_BRIDGE.md"
+      - ".github/workflows/research-fanc-lee-supervoxel-direction-bridge.yml"
+  pull_request:
+    paths:
+      - "scripts/research_probe_fanc_lee_supervoxel_direction_bridge.py"
+      - "tests/test_fanc_lee_supervoxel_direction_bridge_contract.py"
+      - "docs/experiments/V1_FANC_LEE_HOOK_SUPERVOXEL_DIRECTION_BRIDGE.md"
+      - ".github/workflows/research-fanc-lee-supervoxel-direction-bridge.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  fanc-lee-hook-svid-bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install probe dependencies
+        run: python -m pip install --disable-pip-version-check numpy pytest
+      - name: Contract test
+        run: python -m pytest -q tests/test_fanc_lee_supervoxel_direction_bridge_contract.py
+      - name: Run exact supervoxel bridge probe
+        run: |
+          python scripts/research_probe_fanc_lee_supervoxel_direction_bridge.py \
+            --output artifacts/fanc_lee_hook_svid_bridge.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fanc-lee-hook-svid-bridge
+          path: artifacts/fanc_lee_hook_svid_bridge.json
+          if-no-files-found: warn
