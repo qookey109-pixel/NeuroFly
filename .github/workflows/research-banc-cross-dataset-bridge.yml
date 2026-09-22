@@ -1,0 +1,41 @@
+name: Research BANC Cross-Dataset FeCO Bridge Audit
+
+on:
+  pull_request:
+    paths:
+      - "scripts/research_probe_banc_cross_dataset_bridge.py"
+      - ".github/workflows/research-banc-cross-dataset-bridge.yml"
+      - "tests/test_banc_cross_dataset_bridge_contract.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  banc-cross-dataset-bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install evidence reader
+        run: python -m pip install --disable-pip-version-check "pyarrow>=16,<24"
+
+      - name: Run read-only BANC cross-dataset audit
+        run: |
+          python scripts/research_probe_banc_cross_dataset_bridge.py \
+            --output artifacts/banc_cross_dataset_bridge_audit.json
+
+      - name: Upload evidence receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: banc-cross-dataset-feco-bridge-audit
+          path: artifacts/banc_cross_dataset_bridge_audit.json
+          if-no-files-found: error
+          retention-days: 30
