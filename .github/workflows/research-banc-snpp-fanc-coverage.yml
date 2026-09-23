@@ -1,0 +1,45 @@
+name: Research BANC SNpp FANC Coverage Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/v1-feco-banc-snpp-fanc-coverage-audit
+    paths:
+      - "scripts/research_probe_banc_snpp_fanc_coverage.py"
+      - "tests/test_banc_snpp_fanc_coverage_contract.py"
+      - "docs/experiments/V1_BANC_SNPP_FANC_COVERAGE_AUDIT.md"
+      - ".github/workflows/research-banc-snpp-fanc-coverage.yml"
+  pull_request:
+    paths:
+      - "scripts/research_probe_banc_snpp_fanc_coverage.py"
+      - "tests/test_banc_snpp_fanc_coverage_contract.py"
+      - "docs/experiments/V1_BANC_SNPP_FANC_COVERAGE_AUDIT.md"
+      - ".github/workflows/research-banc-snpp-fanc-coverage.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  banc-snpp-fanc-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest pyarrow
+      - name: Contract test
+        run: python -m pytest -q tests/test_banc_snpp_fanc_coverage_contract.py
+      - name: Run BANC SNpp/FANC coverage audit
+        run: |
+          python scripts/research_probe_banc_snpp_fanc_coverage.py \
+            --output artifacts/banc_snpp_fanc_coverage_audit.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: banc-snpp-fanc-coverage-audit
+          path: artifacts/banc_snpp_fanc_coverage_audit.json
+          if-no-files-found: warn
