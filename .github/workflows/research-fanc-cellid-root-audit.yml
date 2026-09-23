@@ -1,0 +1,45 @@
+name: Research FANC Cell-ID Root Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/v1-feco-fanc-cellid-root-audit
+    paths:
+      - "scripts/research_probe_fanc_cellid_root.py"
+      - "tests/test_fanc_cellid_root_contract.py"
+      - "docs/experiments/V1_FANC_CELLID_ROOT_AUDIT.md"
+      - ".github/workflows/research-fanc-cellid-root-audit.yml"
+  pull_request:
+    paths:
+      - "scripts/research_probe_fanc_cellid_root.py"
+      - "tests/test_fanc_cellid_root_contract.py"
+      - "docs/experiments/V1_FANC_CELLID_ROOT_AUDIT.md"
+      - ".github/workflows/research-fanc-cellid-root-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  fanc-cellid-root-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Contract test
+        run: python -m pytest -q tests/test_fanc_cellid_root_contract.py
+      - name: Run anonymous exact cell-ID/root probe
+        run: |
+          python scripts/research_probe_fanc_cellid_root.py \
+            --output artifacts/fanc_cellid_root_audit.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fanc-cellid-root-audit
+          path: artifacts/fanc_cellid_root_audit.json
+          if-no-files-found: warn
