@@ -1,0 +1,45 @@
+name: Research FeCO Motor-Sign Concordance
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/v1-feco-motor-sign-concordance-audit
+    paths:
+      - "scripts/research_probe_feco_motor_sign_concordance.py"
+      - "tests/test_feco_motor_sign_concordance_contract.py"
+      - "docs/experiments/V1_FECO_MOTOR_SIGN_CONCORDANCE_AUDIT.md"
+      - ".github/workflows/research-feco-motor-sign-concordance.yml"
+  pull_request:
+    paths:
+      - "scripts/research_probe_feco_motor_sign_concordance.py"
+      - "tests/test_feco_motor_sign_concordance_contract.py"
+      - "docs/experiments/V1_FECO_MOTOR_SIGN_CONCORDANCE_AUDIT.md"
+      - ".github/workflows/research-feco-motor-sign-concordance.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  motor-sign-concordance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Contract test
+        run: python -m pytest -q tests/test_feco_motor_sign_concordance_contract.py
+      - name: Run motor-sign concordance audit
+        run: |
+          python scripts/research_probe_feco_motor_sign_concordance.py \
+            --output artifacts/feco_motor_sign_concordance.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: feco-motor-sign-concordance
+          path: artifacts/feco_motor_sign_concordance.json
+          if-no-files-found: error
