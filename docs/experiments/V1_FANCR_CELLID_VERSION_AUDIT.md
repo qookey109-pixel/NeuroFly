@@ -79,3 +79,35 @@ Therefore this audit does not automatically set:
 - calibration authorization
 - runtime stimulation authorization
 - privileged-state bypass authorization
+
+
+## Observed result (2026-09-23)
+
+All pinned source checks succeeded:
+
+- official `fancr` cell-ID conversion semantics verified;
+- Dallmann v840 / `feco_axons_v0` source verified;
+- Lee static five-cell `T1L / hook_flx` root+supervoxel set verified 5/5.
+
+Anonymous namespace queries were then run for:
+
+- v840 / `cell_ids_v2` forward and reverse;
+- v840 / `cell_ids` forward and reverse;
+- v1116 / `cell_ids_v2` forward and reverse;
+- v1116 / `cell_ids` forward and reverse;
+- v840 / `feco_axons_v0` exact five-root query.
+
+Observed receipt:
+
+- `auth_interstitial_request_count = 9`;
+- `transport_error_count = 0`;
+- every request was redirected to Google OAuth/login HTML;
+- `exact_cellid_20201_to_hook_flx_root_found = false` is therefore **not**
+  interpreted as a scientific negative;
+- `positive_version_tables = []`.
+
+Conclusion: the official `fancr` namespace route confirms the same
+authentication boundary as PR #126. There is no anonymous supported shortcut
+for resolving `cell_id=20201 -> pt_root_id` at either v840 or v1116.
+
+No governance lock changes.
