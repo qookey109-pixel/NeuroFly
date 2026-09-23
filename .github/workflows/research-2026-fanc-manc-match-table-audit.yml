@@ -1,0 +1,45 @@
+name: Research 2026 FANC-MANC Match Table Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/v1-feco-2026-fanc-manc-match-table-audit
+    paths:
+      - "scripts/research_probe_2026_fanc_manc_match_table.py"
+      - "tests/test_2026_fanc_manc_match_table_contract.py"
+      - "docs/experiments/V1_2026_FANC_MANC_MATCH_TABLE_AUDIT.md"
+      - ".github/workflows/research-2026-fanc-manc-match-table-audit.yml"
+  pull_request:
+    paths:
+      - "scripts/research_probe_2026_fanc_manc_match_table.py"
+      - "tests/test_2026_fanc_manc_match_table_contract.py"
+      - "docs/experiments/V1_2026_FANC_MANC_MATCH_TABLE_AUDIT.md"
+      - ".github/workflows/research-2026-fanc-manc-match-table-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  match-table-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Contract test
+        run: python -m pytest -q tests/test_2026_fanc_manc_match_table_contract.py
+      - name: Run author match-table audit
+        run: |
+          python scripts/research_probe_2026_fanc_manc_match_table.py \
+            --output artifacts/fanc_manc_2026_match_table_audit.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fanc-manc-2026-match-table-audit
+          path: artifacts/fanc_manc_2026_match_table_audit.json
+          if-no-files-found: warn
