@@ -1,0 +1,45 @@
+name: Research FANC CAVE Global Route Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/v1-feco-cave-global-route-audit
+    paths:
+      - "scripts/research_probe_fanc_cave_global_route.py"
+      - "tests/test_fanc_cave_global_route_contract.py"
+      - "docs/experiments/V1_FANC_CAVE_GLOBAL_ROUTE_AUDIT.md"
+      - ".github/workflows/research-fanc-cave-global-route-audit.yml"
+  pull_request:
+    paths:
+      - "scripts/research_probe_fanc_cave_global_route.py"
+      - "tests/test_fanc_cave_global_route_contract.py"
+      - "docs/experiments/V1_FANC_CAVE_GLOBAL_ROUTE_AUDIT.md"
+      - ".github/workflows/research-fanc-cave-global-route-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  fanc-cave-global-route-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Contract test
+        run: python -m pytest -q tests/test_fanc_cave_global_route_contract.py
+      - name: Run official global-to-local CAVE route audit
+        run: |
+          python scripts/research_probe_fanc_cave_global_route.py \
+            --output artifacts/fanc_cave_global_route_audit.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fanc-cave-global-route-audit
+          path: artifacts/fanc_cave_global_route_audit.json
+          if-no-files-found: warn
