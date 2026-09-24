@@ -1,0 +1,45 @@
+name: Research Public FANC Raw NBLAST Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/v1-feco-public-fanc-raw-nblast-audit
+    paths:
+      - "scripts/research_probe_public_fanc_raw_nblast.py"
+      - "tests/test_public_fanc_raw_nblast_contract.py"
+      - "docs/experiments/V1_PUBLIC_FANC_RAW_NBLAST_AUDIT.md"
+      - ".github/workflows/research-public-fanc-raw-nblast-audit.yml"
+  pull_request:
+    paths:
+      - "scripts/research_probe_public_fanc_raw_nblast.py"
+      - "tests/test_public_fanc_raw_nblast_contract.py"
+      - "docs/experiments/V1_PUBLIC_FANC_RAW_NBLAST_AUDIT.md"
+      - ".github/workflows/research-public-fanc-raw-nblast-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  public-fanc-raw-nblast-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Contract test
+        run: python -m pytest -q tests/test_public_fanc_raw_nblast_contract.py
+      - name: Probe reviewed and raw public FANC NBLAST products
+        run: |
+          python scripts/research_probe_public_fanc_raw_nblast.py \
+            --output artifacts/public_fanc_raw_nblast_audit.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-fanc-raw-nblast-audit
+          path: artifacts/public_fanc_raw_nblast_audit.json
+          if-no-files-found: warn
