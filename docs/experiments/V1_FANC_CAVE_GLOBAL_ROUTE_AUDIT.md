@@ -48,3 +48,20 @@ mapping only. Because the BANC->FANC morphology match remains
 `validation=false`, it does not by itself establish a curated FANC->MANC
 identity or open polarity, calibration, runtime stimulation, or privileged-state
 locks.
+
+
+## Public segment-properties fallback
+
+The BANC pipeline explicitly states that the FANC compiled metadata feather is
+not publicly released, but it publishes a Neuroglancer `segment_properties`
+JSON generated from the local `fanc_meta.csv`.
+
+Pinned public object:
+
+`imported_meshes/fanc_1116_meshes_elastix_tpsreg_240721/segment_properties/info`
+
+Its IDs are FANC `cell_id` values, labels are `cell_type`, and tags are
+derived from the same local FANC metadata. The audit therefore also performs an
+exact lookup of `cell_id=20201` in this public object and records its label and
+decoded tags. This can add public annotation context but does not by itself
+resolve the corresponding FANC root ID.
