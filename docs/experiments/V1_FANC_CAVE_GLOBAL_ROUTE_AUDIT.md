@@ -65,3 +65,33 @@ derived from the same local FANC metadata. The audit therefore also performs an
 exact lookup of `cell_id=20201` in this public object and records its label and
 decoded tags. This can add public annotation context but does not by itself
 resolve the corresponding FANC root ID.
+
+
+## Observed result (2026-09-24)
+
+The official anonymous CAVE route is also authentication-blocked:
+
+- `https://global.daf-apis.com/info/api/v2/datastack/full/fanc_production_mar2021`
+  returns an HTTP-200 Google Accounts interstitial rather than JSON;
+- no `local_server` can therefore be discovered anonymously;
+- direct materialization requests against the global server return HTTP 404,
+  which is routing evidence only and not a scientific negative result.
+
+The public FANC Neuroglancer segment-properties object is readable without
+credentials and is generated from the pipeline's local `fanc_meta.csv`.
+
+For exact `cell_id=20201`:
+
+- found: `true`
+- label: `unknown`
+- decoded tags: `central neuron`, `right`
+
+This public metadata does **not** support a sensory / chordotonal / hook
+identity for cell 20201. Combined with the BANC NBLAST row
+(`score=0.1`, `validation=false`, `match_cell_type=null`), cell 20201
+must remain an unvalidated morphology candidate and is not accepted as the
+FANC identity bridge to SNpp41.
+
+The result also closes the hypothesis that PR #126 failed only because it used
+the historical `cave.fanc-fly.com` hostname: the official global InfoService
+route is anonymous-auth-blocked as well.
