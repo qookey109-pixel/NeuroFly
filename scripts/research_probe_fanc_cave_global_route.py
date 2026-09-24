@@ -66,6 +66,13 @@ RECEIPT_SCHEMA = "neurofly-fanc-cave-global-route-audit-v0.1"
 USER_AGENT = "NeuroFly-fanc-cave-global-route-audit/0.1"
 TIMEOUT = 30
 
+FANC_SEGMENT_PROPERTIES_URL = (
+    "https://storage.googleapis.com/"
+    "lee-lab_brain-and-nerve-cord-fly-connectome/"
+    "imported_meshes/fanc_1116_meshes_elastix_tpsreg_240721/"
+    "segment_properties/info"
+)
+
 LOCKS = {
     "curated_r21d12_to_specific_fanc_em_identity_found": False,
     "curated_fanc_to_manc_snpp_bridge_found": False,
@@ -265,6 +272,68 @@ def collect_rows(value: Any) -> list[dict[str, Any]]:
     return unique
 
 
+def audit_public_segment_properties() -> dict[str, Any]:
+    response = request_json(FANC_SEGMENT_PROPERTIES_URL)
+    parsed = response.get("json")
+    result = {
+        "request": response,
+        "cell_id": TARGET_FANC_CELL_ID,
+        "found": False,
+        "label": None,
+        "tags": [],
+        "property_schema": [],
+    }
+    if not isinstance(parsed, dict):
+        return result
+
+    inline = parsed.get("inline")
+    if not isinstance(inline, dict):
+        return result
+
+    ids = inline.get("ids")
+    properties = inline.get("properties")
+    if not isinstance(ids, list) or not isinstance(properties, list):
+        return result
+
+    result["property_schema"] = [
+        {
+            "id": prop.get("id"),
+            "type": prop.get("type"),
+        }
+        for prop in properties
+        if isinstance(prop, dict)
+    ]
+
+    target = str(TARGET_FANC_CELL_ID)
+    try:
+        idx = [str(x) for x in ids].index(target)
+    except ValueError:
+        return result
+
+    result["found"] = True
+    for prop in properties:
+        if not isinstance(prop, dict):
+            continue
+        prop_id = prop.get("id")
+        values = prop.get("values")
+        if not isinstance(values, list) or idx >= len(values):
+            continue
+        if prop_id == "label":
+            result["label"] = values[idx]
+        elif prop_id == "tags":
+            global_tags = prop.get("tags")
+            tag_ids = values[idx]
+            if isinstance(global_tags, list) and isinstance(tag_ids, list):
+                decoded = []
+                for tag_id in tag_ids:
+                    tag_index = normalize_int(tag_id)
+                    if tag_index is not None and 0 <= tag_index < len(global_tags):
+                        decoded.append(global_tags[tag_index])
+                result["tags"] = decoded
+
+    return result
+
+
 def audit_server(server: str) -> dict[str, Any]:
     versions = request_json(versions_url(server))
 
@@ -401,6 +470,7 @@ def main() -> int:
             server_candidates.append(server)
 
     audits = [audit_server(server) for server in server_candidates]
+    public_segment_properties = audit_public_segment_properties()
 
     feco_positive = [
         audit for audit in audits
@@ -439,6 +509,7 @@ def main() -> int:
             },
         },
         "server_audits": audits,
+        "public_segment_properties": public_segment_properties,
         "summary": {
             "global_info_json_received": bool(info.get("response_is_json")),
             "global_info_auth_blocked": bool(info.get("auth_interstitial"))
@@ -446,6 +517,15 @@ def main() -> int:
             "local_server_discovered": bool(local_servers),
             "official_feco_v840_all_five_hook_flx_confirmed": bool(feco_positive),
             "cell_id_20201_to_hook_flx_root_found": bool(cellid_positive),
+            "public_segment_properties_20201_found": bool(
+                public_segment_properties.get("found")
+            ),
+            "public_segment_properties_20201_label": (
+                public_segment_properties.get("label")
+            ),
+            "public_segment_properties_20201_tags": (
+                public_segment_properties.get("tags")
+            ),
             "feco_positive_servers": [a["server"] for a in feco_positive],
             "cellid_positive_servers": [a["server"] for a in cellid_positive],
             "interpretation": (
