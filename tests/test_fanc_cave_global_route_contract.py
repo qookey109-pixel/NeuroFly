@@ -51,3 +51,11 @@ def test_validation_false_cannot_unlock():
         '"privileged_state_bypass_authorized": False',
     ):
         assert key in PROBE
+
+
+def test_public_segment_properties_fallback_is_pinned():
+    assert "FANC_SEGMENT_PROPERTIES_URL" in PROBE
+    assert "fanc_1116_meshes_elastix_tpsreg_240721" in PROBE
+    assert "segment_properties/info" in PROBE
+    assert "audit_public_segment_properties" in PROBE
+    assert "public_segment_properties_20201_label" in PROBE
