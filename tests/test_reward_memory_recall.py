@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from neurofly.reward_memory_recall import validate_config
+from neurofly.reward_memory_recall import _receipt_plastic_state, validate_config
 
 
 def test_reward_memory_recall_contract_is_frozen():
@@ -10,3 +10,22 @@ def test_reward_memory_recall_contract_is_frozen():
     assert gates
     assert all(gates.values()), gates
     assert all(value is False for value in config["claim_policy"].values())
+
+
+def test_reward_memory_receipt_state_is_json_serializable():
+    import numpy as np
+
+    state = {
+        "fraction": np.asarray([1.0, 0.9]),
+        "reward_mask": np.asarray([True, False]),
+        "aversive_mask": np.asarray([False, True]),
+        "fraction_digest": "abc",
+        "reward_mask_digest": "reward",
+        "aversive_mask_digest": "aversive",
+    }
+    cleaned = _receipt_plastic_state(state)
+    assert "fraction" not in cleaned
+    assert "reward_mask" not in cleaned
+    assert "aversive_mask" not in cleaned
+    assert cleaned["fraction_digest"] == "abc"
+    json.dumps(cleaned)
