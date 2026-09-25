@@ -1,0 +1,100 @@
+{
+  "schema": "neurofly-memory-vg-delay-moderator-audit-v0.1",
+  "status": "PREREGISTERED_EXPLORATORY_DISCOVERY",
+  "scope": "real-malecns-reward-memory-vg-delay-history-moderator-audit",
+  "question": "Which pre-intervention neural and trajectory features are associated with suppression versus reversal after clearing v/g + refractory/delay state?",
+  "origin": {
+    "vg_delay_replication_run_id": 36148793925,
+    "vg_delay_replication_receipt_sha256": "bbdc1132f72ee59577859ffd56bd73fc66db447476f21664a96e6c67af95a40e",
+    "vg_delay_replication_freeze": "data/memory_vg_delay_replication_run1_freeze_v01.json",
+    "reason": "Fresh replication produced aggregate suppression but only 3/4 history-level replication, with VR4 reversing all three primary endpoints."
+  },
+  "candidate_pool": [
+    5603, 5609, 5623, 5639, 5641, 5647, 5651, 5653, 5657, 5659,
+    5669, 5683, 5689, 5693, 5701, 5711, 5717, 5737, 5741, 5743,
+    5749, 5779, 5783, 5791, 5801, 5807, 5813, 5821, 5827, 5839
+  ],
+  "selection": {
+    "target_replicates": 8,
+    "candidate_order_is_frozen": true,
+    "event_selection": "first natural reward at or after decision index 60",
+    "maximum_acquisition_decisions": 300,
+    "eligibility_rule": "accept the first candidates in frozen order whose pre-event brain checkpoint SHA-256 and stable sensory-sequence SHA-256 are both unique among already accepted candidates",
+    "sensory_sequence_window": "source lags -60 through 0 inclusive",
+    "stable_context_volatile_keys_removed_recursively": [
+      "survival_seconds",
+      "total_active_seconds",
+      "first_clear_seconds",
+      "latest_clear_seconds",
+      "best_clear_seconds",
+      "seconds"
+    ],
+    "selection_is_outcome_blind": true,
+    "moderator_features_must_not_be_labeled_by_effect_before_selection_freeze": true,
+    "no_seed_replacement_after_selection": true,
+    "fail_if_fewer_than_eight_eligible_candidates": true
+  },
+  "runtime": {
+    "post_reward_delay_decisions": 5,
+    "prefix_sequence": "exact source lags -60 through -21",
+    "boundary": "after source lag -21 and before source lag -20",
+    "terminal_sequence": "exact source lags -20 through -1 followed by exact reward cue at lag 0",
+    "recall_plasticity_frozen": true,
+    "recall_external_reinforcement": "none",
+    "conditions": [
+      {"id": "intact", "target_fields": []},
+      {"id": "clear_vg_delay", "target_fields": ["v", "g", "refractory", "queue", "queue_count"]}
+    ],
+    "primary_comparison_window": "common terminal replay lags -20 through 0 inclusive",
+    "no_model_parameter_change": true
+  },
+  "moderator_features": {
+    "timing": "measured after exact prefix lag -21 and before boundary intervention",
+    "physical_fields": ["v", "g", "adaptation", "luminance", "refractory", "queue_count", "nactive"],
+    "physical_summary_statistics": ["mean", "std", "p95_abs", "max_abs", "nonzero_fraction"],
+    "paired_branch_summaries": ["none", "true", "paired_mean", "absolute_branch_difference"],
+    "prefix_expression_features": [
+      "mean_changed_kc_active_fraction",
+      "mean_changed_l1_engaged_fraction",
+      "mbon07_state_difference_fraction",
+      "mbon07_spike_difference_fraction",
+      "action_divergence_fraction",
+      "lag_minus_21_changed_kc_active_fraction",
+      "lag_minus_21_changed_l1_engaged_fraction",
+      "lag_minus_21_mbon07_state_difference",
+      "lag_minus_21_mbon07_spike_difference"
+    ],
+    "trajectory_features": ["event_index", "changed_reward_edge_count"],
+    "all_feature_names_and_formulas_are_frozen_before_effect_labeling": true
+  },
+  "effect_label": {
+    "primary_endpoints": [
+      "mean_changed_kc_active_fraction",
+      "mean_changed_l1_engaged_fraction",
+      "mean_mbon07_state_difference_fraction"
+    ],
+    "suppression": "clear_vg_delay is lower than intact on all three primary endpoints",
+    "reversal": "clear_vg_delay is higher than intact on all three primary endpoints",
+    "mixed": "all other endpoint-sign patterns"
+  },
+  "analysis_policy": {
+    "exploratory_discovery_only": true,
+    "report_all_frozen_features": true,
+    "report_group_means_by_effect_label_when_group_size_is_nonzero": true,
+    "report_standardized_mean_difference_for_suppression_vs_non_suppression_when_both_groups_exist": true,
+    "no_feature_selection_threshold": true,
+    "no_significance_claim": true,
+    "no_causal_claim": true,
+    "any_moderator_hypothesis_requires_new_preregistered_cohort": true
+  },
+  "claim_policy": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "prefix_sequence_specificity_confirmed": false,
+    "transient_state_carrier_confirmed": false,
+    "memory_expression_causal": false,
+    "moderator_confirmed": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
