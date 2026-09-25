@@ -1,0 +1,80 @@
+{
+  "schema": "neurofly-memory-physical-state-interaction-run1-freeze-v0.1",
+  "status": "EXECUTION_VALID_REPLICATE_DIVERSITY_FAILED",
+  "successful_run": {
+    "run_id": 36118733181,
+    "head_sha": "a4f4e6ffe97e078c0dde45e09148778f6cf074af",
+    "artifact_id": 10858405420,
+    "artifact_sha256": "cfab6438841d9a445188604e5b581d877c27c5de2892e24d4a7b804e7eb71890",
+    "receipt_sha256": "1ee93fc228e6f68db1e5de0b03bdc8e290a58215dc2f4335be068bbf220d4255"
+  },
+  "source_checkpoint_sha256": "74467015e04fba2eda2bdb5efb4e5ae85dd5a7262aebfb69c63a20bb94e7c214",
+  "execution_valid": true,
+  "replicate_quality": {
+    "configured_replicates": 4,
+    "effective_neural_replicates": 1,
+    "event_indices": [66, 66, 66, 66],
+    "changed_reward_edge_counts": [1498, 1498, 1498, 1498],
+    "unique_pre_event_checkpoint_count": 1,
+    "shared_pre_event_checkpoint_sha256": "63ffe8afe79da8adba0510060eb56470dc59a7dad2e42fd1b1a3d073cf244e63",
+    "trajectory_digests_unique": true,
+    "trajectory_digest_is_not_sufficient_diversity_evidence": true,
+    "reason": "The trajectory receipt/context includes wall-clock-derived fields such as survival_seconds, so differing trajectory digests can coexist with an identical replay-relevant neural checkpoint. All four configured seeds produced the same pre-event brain checkpoint and identical condition/per-lag expression endpoints."
+  },
+  "single_unique_neural_trajectory_descriptive_result": {
+    "intact": {
+      "mean_changed_kc_active_fraction": 0.346371882086,
+      "mean_changed_l1_engaged_fraction": 0.503387975729,
+      "mean_mbon07_state_difference_fraction": 1.0,
+      "mean_mbon07_spike_difference_fraction": 0.238095238095,
+      "mean_action_divergence_fraction": 0.142857142857
+    },
+    "clear_vg_adaptation": {
+      "mean_changed_kc_active_fraction": 0.343474426808,
+      "mean_changed_l1_engaged_fraction": 0.500605686826,
+      "mean_mbon07_state_difference_fraction": 1.0,
+      "mean_mbon07_spike_difference_fraction": 0.428571428571,
+      "mean_action_divergence_fraction": 0.095238095238
+    },
+    "clear_input_delay": {
+      "mean_changed_kc_active_fraction": 0.333396321491,
+      "mean_changed_l1_engaged_fraction": 0.496260999438,
+      "mean_mbon07_state_difference_fraction": 1.0,
+      "mean_mbon07_spike_difference_fraction": 0.238095238095,
+      "mean_action_divergence_fraction": 0.095238095238
+    },
+    "clear_broad_physical_transient": {
+      "mean_changed_kc_active_fraction": 0.197656840514,
+      "mean_changed_l1_engaged_fraction": 0.290436754625,
+      "mean_mbon07_state_difference_fraction": 0.571428571429,
+      "mean_mbon07_spike_difference_fraction": 0.095238095238,
+      "mean_action_divergence_fraction": 0.095238095238
+    },
+    "interaction_contrasts": {
+      "mean_changed_kc_active_fraction": -0.132842025699,
+      "mean_changed_l1_engaged_fraction": -0.20304195591,
+      "mean_mbon07_state_difference_fraction": -0.428571428571,
+      "mean_mbon07_spike_difference_fraction": -0.333333333333,
+      "mean_action_divergence_fraction": 0.047619047619,
+      "reward_cue_action_divergence_fraction": 0.0
+    }
+  },
+  "interpretation": {
+    "scheduler_equivalence_replicated_on_unique_neural_trajectory": true,
+    "nonadditive_joint_clear_effect_observed": true,
+    "interaction_replicated_across_independent_neural_trajectories": false,
+    "subsystem_a_or_b_main_effect_established": false,
+    "transient_state_carrier_confirmed": false,
+    "result_can_support_promotion": false,
+    "next_step": "Preregister an outcome-blind neural-diversity gate that accepts candidate seeds only when the pre-event checkpoint digest is unique before any memory-expression condition is executed. Freeze selected seeds, then rerun the A/B/A+B interaction study."
+  },
+  "claims": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "prefix_sequence_specificity_confirmed": false,
+    "transient_state_carrier_confirmed": false,
+    "memory_expression_causal": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
