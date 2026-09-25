@@ -1,64 +1,86 @@
 # V1 Reward Memory Recall Diagnostic
 
-Status: **PREREGISTERED EXPLORATORY EXECUTION**
+Status: **V0.1 INVALID / V0.2 PREREGISTERED EXPLORATORY EXECUTION**
 
-## Question
+## Origin
 
-Run 1 of the compartment plasticity diagnostic established that, under the
-frozen model, reward-pulse edge differences are localized entirely to the
-predefined reward memory compartment. It did not test whether that synaptic
-difference has a later functional consequence.
+The merged compartment-plasticity study established that the immediate paired
+reward-pulse efficacy difference is confined to the predefined reward memory
+compartment. It did not establish persistence or later cue-conditioned
+function.
 
-This study asks:
+## V0.1 invalid freeze
 
-> After one natural reward event, does the compartment-local synaptic
+V0.1 used four fresh seeds and a fixed 60-decision acquisition window.
+
+It is **not scientific evidence**.
+
+- run `36091139488` reached the final receipt stage but failed because runtime
+  NumPy arrays were included in the JSON evidence object; no accepted receipt
+  exists;
+- after fixing serialization, run `36093996850` failed before recall endpoints
+  because at least one preregistered seed had no natural reward event with five
+  later decisions remaining inside the fixed 60-decision window.
+
+The second failure is a design-feasibility failure, not a negative memory
+result. Seeds may not be replaced after observing this failure.
+
+Machine-readable freeze:
+
+`data/reward_memory_recall_v01_invalid_freeze.json`
+
+## V0.2 question
+
+> After the first natural reward event, does the compartment-local synaptic
 > difference produced by true external reinforcement survive five identical
 > no-reinforcement replay decisions and, after clearing transient neural state,
 > change the response to the identical reward cue?
 
-## Why reward only
+## V0.2 acquisition rule
 
-The prior diagnostic observed 15 reward events but only one aversive event.
-The aversive sample is therefore not used to motivate a balanced recall claim.
+Four new seeds are frozen before execution:
 
-This study deliberately narrows to reward memory. Aversive recall requires its
-own adequately sampled preregistered study.
+- R2-1 / 2711
+- R2-2 / 2713
+- R2-3 / 2719
+- R2-4 / 2729
 
-## Frozen design
+For each replicate, the frozen driver starts at decision zero and records until:
 
-Four fresh trajectory seeds:
+1. the **first natural reward** is observed; then
+2. exactly **five subsequent decisions** are recorded.
 
-- R1: 2609
-- R2: 2617
-- R3: 2621
-- R4: 2633
+Maximum acquisition length is **300 decisions**.
 
-For each frozen trajectory, the study chooses the **first natural reward event
-with at least five subsequent recorded decisions**. This rule is fixed before
-execution; no event is selected by observed neural or memory effect.
+If a seed has no reward within that maximum, the replicate and study are
+invalid. The seed is not replaced.
 
-For each replicate:
+This changes only event acquisition feasibility. It does not tune an observed
+memory or neural effect.
+
+## Paired state-cleared recall
+
+For the first natural reward event in each valid acquisition:
 
 1. reconstruct the exact pre-event checkpoint with external reinforcement
    suppressed in prior history;
-2. branch from the same checkpoint:
+2. branch from that identical checkpoint:
    - no pulse;
    - true reward pulse;
-3. replay the next five exact sensory frame/context pairs to both branches with
-   external reinforcement suppressed;
-4. measure reward-compartment paired efficacy difference before and after the
-   replay window;
-5. clear transient neural state with `brain.reset(keep_memory=True)`;
-6. clear the wrapper's visual-history state;
+3. replay the next five exact frame/context pairs to both branches with external
+   reinforcement suppressed;
+4. measure the paired reward-compartment efficacy difference immediately after
+   the event and after the five-decision delay;
+5. call `brain.reset(keep_memory=True)`;
+6. clear wrapper visual-history state;
 7. freeze plasticity;
-8. present the exact original reward-event frame/context to both branches with
-   no reinforcement;
+8. replay the exact original reward-event frame/context with no reinforcement;
 9. compare neural readout and decoded action.
 
 ## Primary descriptive endpoints
 
-- reward-compartment L1 difference immediately after the event;
-- reward-compartment L1 difference after five replay decisions;
+- post-event reward-compartment L1 difference;
+- post-delay reward-compartment L1 difference;
 - L1 retention ratio;
 - recall action divergence;
 - recall DNp20 right-minus-left rate delta;
@@ -70,15 +92,12 @@ No behavioral PASS threshold is defined.
 
 ## Isolation boundary
 
-The state-clearing recall is deliberately stronger than simply continuing the
-live game. It removes transient membrane, queue, trace-rate and visual-history
-state while preserving the branch's synaptic memory.
+The reset removes transient neural state while preserving the branch's synaptic
+memory. Recall plasticity is frozen, so recall cannot create a new branch
+difference.
 
-Recall plasticity is frozen, so the cue cannot create a new memory difference
-during the measurement itself.
-
-This is an engineered mechanistic assay, not a claim that biological flies
-undergo a literal reset.
+This is an engineered mechanistic assay, not a claim that a biological fly
+undergoes a literal reset.
 
 ## Locked claims
 
