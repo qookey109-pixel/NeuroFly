@@ -1,0 +1,122 @@
+name: NeuroFly Paired Recall Diagnostic
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/v1-learning-paired-recall
+    paths:
+      - "data/paired_recall_diagnostic_v01.json"
+      - "src/neurofly/paired_recall_diagnostic.py"
+      - "tests/test_paired_recall_diagnostic.py"
+      - "docs/experiments/V1_PAIRED_RECALL_DIAGNOSTIC.md"
+      - ".github/workflows/paired-recall-diagnostic.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: neurofly-paired-recall-diagnostic
+  cancel-in-progress: false
+
+jobs:
+  paired-recall-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      SOURCE_STATE: runs/free-malecns
+      STUDY_DIR: runs/paired-recall-diagnostic
+      BASE_CHECKPOINT: runs/paired-recall-diagnostic/base-brain.npz
+      RECEIPT: runs/paired-recall-diagnostic/paired-recall-diagnostic-receipt.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+
+      - name: Restore latest production checkpoint read-only source
+        uses: actions/cache/restore@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-v06-state-paired-recall-${{ github.run_id }}
+          restore-keys: |
+            neurofly-v06-state-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Validate preregistered contract
+        run: pytest -q tests/test_paired_recall_diagnostic.py
+
+      - name: Prepare and verify MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$STUDY_DIR"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+          python -m neurofly host-preflight | tee "$STUDY_DIR/preflight.json"
+
+      - name: Copy production brain into isolated diagnostic baseline
+        run: |
+          test -f "$SOURCE_STATE/brain.npz"
+          cp "$SOURCE_STATE/brain.npz" "$BASE_CHECKPOINT"
+          test "$(realpath "$SOURCE_STATE/brain.npz")" != "$(realpath "$BASE_CHECKPOINT")"
+          sha256sum "$SOURCE_STATE/brain.npz" "$BASE_CHECKPOINT"
+
+      - name: Execute paired recall diagnostic
+        run: |
+          python -m neurofly.paired_recall_diagnostic             --base-checkpoint "$BASE_CHECKPOINT"             --output-dir "$STUDY_DIR/replicates"             --receipt "$RECEIPT"
+
+      - name: Validate receipt without opening learning claims
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path(
+              "runs/paired-recall-diagnostic/"
+              "paired-recall-diagnostic-receipt.json"
+          )
+          receipt = json.loads(path.read_text())
+          assert receipt["schema"] == "neurofly-paired-recall-diagnostic-receipt-v0.1"
+          assert receipt["status"] == "EXPLORATORY_DIAGNOSTIC_COMPLETE"
+          assert receipt["execution_valid"] is True
+          assert all(receipt["config_gates"].values())
+          assert all(receipt["evidence_gates"].values())
+          for key in (
+              "learning_validated",
+              "paired_recall_effect_causal",
+              "cue_conditioned_behavior_validated",
+              "reinforcement_mechanism_validated",
+              "causal_learning_claim_authorized",
+              "replacement_confirmatory_authorized",
+              "behavioral_promotion_authorized",
+          ):
+              assert receipt[key] is False
+          assert receipt["production_checkpoint_mutated"] is False
+          print(
+              "PAIRED_RECALL_DIAGNOSTIC_VALID",
+              receipt["receipt_sha256"],
+              receipt["aggregate"],
+          )
+          PY
+
+      - name: Publish paired recall evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-paired-recall-diagnostic-${{ github.run_id }}
+          path: |
+            runs/paired-recall-diagnostic/preflight.json
+            runs/paired-recall-diagnostic/paired-recall-diagnostic-receipt.json
+          if-no-files-found: error
+          retention-days: 14
