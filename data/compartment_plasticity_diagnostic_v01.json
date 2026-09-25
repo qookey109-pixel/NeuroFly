@@ -1,0 +1,62 @@
+{
+  "schema": "neurofly-compartment-plasticity-diagnostic-v0.1",
+  "status": "PREREGISTERED_EXPLORATORY_EXECUTION",
+  "scope": "real-malecns-event-local-compartment-specific-plasticity",
+  "question": "Does a true task reinforcement pulse produce edge-level efficacy redistribution concentrated in the anatomically intended KC-to-MBON memory compartment relative to an identical no-pulse branch?",
+  "origin": {
+    "learning_mechanism_closeout_status": "LEARNING_MECHANISM_DIAGNOSTIC_CLOSED",
+    "event_local_run_id": 35434647150,
+    "event_local_receipt_sha256": "6d7c7fc8c38106e8ceafb8e0346f87a7a6ae71cbfea59b2b3d9e372203e42712",
+    "baseline_digest": "1fd69ded16a400e9a00e1265e8264aeafe7d402fa1819fc412df041fa7f205f9",
+    "reason_for_new_question": "The closeout established that global mean efficacy is insufficient to determine whether useful plasticity is compartment-specific."
+  },
+  "runtime": {
+    "decision_synchronous_world": true,
+    "trajectory_decisions": 60,
+    "neural_ms_per_decision": 50,
+    "pulse_ms": 20,
+    "pulse_current": 20.0,
+    "pre_event_history_reinforcement": "none",
+    "paired_conditions": ["none", "true_external"],
+    "replay_learning": true,
+    "baseline_mode": "calibrated",
+    "trace_state_mode": "subtract_baseline",
+    "edge_change_tolerance": 1e-12
+  },
+  "replicates": [
+    {"id": "C1", "trajectory_seed": 2309},
+    {"id": "C2", "trajectory_seed": 2311},
+    {"id": "C3", "trajectory_seed": 2333},
+    {"id": "C4", "trajectory_seed": 2339}
+  ],
+  "compartments": {
+    "reward_event_target": "KC-to-MBON07 edges selected by nonzero PAM11 gain",
+    "aversive_event_target": "KC-to-MBON11 edges selected by nonzero PPL101 gain",
+    "selection_rule": "derive masks only from the frozen Stonkfly circuit gain matrix; do not select edges by observed effect"
+  },
+  "primary_descriptive_endpoints": [
+    "reward_event_target_l1_fraction",
+    "aversive_event_target_l1_fraction",
+    "reward_event_target_mean_signed_delta",
+    "aversive_event_target_mean_signed_delta",
+    "reward_event_target_negative_edge_fraction",
+    "aversive_event_target_negative_edge_fraction",
+    "off_target_max_abs_delta",
+    "event_action_divergence_fraction"
+  ],
+  "interpretation_policy": {
+    "no_posthoc_edge_selection": true,
+    "no_parameter_tuning": true,
+    "no_directional_pass_threshold": true,
+    "global_mean_efficacy_not_used_as_primary_mechanistic_endpoint": true,
+    "result_is_descriptive_mechanism_evidence_only": true
+  },
+  "claim_policy": {
+    "learning_validated": false,
+    "compartment_specificity_causal": false,
+    "reinforcement_mechanism_validated": false,
+    "causal_learning_claim_authorized": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "schema": "neurofly-compartment-plasticity-diagnostic-run1-freeze-v0.1",
+  "status": "EXPLORATORY_DIAGNOSTIC_COMPLETE",
+  "successful_run": {
+    "run_id": 36090134339,
+    "head_sha": "9755b4a0161948e1d502a1725ecd663a3bab410f",
+    "artifact_id": 10844969762,
+    "artifact_name": "neurofly-compartment-plasticity-diagnostic-36090134339",
+    "artifact_sha256": "5e7c347af0adc0d4dad1b94812012413423d5ac34d48e319eb9920b61c25f8be",
+    "receipt_sha256": "19802e5a95243b55f1712b313e6e844637a85eff4c35e405d8d4b8a936e71308"
+  },
+  "invalid_implementation_run": {
+    "run_id": 36089897219,
+    "head_sha": "4a690ba232ff4f0d7144103102be6c09424830d5",
+    "scientific_result_valid": false,
+    "failure": "Weight fraction and memory_w reconstruction check used an unrealistically strict fixed 1e-10 tolerance across float32 weight and float64 memory state.",
+    "fix": "Replaced fixed tolerance with a dtype-aware quantization bound. No preregistered scientific parameter, seed, endpoint, pulse, baseline, trace rule, or compartment definition changed."
+  },
+  "source_checkpoint": {
+    "sha256_before": "3ae3317d452ea48ea04584836d6b99ec4133e0663dbd48615364c4735c0f8082",
+    "sha256_after": "3ae3317d452ea48ea04584836d6b99ec4133e0663dbd48615364c4735c0f8082",
+    "mutated": false
+  },
+  "design": {
+    "replicates": [
+      {"id": "C1", "trajectory_seed": 2309, "event_count": 3},
+      {"id": "C2", "trajectory_seed": 2311, "event_count": 3},
+      {"id": "C3", "trajectory_seed": 2333, "event_count": 7},
+      {"id": "C4", "trajectory_seed": 2339, "event_count": 3}
+    ],
+    "trajectory_digests_unique": true,
+    "plastic_edges": 7835,
+    "reward_compartment_edges": 3651,
+    "aversive_compartment_edges": 4184,
+    "edge_compartments_overlap": false
+  },
+  "aggregate": {
+    "event_count": 16,
+    "event_action_divergence_fraction": 0.0,
+    "mean_memory_w_reconstruction_max_abs_error": 0.000000094061423,
+    "reward": {
+      "event_count": 15,
+      "mean_target_l1_fraction": 1.0,
+      "median_target_l1_fraction": 1.0,
+      "target_dominant_event_fraction": 1.0,
+      "mean_target_signed_delta": -0.001273467775222,
+      "mean_target_abs_delta": 0.001273482385779,
+      "mean_off_target_abs_delta": 0.0,
+      "maximum_off_target_abs_delta": 0.0,
+      "mean_target_negative_edge_fraction": 0.407778690769,
+      "mean_target_positive_edge_fraction": 0.000036519675
+    },
+    "aversive": {
+      "event_count": 1,
+      "mean_target_l1_fraction": 1.0,
+      "median_target_l1_fraction": 1.0,
+      "target_dominant_event_fraction": 1.0,
+      "mean_target_signed_delta": -0.001020820100972,
+      "mean_target_abs_delta": 0.001020820100972,
+      "mean_off_target_abs_delta": 0.0,
+      "maximum_off_target_abs_delta": 0.0,
+      "mean_target_negative_edge_fraction": 0.451003824092,
+      "mean_target_positive_edge_fraction": 0.0
+    }
+  },
+  "execution_gates": {
+    "all_config_gates_true": true,
+    "all_evidence_gates_true": true,
+    "all_replicates_executed": true,
+    "all_trajectories_complete": true,
+    "at_least_one_event_per_replicate": true,
+    "reward_and_aversive_events_observed": true,
+    "paired_edge_topology_exact": true,
+    "memory_w_reconstruction_within_dtype_bound": true,
+    "none_branches_have_no_stimulus": true,
+    "true_branches_deliver_20ms_stimulus": true,
+    "trajectory_driver_frozen_memory_unchanged": true
+  },
+  "interpretation": {
+    "global_negative_mean_is_broad_nonspecific_drift": false,
+    "paired_pulse_effect_is_compartment_local_under_current_model": true,
+    "off_target_effect_detected": false,
+    "immediate_action_effect_detected": false,
+    "note": "Exact compartment locality is expected from the frozen gain topology and is evidence about implementation/mechanism behavior, not independent biological validation.",
+    "replicate_independence_claim": false,
+    "reason": "Trajectory digests are distinct, but event timing/effect patterns overlap substantially across seeds; this exploratory study was not designed as an independence or generalization test."
+  },
+  "claims": {
+    "learning_validated": false,
+    "compartment_specificity_causal": false,
+    "reinforcement_mechanism_validated": false,
+    "causal_learning_claim_authorized": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  },
+  "next_question": "Test whether the frozen compartment-local edge changes persist and alter cue-conditioned behavior after the event, using a new preregistered paired recall design before any replacement confirmatory study."
+}
