@@ -1,0 +1,28 @@
+{
+  "schema": "neurofly-public-fanc-provenance-summary-v0.1",
+  "source_run_id": 36089073238,
+  "source_artifact_id": 10844724488,
+  "source_artifact_sha256": "c45ad281f98aa2ec31dbcc499a88884557fdf03968a5dad11bae9699313964b4",
+  "public_inventory": {
+    "compiled_data_fanc_1116_object_count": 21865,
+    "nblast_object_count": 14,
+    "hook_flx_roots_with_public_swc": 13,
+    "hook_flx_roots_with_non_swc_public_object": 0,
+    "public_root_named_obj_count": 0,
+    "public_root_named_mesh_count": 0,
+    "segment_properties_stable_id_count": 21952,
+    "segment_properties_contains_root_property": false
+  },
+  "interpretation": {
+    "exact_public_provenance_bridge_found": false,
+    "public_only_namespace_routes_exhausted": true,
+    "authenticated_cell_ids_v2_required": true,
+    "morphology_similarity_not_accepted_as_identity": true
+  },
+  "gates": {
+    "bridge_is_curated_identity": false,
+    "exact_polarity_verified": false,
+    "current_calibration_authorized": false,
+    "runtime_stimulation_authorized": false
+  }
+}
