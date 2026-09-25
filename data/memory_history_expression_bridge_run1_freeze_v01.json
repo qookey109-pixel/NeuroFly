@@ -1,0 +1,150 @@
+{
+  "schema": "neurofly-memory-history-expression-bridge-run1-freeze-v0.1",
+  "status": "EXPLORATORY_MEMORY_HISTORY_EXPRESSION_BRIDGE_COMPLETE",
+  "successful_run": {
+    "run_id": 36104612747,
+    "head_sha": "ed0bba7f1d9373c9bfa6ad28cd699216cb9e4c17",
+    "artifact_id": 10850744135,
+    "artifact_name": "neurofly-memory-history-expression-bridge-36104612747",
+    "artifact_sha256": "45cf654bcceda452564a731b60ef84bdcc1b7f51c8ffa72cd26bdbb8f9bbc863",
+    "receipt_sha256": "f61d6b9078cb43e80fdcf2bace26034cdb2b362739fd91119c450d54bf14162a"
+  },
+  "source_checkpoint": {
+    "sha256_before": "b4af753be2ad382ae112c9a4ee05198b15dc629b74d9a64e22d48edf8d7ae618",
+    "sha256_after": "b4af753be2ad382ae112c9a4ee05198b15dc629b74d9a64e22d48edf8d7ae618",
+    "mutated": false
+  },
+  "primary_aggregate": {
+    "replicate_count": 4,
+    "mean_changed_reward_edge_count": 1505.75,
+    "one_tau_terminal_replicates_with_changed_kc_activity": 4,
+    "three_tau_terminal_replicates_with_changed_kc_activity": 4,
+    "one_tau_terminal_replicates_with_mbon07_state_difference": 4,
+    "three_tau_terminal_replicates_with_mbon07_state_difference": 4,
+    "one_tau_terminal_replicates_with_mbon07_spike_difference": 3,
+    "three_tau_terminal_replicates_with_mbon07_spike_difference": 4,
+    "one_tau_terminal_replicates_with_action_divergence": 2,
+    "three_tau_terminal_replicates_with_action_divergence": 4,
+    "one_tau_reward_cue_action_divergence_fraction": 0.0,
+    "three_tau_reward_cue_action_divergence_fraction": 0.0
+  },
+  "derived_common_terminal_window_summary": {
+    "window": "lags -20 through 0 inclusive",
+    "note": "Derived only from preregistered paired terminal per-lag endpoints; no new threshold or window selection.",
+    "one_tau_mean_changed_kc_active_fraction_across_replicate_lags": 0.148842578027,
+    "three_tau_mean_changed_kc_active_fraction_across_replicate_lags": 0.328761877451,
+    "one_tau_mean_changed_l1_engaged_fraction_across_replicate_lags": 0.224429760617,
+    "three_tau_mean_changed_l1_engaged_fraction_across_replicate_lags": 0.492223309279,
+    "one_tau_mean_mbon07_state_difference_lags_per_replicate": 9.75,
+    "three_tau_mean_mbon07_state_difference_lags_per_replicate": 21.0,
+    "one_tau_mean_mbon07_spike_difference_lags_per_replicate": 1.0,
+    "three_tau_mean_mbon07_spike_difference_lags_per_replicate": 7.0,
+    "one_tau_mean_action_divergence_lags_per_replicate": 2.0,
+    "three_tau_mean_action_divergence_lags_per_replicate": 3.5,
+    "one_tau_reward_cue_mean_changed_kc_active_fraction": 0.381197938342,
+    "three_tau_reward_cue_mean_changed_kc_active_fraction": 0.355791845074,
+    "one_tau_reward_cue_mean_changed_l1_engaged_fraction": 0.565553626018,
+    "three_tau_reward_cue_mean_changed_l1_engaged_fraction": 0.510345133881
+  },
+  "replicates": [
+    {
+      "id": "HE1",
+      "trajectory_seed": 3109,
+      "event_index": 102,
+      "acquisition_decisions": 108,
+      "changed_reward_edge_count": 1507,
+      "unique_changed_presynaptic_kc_count": 759,
+      "one_tau": {
+        "mbon07_spike_difference": true,
+        "action_divergence": true,
+        "action_divergence_lags": [-2, -1],
+        "reward_cue_action_divergence": false
+      },
+      "three_tau": {
+        "mbon07_spike_difference": true,
+        "action_divergence": true,
+        "action_divergence_lags": [-9],
+        "reward_cue_action_divergence": false
+      }
+    },
+    {
+      "id": "HE2",
+      "trajectory_seed": 3119,
+      "event_index": 60,
+      "acquisition_decisions": 66,
+      "changed_reward_edge_count": 1512,
+      "unique_changed_presynaptic_kc_count": 760,
+      "one_tau": {
+        "mbon07_spike_difference": true,
+        "action_divergence": false,
+        "action_divergence_lags": [],
+        "reward_cue_action_divergence": false
+      },
+      "three_tau": {
+        "mbon07_spike_difference": true,
+        "action_divergence": true,
+        "action_divergence_lags": [-17, -11, -7],
+        "reward_cue_action_divergence": false
+      }
+    },
+    {
+      "id": "HE3",
+      "trajectory_seed": 3121,
+      "event_index": 71,
+      "acquisition_decisions": 77,
+      "changed_reward_edge_count": 1500,
+      "unique_changed_presynaptic_kc_count": 755,
+      "one_tau": {
+        "mbon07_spike_difference": false,
+        "action_divergence": false,
+        "action_divergence_lags": [],
+        "reward_cue_action_divergence": false
+      },
+      "three_tau": {
+        "mbon07_spike_difference": true,
+        "action_divergence": true,
+        "action_divergence_lags": [-12, -11, -9, -5, -3, -1],
+        "reward_cue_action_divergence": false
+      }
+    },
+    {
+      "id": "HE4",
+      "trajectory_seed": 3137,
+      "event_index": 61,
+      "acquisition_decisions": 67,
+      "changed_reward_edge_count": 1504,
+      "unique_changed_presynaptic_kc_count": 756,
+      "one_tau": {
+        "mbon07_spike_difference": true,
+        "action_divergence": true,
+        "action_divergence_lags": [-15, -13, -9, -6, -5, -4],
+        "reward_cue_action_divergence": false
+      },
+      "three_tau": {
+        "mbon07_spike_difference": true,
+        "action_divergence": true,
+        "action_divergence_lags": [-12, -9, -8, -7],
+        "reward_cue_action_divergence": false
+      }
+    }
+  ],
+  "interpretation": {
+    "three_tau_stabilizes_terminal_memory_expression": true,
+    "changed_kc_activity_presence_alone_distinguishes_windows": false,
+    "mbon07_state_presence_alone_distinguishes_windows": false,
+    "three_tau_increases_mbon07_spike_replicate_coverage": true,
+    "three_tau_increases_action_divergence_replicate_coverage": true,
+    "three_tau_reward_cue_action_divergence_detected": false,
+    "three_tau_reward_cue_engagement_stronger_than_one_tau": false,
+    "mechanistic_summary": "The extra -60..-21 temporal context produces a more continuously expressed paired-memory state across the common -20..0 terminal window. Three tau yields MBON07 state differences at all 21 terminal lags in all four replicates, MBON07 spike differences in 4/4 versus 3/4, and action divergence in 4/4 versus 2/4. The effect is temporal-context stabilization rather than amplification of the instantaneous reward cue, where action divergence remains 0/4 in both conditions and mean changed-KC/L1 engagement is not higher under three tau.",
+    "next_question": "Test the causal specificity of the extra -60..-21 history with fresh preregistered trajectories by preserving the identical -20..0 terminal sequence while comparing exact early history against a matched disrupted-prefix control, with all learning and promotion claims locked."
+  },
+  "claims": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "cue_indexing_failure_confirmed": false,
+    "memory_expression_causal": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
