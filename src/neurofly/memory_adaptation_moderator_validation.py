@@ -7,7 +7,6 @@ from pathlib import Path
 from statistics import mean
 from typing import Any
 
-import numpy as np
 
 from .event_local_reinforcement_pulse import _build_pre_event_checkpoint, _restore_recentered
 from .learning_control_study import _sha256_file
