@@ -1,0 +1,62 @@
+{
+  "schema": "neurofly-paired-recall-diagnostic-v0.1",
+  "status": "PREREGISTERED_EXPLORATORY_EXECUTION",
+  "scope": "real-malecns-post-reinforcement-paired-cue-recall",
+  "question": "Does the compartment-local efficacy difference caused by one true task reinforcement pulse persist through identical reinforcement-free replay and alter the later neural/action response to the same cue?",
+  "origin": {
+    "compartment_run_id": 36090134339,
+    "compartment_receipt_sha256": "19802e5a95243b55f1712b313e6e844637a85eff4c35e405d8d4b8a936e71308",
+    "compartment_artifact_sha256": "5e7c347af0adc0d4dad1b94812012413423d5ac34d48e319eb9920b61c25f8be",
+    "observed_target_l1_fraction": 1.0,
+    "observed_off_target_effect": 0.0
+  },
+  "runtime": {
+    "decision_synchronous_world": true,
+    "trajectory_decisions": 60,
+    "delay_decisions": 8,
+    "neural_ms_per_decision": 50,
+    "pulse_ms": 20,
+    "pulse_current": 20.0,
+    "pre_event_history_reinforcement": "none",
+    "post_event_replay_reinforcement": "none",
+    "recall_reinforcement": "none",
+    "paired_conditions": ["none", "true_external"],
+    "baseline_mode": "calibrated",
+    "trace_state_mode": "subtract_baseline",
+    "replay_source": "frozen recorded frames and contexts",
+    "recall_cue": "exact original event frame and context"
+  },
+  "replicates": [
+    {"id": "RCL1", "trajectory_seed": 2459},
+    {"id": "RCL2", "trajectory_seed": 2467},
+    {"id": "RCL3", "trajectory_seed": 2473},
+    {"id": "RCL4", "trajectory_seed": 2477}
+  ],
+  "primary_descriptive_endpoints": [
+    "immediate_target_l1",
+    "delayed_target_l1",
+    "target_l1_persistence_ratio",
+    "delayed_target_mean_signed_delta",
+    "recall_action_divergence_fraction",
+    "recall_difference_hz_delta",
+    "recall_gate_spike_delta",
+    "recall_total_spike_delta"
+  ],
+  "interpretation_policy": {
+    "no_parameter_tuning": true,
+    "no_posthoc_event_selection": true,
+    "all_eligible_reinforced_events_used": true,
+    "no_directional_pass_threshold": true,
+    "fixed_delay_before_execution": true,
+    "result_is_descriptive_mechanism_evidence_only": true
+  },
+  "claim_policy": {
+    "learning_validated": false,
+    "paired_recall_effect_causal": false,
+    "cue_conditioned_behavior_validated": false,
+    "reinforcement_mechanism_validated": false,
+    "causal_learning_claim_authorized": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
