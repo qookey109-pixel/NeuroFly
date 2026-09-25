@@ -1,0 +1,57 @@
+{
+  "schema": "neurofly-memory-expression-audit-v0.1",
+  "status": "PREREGISTERED_EXPLORATORY_EXECUTION",
+  "scope": "real-malecns-reward-memory-expression-path",
+  "question": "When a reward-pulse-induced KC-to-MBON07 synaptic difference persists but the state-cleared cue recall action is unchanged, is the stored difference engaged by cue-active presynaptic KCs, expressed at MBON07, and propagated toward the current DNp20/DNpe017 decoder?",
+  "origin": {
+    "reward_recall_run_id": 36094504041,
+    "reward_recall_receipt_sha256": "79eda0b1cf440e7e7bbe99233784b01789d010e16e136128dd8cdbbbe3431ca3",
+    "reward_recall_artifact_sha256": "be99048d5feb253e65418dbaedd8f3eff49be6f5e5e5abd9c68a937fd13febfc",
+    "reward_recall_freeze": "data/reward_memory_recall_v02_run1_freeze.json"
+  },
+  "runtime": {
+    "event_acquisition": "same event-triggered first-natural-reward rule as reward recall v0.2",
+    "maximum_acquisition_decisions": 300,
+    "post_event_replay_decisions": 5,
+    "post_event_external_reinforcement": "none",
+    "transient_state_policy": "brain.reset(keep_memory=true) before recall; wrapper visual-history state cleared",
+    "recall_external_reinforcement": "none",
+    "recall_plasticity_frozen": true,
+    "changed_edge_tolerance_fraction": 1e-12,
+    "no_model_parameter_change": true
+  },
+  "replicates": [
+    {"id": "ME1", "trajectory_seed": 2801},
+    {"id": "ME2", "trajectory_seed": 2803},
+    {"id": "ME3", "trajectory_seed": 2819},
+    {"id": "ME4", "trajectory_seed": 2833}
+  ],
+  "primary_descriptive_endpoints": [
+    "changed_reward_edge_count",
+    "changed_reward_edge_active_presynaptic_fraction",
+    "changed_reward_l1_on_active_presynaptic_fraction",
+    "changed_presynaptic_kc_active_fraction",
+    "mbon07_total_spike_delta",
+    "mbon07_max_abs_membrane_delta",
+    "mbon07_max_abs_conductance_delta",
+    "dnp20_max_abs_membrane_delta",
+    "dnpe017_max_abs_membrane_delta",
+    "recall_action_divergence"
+  ],
+  "interpretation_policy": {
+    "no_parameter_tuning": true,
+    "no_posthoc_edge_selection": true,
+    "changed_edges_defined_only_by_paired_synaptic_difference": true,
+    "reward_compartment_defined_only_by_frozen_gain_topology": true,
+    "no_directional_pass_threshold": true,
+    "result_is_mechanistic_localization_only": true
+  },
+  "claim_policy": {
+    "learning_validated": false,
+    "memory_expression_causal": false,
+    "cue_indexing_failure_confirmed": false,
+    "downstream_readout_failure_confirmed": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
