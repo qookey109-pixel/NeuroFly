@@ -1,0 +1,111 @@
+{
+  "schema": "neurofly-memory-cross-subsystem-localization-run1-freeze-v0.1",
+  "status": "EXPLORATORY_MEMORY_CROSS_SUBSYSTEM_LOCALIZATION_COMPLETE",
+  "successful_run": {
+    "run_id": 36143667740,
+    "head_sha": "2d6afe8dc50d66fd74b8062d01909568e2eb223e",
+    "artifact_id": 10869666593,
+    "artifact_sha256": "0b8d18dafccbcb18c4ec19bfaf3e56da1641d87f64690da6c2ae793324d5633e",
+    "receipt_sha256": "b548f59b6874413dbfd38e99cbffe783618d99c24d1b23101963e99e7c337465"
+  },
+  "source_checkpoint": {
+    "sha256_before": "a7ca776823c84a0c633b82dd1e9dc256ef55e197d6bb7d79b2724f219577d26d",
+    "sha256_after": "a7ca776823c84a0c633b82dd1e9dc256ef55e197d6bb7d79b2724f219577d26d",
+    "mutated": false
+  },
+  "selection": {
+    "outcome_blind": true,
+    "selected": [
+      {"replicate_id":"CS1","trajectory_seed":5209,"event_index":63,"pre_event_checkpoint_sha256":"1867b645983769cb83ec61069059dd06bb756f064e233604f65d14be0467f40b","stable_sensory_sequence_sha256":"3e4eadf63bb8452ce97b2511698c267c90052792798a6c8f0f3919a6f1149ff0"},
+      {"replicate_id":"CS2","trajectory_seed":5227,"event_index":92,"pre_event_checkpoint_sha256":"006e9c4c5c5eae1015361d2ef0e61195d0f95efff9e789710a40db0241a6eb05","stable_sensory_sequence_sha256":"329dad8daf1048d5c10bd2568b47f462ba0f51b78e252e5128187a41eaa0f4d2"},
+      {"replicate_id":"CS3","trajectory_seed":5231,"event_index":118,"pre_event_checkpoint_sha256":"08887a4f2378384085f8c6be3beba5bf47302c3d7422d573d2ebf249f8f72242","stable_sensory_sequence_sha256":"87de8a6c2c389a8ca7b14c9c0b41e3804a155972946a89b4c082b18088882f5a"},
+      {"replicate_id":"CS4","trajectory_seed":5233,"event_index":74,"pre_event_checkpoint_sha256":"b510fb74fbde2d732faf8edf9e036219a8daebeeeca19f243b1ffbaacc075cbf","stable_sensory_sequence_sha256":"197c77d320f4fb556f540b35b98a13ad8350ec3f41dd95616f9800ea8350943f"}
+    ],
+    "unique_pre_event_checkpoint_count": 4,
+    "unique_stable_sensory_sequence_count": 4
+  },
+  "aggregate": {
+    "intact": {
+      "mean_changed_kc_active_fraction": 0.328778300583,
+      "mean_changed_l1_engaged_fraction": 0.485258556136,
+      "mean_mbon07_state_difference_fraction": 1.0,
+      "mean_mbon07_spike_difference_fraction": 0.202380952381,
+      "mean_action_divergence_fraction": 0.214285714286,
+      "reward_cue_action_divergence_fraction": 0.0
+    },
+    "clear_vg_luminance": {
+      "mean_changed_kc_active_fraction": 0.32553310302,
+      "mean_changed_l1_engaged_fraction": 0.481889533796,
+      "mean_mbon07_state_difference_fraction": 1.0,
+      "mean_mbon07_spike_difference_fraction": 0.27380952381,
+      "mean_action_divergence_fraction": 0.190476190476,
+      "reward_cue_action_divergence_fraction": 0.25
+    },
+    "clear_vg_delay": {
+      "mean_changed_kc_active_fraction": 0.112446969005,
+      "mean_changed_l1_engaged_fraction": 0.165680740562,
+      "mean_mbon07_state_difference_fraction": 0.321428571429,
+      "mean_mbon07_spike_difference_fraction": 0.083333333333,
+      "mean_action_divergence_fraction": 0.083333333333,
+      "reward_cue_action_divergence_fraction": 0.0
+    },
+    "clear_adaptation_luminance": {
+      "mean_changed_kc_active_fraction": 0.3438034701,
+      "mean_changed_l1_engaged_fraction": 0.498847408675,
+      "mean_mbon07_state_difference_fraction": 1.0,
+      "mean_mbon07_spike_difference_fraction": 0.25,
+      "mean_action_divergence_fraction": 0.178571428571,
+      "reward_cue_action_divergence_fraction": 0.0
+    },
+    "clear_adaptation_delay": {
+      "mean_changed_kc_active_fraction": 0.350157161464,
+      "mean_changed_l1_engaged_fraction": 0.510751512941,
+      "mean_mbon07_state_difference_fraction": 1.0,
+      "mean_mbon07_spike_difference_fraction": 0.27380952381,
+      "mean_action_divergence_fraction": 0.095238095238,
+      "reward_cue_action_divergence_fraction": 0.0
+    },
+    "clear_broad_physical_transient": {
+      "mean_changed_kc_active_fraction": 0.148234318409,
+      "mean_changed_l1_engaged_fraction": 0.220907877788,
+      "mean_mbon07_state_difference_fraction": 0.440476190476,
+      "mean_mbon07_spike_difference_fraction": 0.130952380952,
+      "mean_action_divergence_fraction": 0.047619047619,
+      "reward_cue_action_divergence_fraction": 0.25
+    }
+  },
+  "clear_vg_delay_relative_to_intact": {
+    "changed_kc_active_fraction_delta": -0.216331331578,
+    "changed_l1_engaged_fraction_delta": -0.319577815574,
+    "mbon07_state_difference_fraction_delta": -0.678571428571,
+    "mbon07_spike_difference_fraction_delta": -0.119047619048,
+    "action_divergence_fraction_delta": -0.130952380953
+  },
+  "replicate_pattern": {
+    "clear_vg_delay_reduces_changed_kc_fraction_vs_intact": "4/4",
+    "clear_vg_delay_reduces_changed_l1_engagement_vs_intact": "4/4",
+    "clear_vg_delay_reduces_mbon07_state_fraction_vs_intact": "4/4",
+    "other_cross_pairs_show_same_three-endpoint_suppression_pattern": false,
+    "clear_vg_delay_is_monotonically_between_intact_and_broad_clear_in_every_replicate": false,
+    "nonmonotonic_examples": ["CS2","CS3"]
+  },
+  "interpretation": {
+    "robust_suppressive_cross_subsystem_candidate": "v/g + refractory/delay",
+    "vg_luminance_supported_as_suppressive_pair": false,
+    "adaptation_luminance_supported_as_suppressive_pair": false,
+    "adaptation_delay_supported_as_suppressive_pair": false,
+    "minimal_unique_carrier_confirmed": false,
+    "broad_clear_fully_explained_by_vg_delay": false,
+    "mechanistic_summary": "Across four outcome-blind neural-diverse histories, clearing v/g together with refractory and delayed-event state is the only tested cross-subsystem pair that consistently suppresses changed-KC activity, changed-edge engagement and MBON07 state expression relative to intact recall. The other three cross-pairs remain near intact on those neural endpoints. However, the v/g+delay intervention is not monotonically nested inside the full broad-clear phenotype in every history; in CS2 and CS3 it suppresses neural expression more strongly than the broad clear. The result therefore localizes a robust suppressive cross-subsystem ensemble candidate, not a unique carrier and not a complete additive explanation of the broad physical-state effect.",
+    "next_question": "Replicate the v/g+refractory/delay candidate in a fresh outcome-blind neural-diverse cohort against intact and broad clear, then decompose v versus g only if the suppression reproduces."
+  },
+  "claims": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "prefix_sequence_specificity_confirmed": false,
+    "transient_state_carrier_confirmed": false,
+    "memory_expression_causal": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
