@@ -6,7 +6,8 @@ on:
     branches:
       - research/v1-reward-memory-recall
     paths:
-      - "data/reward_memory_recall_v01.json"
+      - "data/reward_memory_recall_v02.json"
+      - "data/reward_memory_recall_v01_invalid_freeze.json"
       - "src/neurofly/reward_memory_recall.py"
       - "tests/test_reward_memory_recall.py"
       - "docs/experiments/V1_REWARD_MEMORY_RECALL.md"
@@ -77,7 +78,7 @@ jobs:
           from pathlib import Path
           p=Path("runs/reward-memory-recall/reward-memory-recall-receipt.json")
           r=json.loads(p.read_text())
-          assert r["schema"]=="neurofly-reward-memory-recall-receipt-v0.1"
+          assert r["schema"]=="neurofly-reward-memory-recall-receipt-v0.2"
           assert r["status"]=="EXPLORATORY_RECALL_COMPLETE"
           assert r["execution_valid"] is True
           assert all(r["config_gates"].values())
