@@ -13,12 +13,10 @@ def test_reward_memory_recall_contract_is_frozen():
 
 
 def test_reward_memory_receipt_state_is_json_serializable():
-    import numpy as np
-
     state = {
-        "fraction": np.asarray([1.0, 0.9]),
-        "reward_mask": np.asarray([True, False]),
-        "aversive_mask": np.asarray([False, True]),
+        "fraction": object(),
+        "reward_mask": object(),
+        "aversive_mask": object(),
         "fraction_digest": "abc",
         "reward_mask_digest": "reward",
         "aversive_mask_digest": "aversive",
