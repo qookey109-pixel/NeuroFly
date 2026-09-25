@@ -122,6 +122,7 @@ def _classify(value:float)->str:
     return "intermediate"
 
 def _candidate_pre_effect(*,base_checkpoint:Path,work_dir:Path,seed:int,ordinal:int):
+    import numpy as np
     cdir=work_dir/f"candidate-{ordinal:02d}-{seed}"
     cdir.mkdir(parents=True,exist_ok=True)
     try:
