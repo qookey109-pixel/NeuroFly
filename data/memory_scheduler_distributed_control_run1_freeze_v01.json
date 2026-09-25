@@ -1,0 +1,119 @@
+{
+  "schema": "neurofly-memory-scheduler-distributed-control-run1-freeze-v0.1",
+  "status": "EXPLORATORY_MEMORY_SCHEDULER_DISTRIBUTED_CONTROL_COMPLETE",
+  "successful_run": {
+    "run_id": 36116327415,
+    "head_sha": "ec3b8fc408cfedef6ac0aeacfd9d9841fd630908",
+    "artifact_id": 10856330414,
+    "artifact_name": "neurofly-memory-scheduler-distributed-control-36116327415",
+    "artifact_sha256": "af9823ed48cad96c03692c336cf6a25b675eb3e18a59261343e9e26084e5f8dc",
+    "receipt_sha256": "cafe01b55cafba293bd0f9025dbc4fa832de3a2aa643dbbb2f352b633ce34bfb"
+  },
+  "source_checkpoint": {
+    "sha256_before": "7706cad7228a127b65a668fea2007a72bc514dea5ae7e4bc68b52084ed9ead0d",
+    "sha256_after": "7706cad7228a127b65a668fea2007a72bc514dea5ae7e4bc68b52084ed9ead0d",
+    "mutated": false
+  },
+  "replicate_count": 4,
+  "mean_changed_reward_edge_count": 1505.25,
+  "conditions": {
+    "intact": {
+      "replicates_with_changed_kc_activity": 3,
+      "replicates_with_mbon07_state_difference": 3,
+      "replicates_with_mbon07_spike_difference": 3,
+      "replicates_with_action_divergence": 3,
+      "reward_cue_action_divergence_fraction": 0.0,
+      "mean_changed_kc_active_fraction": 0.256151834476,
+      "mean_changed_l1_engaged_fraction": 0.379950167921,
+      "mean_mbon07_state_difference_fraction": 0.75,
+      "mean_mbon07_spike_difference_fraction": 0.202380952381,
+      "mean_action_divergence_fraction": 0.107142857143
+    },
+    "coherent_scheduler_rebuild": {
+      "replicates_with_changed_kc_activity": 3,
+      "replicates_with_mbon07_state_difference": 3,
+      "replicates_with_mbon07_spike_difference": 3,
+      "replicates_with_action_divergence": 3,
+      "reward_cue_action_divergence_fraction": 0.0,
+      "mean_changed_kc_active_fraction": 0.256151834476,
+      "mean_changed_l1_engaged_fraction": 0.379950167921,
+      "mean_mbon07_state_difference_fraction": 0.75,
+      "mean_mbon07_spike_difference_fraction": 0.202380952381,
+      "mean_action_divergence_fraction": 0.107142857143,
+      "exactly_equal_to_intact_on_every_terminal_per_lag_endpoint": true
+    },
+    "clear_vg_adaptation": {
+      "replicates_with_changed_kc_activity": 4,
+      "replicates_with_mbon07_state_difference": 4,
+      "replicates_with_mbon07_spike_difference": 4,
+      "replicates_with_action_divergence": 4,
+      "reward_cue_action_divergence_fraction": 0.0,
+      "mean_changed_kc_active_fraction": 0.305115737297,
+      "mean_changed_l1_engaged_fraction": 0.453624716381,
+      "mean_mbon07_state_difference_fraction": 0.904761904762,
+      "mean_mbon07_spike_difference_fraction": 0.238095238095,
+      "mean_action_divergence_fraction": 0.142857142857
+    },
+    "clear_broad_physical_transient": {
+      "replicates_with_changed_kc_activity": 3,
+      "replicates_with_mbon07_state_difference": 3,
+      "replicates_with_mbon07_spike_difference": 2,
+      "replicates_with_action_divergence": 2,
+      "reward_cue_action_divergence_fraction": 0.5,
+      "mean_changed_kc_active_fraction": 0.087764123312,
+      "mean_changed_l1_engaged_fraction": 0.133538488508,
+      "mean_mbon07_state_difference_fraction": 0.27380952381,
+      "mean_mbon07_spike_difference_fraction": 0.047619047619,
+      "mean_action_divergence_fraction": 0.059523809524
+    }
+  },
+  "broad_clear_relative_to_intact": {
+    "changed_kc_active_fraction_change": -0.657374605606,
+    "changed_l1_engaged_fraction_change": -0.648536835136,
+    "mbon07_state_difference_fraction_change": -0.63492063492,
+    "mbon07_spike_difference_fraction_change": -0.764705882353,
+    "action_divergence_fraction_change": -0.444444444443
+  },
+  "replicate_specific_summary": {
+    "SD1": "scheduler rebuild exactly matched intact; broad physical clear nearly abolished upstream and MBON expression",
+    "SD2": "intact and scheduler rebuild were both silent; v/g+adaptation clear recovered expression; broad physical clear remained silent",
+    "SD3": "scheduler rebuild exactly matched intact; broad physical clear reduced but did not abolish expression and introduced reward-cue action divergence",
+    "SD4": "scheduler rebuild exactly matched intact; broad physical clear reduced neural expression and introduced reward-cue action divergence"
+  },
+  "intervention_integrity": {
+    "scheduler_rebuild_changed_only_bookkeeping": [
+      "active",
+      "active_flag",
+      "eligibility_last",
+      "last",
+      "modulation_last",
+      "nactive",
+      "queue",
+      "queue_count"
+    ],
+    "scheduler_rebuild_preserved_physical_state": true,
+    "scheduler_rebuild_preserved_synaptic_memory": true,
+    "all_conditions_preserved_synaptic_memory": true,
+    "all_conditions_used_identical_prefix_and_terminal_sequence": true,
+    "all_conditions_used_identical_paired_memory": true
+  },
+  "interpretation": {
+    "scheduler_bookkeeping_is_expression_carrier_candidate": false,
+    "scheduler_rebuild_is_exact_equivalence_control": true,
+    "vg_adaptation_is_positive_carrier_candidate": false,
+    "broad_physical_transient_clear_reduces_expression": true,
+    "joint_physical_state_dependency_supported": true,
+    "single_transient_state_carrier_confirmed": false,
+    "mechanistic_summary": "Coherent scheduler reindex/rebuild was exactly endpoint-equivalent to intact in all four fresh trajectories, excluding absolute cursor, queue-ring indexing, lazy timestamps and active-set bookkeeping as the positive memory-expression carrier in this assay. Clearing v/g plus adaptation increased aggregate expression and recovered the otherwise silent SD2 trajectory, so that pair is not a positive carrier. In contrast, jointly clearing v/g, adaptation, luminance, refractory state and delayed-event queue sharply reduced changed-KC engagement, changed-edge L1 engagement and MBON07 state/spike expression in every trajectory that expressed memory under intact recall. This supports dependence on an interacting physical transient-state ensemble rather than scheduler bookkeeping or any already-tested single state class. Because the intervention is composite and reward-cue action divergence increased in two trajectories, no single carrier or behavioral-causal claim is opened.",
+    "next_question": "Use a preregistered interaction decomposition focused on combinations among luminance, refractory/delay state, adaptation and v/g to identify the minimal physical-state ensemble required for the broad-clear suppression, while preserving the scheduler equivalence control."
+  },
+  "claims": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "prefix_sequence_specificity_confirmed": false,
+    "transient_state_carrier_confirmed": false,
+    "memory_expression_causal": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
