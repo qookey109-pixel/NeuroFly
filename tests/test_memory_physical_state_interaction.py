@@ -7,7 +7,7 @@ def test_scheduler_distributed_contract():
     gates=validate_config(c)
     assert gates and all(gates.values()), gates
     assert EXPECTED_CONDITIONS == (
-        "intact","coherent_scheduler_rebuild","clear_vg_adaptation","clear_broad_physical_transient"
+        "intact","coherent_scheduler_rebuild","clear_vg_adaptation","clear_input_delay","clear_broad_physical_transient"
     )
     assert EXPECTED_REPLICATES == (("PI1",3607),("PI2",3613),("PI3",3617),("PI4",3623))
     assert all(v is False for v in c["claim_policy"].values())
