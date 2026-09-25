@@ -1,0 +1,42 @@
+name: Research Public FANC Stable-ID Intersection
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/v1-feco-public-stable-id-intersection
+    paths:
+      - "scripts/research_probe_public_fanc_stable_id_intersection.py"
+      - "docs/experiments/V1_PUBLIC_FANC_STABLE_ID_INTERSECTION.md"
+      - ".github/workflows/research-public-fanc-stable-id-intersection.yml"
+  pull_request:
+    paths:
+      - "scripts/research_probe_public_fanc_stable_id_intersection.py"
+      - "docs/experiments/V1_PUBLIC_FANC_STABLE_ID_INTERSECTION.md"
+      - ".github/workflows/research-public-fanc-stable-id-intersection.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  public-fanc-stable-id-intersection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install probe dependencies
+        run: python -m pip install --disable-pip-version-check pyarrow
+      - name: Run public stable-ID intersection
+        run: |
+          python scripts/research_probe_public_fanc_stable_id_intersection.py \
+            --output artifacts/public_fanc_stable_id_intersection.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-fanc-stable-id-intersection
+          path: artifacts/public_fanc_stable_id_intersection.json
+          if-no-files-found: error
+          retention-days: 30
