@@ -1,0 +1,114 @@
+{
+  "schema": "neurofly-memory-temporal-index-audit-run1-freeze-v0.1",
+  "status": "EXPLORATORY_TEMPORAL_INDEX_AUDIT_COMPLETE",
+  "successful_run": {
+    "run_id": 36095883843,
+    "head_sha": "a423df3a24962cf1816e38e3217906c051f758dd",
+    "artifact_id": 10847468546,
+    "artifact_name": "neurofly-memory-temporal-index-audit-36095883843",
+    "artifact_sha256": "947633623b5a8f6071833abf7f04283e6a0f3a7c147183f79a199ce9b90c16ba",
+    "receipt_sha256": "573c10a5f52a03fa7a04226979c14594b59eb56da763a150057ff2137289ed72"
+  },
+  "source_checkpoint": {
+    "sha256_before": "b98e621d1132a1cbefe47dfc1b5026e1107e32f6a0c6754ed47d7445c2a57563",
+    "sha256_after": "b98e621d1132a1cbefe47dfc1b5026e1107e32f6a0c6754ed47d7445c2a57563",
+    "mutated": false
+  },
+  "aggregate": {
+    "replicate_count": 4,
+    "mean_changed_reward_edge_count": 1490.75,
+    "mean_changed_edge_pre_event_trace_positive_fraction": 0.997995097138,
+    "mean_changed_edge_pre_event_mean_kc_trace_hz": 4.276311382904,
+    "replicates_with_any_changed_kc_sequence_activity": 2,
+    "replicates_with_any_mbon07_state_difference": 2,
+    "replicates_with_any_mbon07_spike_difference": 2,
+    "replicates_with_any_action_divergence": 1,
+    "reward_cue_action_divergence_fraction": 0.0
+  },
+  "replicates": [
+    {
+      "id": "TI1",
+      "trajectory_seed": 2903,
+      "event_index": 21,
+      "acquisition_decisions": 27,
+      "changed_reward_edge_count": 1497,
+      "unique_changed_presynaptic_kc_count": 753,
+      "changed_edge_pre_event_trace_positive_fraction": 0.99331997328,
+      "first_lag_with_changed_kc_activity": -10,
+      "first_lag_with_mbon07_state_difference": -10,
+      "sequence_any_mbon07_spike_difference": true,
+      "sequence_any_action_divergence": false,
+      "reward_cue_changed_kc_active_fraction": 0.403718459495,
+      "reward_cue_changed_l1_engaged_fraction": 0.588636794104,
+      "reward_cue_action_divergence": false
+    },
+    {
+      "id": "TI2",
+      "trajectory_seed": 2909,
+      "event_index": 52,
+      "acquisition_decisions": 58,
+      "changed_reward_edge_count": 1493,
+      "unique_changed_presynaptic_kc_count": 751,
+      "changed_edge_pre_event_trace_positive_fraction": 0.998660415271,
+      "first_lag_with_changed_kc_activity": null,
+      "first_lag_with_mbon07_state_difference": null,
+      "sequence_any_mbon07_spike_difference": false,
+      "sequence_any_action_divergence": false,
+      "reward_cue_changed_kc_active_fraction": 0.0,
+      "reward_cue_changed_l1_engaged_fraction": 0.0,
+      "reward_cue_action_divergence": false
+    },
+    {
+      "id": "TI3",
+      "trajectory_seed": 2917,
+      "event_index": 42,
+      "acquisition_decisions": 48,
+      "changed_reward_edge_count": 1488,
+      "unique_changed_presynaptic_kc_count": 749,
+      "changed_edge_pre_event_trace_positive_fraction": 1.0,
+      "first_lag_with_changed_kc_activity": null,
+      "first_lag_with_mbon07_state_difference": null,
+      "sequence_any_mbon07_spike_difference": false,
+      "sequence_any_action_divergence": false,
+      "reward_cue_changed_kc_active_fraction": 0.0,
+      "reward_cue_changed_l1_engaged_fraction": 0.0,
+      "reward_cue_action_divergence": false
+    },
+    {
+      "id": "TI4",
+      "trajectory_seed": 2927,
+      "event_index": 27,
+      "acquisition_decisions": 33,
+      "changed_reward_edge_count": 1485,
+      "unique_changed_presynaptic_kc_count": 747,
+      "changed_edge_pre_event_trace_positive_fraction": 1.0,
+      "first_lag_with_changed_kc_activity": -15,
+      "first_lag_with_mbon07_state_difference": -15,
+      "sequence_any_mbon07_spike_difference": true,
+      "sequence_any_action_divergence": true,
+      "sequence_action_divergence_lags": [-13, -12, -11, -8],
+      "reward_cue_changed_kc_active_fraction": 0.325301204819,
+      "reward_cue_changed_l1_engaged_fraction": 0.438177701044,
+      "reward_cue_action_divergence": false
+    }
+  ],
+  "interpretation": {
+    "pre_event_eligibility_supported": true,
+    "temporal_sequence_reengagement_observed": true,
+    "mbon07_expression_observed": true,
+    "sequence_action_divergence_observed": true,
+    "single_reward_event_cue_sufficient_for_stable_memory_readout": false,
+    "temporal_cue_index_confirmed": false,
+    "cue_indexing_failure_confirmed": false,
+    "mechanistic_summary": "Persistent reward-memory edges almost all carried positive prereward KC eligibility. After state clearing, the frozen 20-decision prereward sequence re-engaged changed KCs and MBON07 state in 2/4 trajectories and reached action divergence in 1/4, while the reward-event cue itself produced 0/4 action divergence.",
+    "next_question": "Reconstruct the original reward-time rate_kc eligibility vector directly and measure how much of that vector is recovered by state-cleared history replay; preregister a longer 3-tau / 60-decision history without changing learning parameters."
+  },
+  "claims": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "cue_indexing_failure_confirmed": false,
+    "memory_expression_causal": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
