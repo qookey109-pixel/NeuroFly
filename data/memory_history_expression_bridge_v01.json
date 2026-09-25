@@ -1,0 +1,73 @@
+{
+  "schema": "neurofly-memory-history-expression-bridge-v0.1",
+  "status": "PREREGISTERED_EXPLORATORY_EXECUTION",
+  "scope": "real-malecns-reward-memory-history-expression-bridge",
+  "question": "Does a three-tau prereward history, which reconstructs more of the original KC eligibility state, stabilize expression of the persistent paired reward-memory difference through changed KCs and MBON07 compared with a one-tau history on the same fresh trajectory?",
+  "origin": {
+    "trace_reconstruction_run_id": 36103039412,
+    "trace_reconstruction_receipt_sha256": "fb5538afb4aab6a1f1608e054bf9b5c6852c867945d0e6c198b381b6537be131",
+    "trace_reconstruction_artifact_sha256": "590d0fd9eae139a8374c93ec314f02b35428a901fed59dfb83907a5b21c31ecd",
+    "trace_reconstruction_freeze": "data/memory_trace_reconstruction_audit_run1_freeze_v01.json"
+  },
+  "model_clock": {
+    "kc_trace_seconds": 1.0,
+    "neural_ms_per_decision": 50,
+    "one_tau_decisions": 20,
+    "three_tau_decisions": 60
+  },
+  "runtime": {
+    "event_selection": "first natural reward at or after decision index 60",
+    "maximum_acquisition_decisions": 300,
+    "post_reward_delay_decisions": 5,
+    "history_and_delay_external_reinforcement": "none",
+    "state_clear_before_recall": true,
+    "recall_plasticity_frozen": true,
+    "recall_external_reinforcement": "none",
+    "one_tau_sequence": "exact 20 recorded prereward decisions followed by the exact reward-event cue",
+    "three_tau_sequence": "exact 60 recorded prereward decisions followed by the exact reward-event cue",
+    "primary_comparison_window": "common terminal lags -20 through 0 inclusive",
+    "three_tau_context_only_window": "lags -60 through -21 are context warmup only and are excluded from primary expression counts",
+    "changed_edge_tolerance_fraction": 1e-12,
+    "state_difference_tolerance": 1e-12,
+    "no_model_parameter_change": true
+  },
+  "replicates": [
+    {"id": "HE1", "trajectory_seed": 3109},
+    {"id": "HE2", "trajectory_seed": 3119},
+    {"id": "HE3", "trajectory_seed": 3121},
+    {"id": "HE4", "trajectory_seed": 3137}
+  ],
+  "primary_descriptive_endpoints": [
+    "changed_reward_edge_count",
+    "one_tau_terminal_any_changed_kc_activity",
+    "three_tau_terminal_any_changed_kc_activity",
+    "one_tau_terminal_any_mbon07_state_difference",
+    "three_tau_terminal_any_mbon07_state_difference",
+    "one_tau_terminal_any_mbon07_spike_difference",
+    "three_tau_terminal_any_mbon07_spike_difference",
+    "one_tau_terminal_any_action_divergence",
+    "three_tau_terminal_any_action_divergence",
+    "one_tau_reward_cue_action_divergence",
+    "three_tau_reward_cue_action_divergence",
+    "paired_terminal_per_lag_expression_metrics"
+  ],
+  "interpretation_policy": {
+    "no_parameter_tuning": true,
+    "no_posthoc_event_selection": true,
+    "no_posthoc_window_selection": true,
+    "one_tau_and_three_tau_compared_on_same_trajectory": true,
+    "changed_edges_defined_before_recall_from_paired_synaptic_difference": true,
+    "primary_expression_comparison_uses_identical_terminal_lags": true,
+    "three_tau_extra_history_is_context_only": true,
+    "no_directional_pass_threshold": true,
+    "result_is_memory_expression_localization_only": true
+  },
+  "claim_policy": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "cue_indexing_failure_confirmed": false,
+    "memory_expression_causal": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
