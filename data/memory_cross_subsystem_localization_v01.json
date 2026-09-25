@@ -1,0 +1,85 @@
+{
+  "schema": "neurofly-memory-cross-subsystem-localization-v0.1",
+  "status": "PREREGISTERED_EXPLORATORY_EXECUTION",
+  "scope": "real-malecns-reward-memory-cross-subsystem-localization",
+  "question": "Which minimal cross-subsystem physical-state pair best reproduces the broad-clear suppression of stored-memory expression?",
+  "origin": {
+    "diversity_recovery_run_id": 36121847253,
+    "diversity_recovery_receipt_sha256": "281d9fd7fc77752a7cab450c880c26437549e8e77674b6dfcb53c391435d88fd",
+    "diversity_recovery_freeze": "data/memory_interaction_diversity_recovery_run1_freeze_v01.json"
+  },
+  "scheduler_control_policy": {
+    "retired_from_this_round": true,
+    "reason": "coherent scheduler rebuild has repeatedly been exact endpoint-equivalent to intact across prior neural-diverse studies",
+    "no_scheduler_carrier_claim_opened": true
+  },
+  "candidate_pool": [
+    5209, 5227, 5231, 5233, 5237, 5261, 5273, 5279, 5281, 5297,
+    5303, 5309, 5323, 5333, 5347, 5351, 5381, 5387, 5393, 5399
+  ],
+  "selection": {
+    "target_replicates": 4,
+    "candidate_order_is_frozen": true,
+    "event_selection": "first natural reward at or after decision index 60",
+    "maximum_acquisition_decisions": 300,
+    "eligibility_rule": "accept the first candidates in frozen order whose pre-event brain checkpoint SHA-256 and stable sensory-sequence SHA-256 are both unique among already accepted candidates",
+    "sensory_sequence_window": "source lags -60 through 0 inclusive",
+    "stable_context_volatile_keys_removed_recursively": [
+      "survival_seconds",
+      "total_active_seconds",
+      "first_clear_seconds",
+      "latest_clear_seconds",
+      "best_clear_seconds",
+      "seconds"
+    ],
+    "selection_is_outcome_blind": true,
+    "memory_expression_endpoints_must_not_be_computed_before_selection_freeze": true,
+    "no_seed_replacement_after_selection": true,
+    "fail_if_fewer_than_four_eligible_candidates": true
+  },
+  "runtime": {
+    "post_reward_delay_decisions": 5,
+    "prefix_sequence": "exact source lags -60 through -21",
+    "boundary": "after source lag -21 and before source lag -20",
+    "terminal_sequence": "exact source lags -20 through -1 followed by exact reward cue at lag 0",
+    "recall_plasticity_frozen": true,
+    "recall_external_reinforcement": "none",
+    "conditions": [
+      {"id": "intact", "target_fields": []},
+      {"id": "clear_vg_luminance", "target_fields": ["v", "g", "luminance"]},
+      {"id": "clear_vg_delay", "target_fields": ["v", "g", "refractory", "queue", "queue_count"]},
+      {"id": "clear_adaptation_luminance", "target_fields": ["adaptation", "luminance"]},
+      {"id": "clear_adaptation_delay", "target_fields": ["adaptation", "refractory", "queue", "queue_count"]},
+      {"id": "clear_broad_physical_transient", "target_fields": ["v", "g", "adaptation", "luminance", "refractory", "queue", "queue_count"]}
+    ],
+    "primary_comparison_window": "common terminal replay lags -20 through 0 inclusive",
+    "no_model_parameter_change": true
+  },
+  "localization_analysis": {
+    "reference": "intact",
+    "broad_clear_reference": "clear_broad_physical_transient",
+    "primary_question": "which cross-pair produces the largest neural-expression suppression toward the broad-clear phenotype",
+    "report_all_condition_minus_intact_deltas": true,
+    "report_broad_minus_condition_residuals": true,
+    "no_formal_significance_threshold": true,
+    "no_posthoc_pair_selection": true
+  },
+  "interpretation_policy": {
+    "selection_uses_only_pre_expression_neural_diversity": true,
+    "no_parameter_tuning": true,
+    "no_posthoc_event_selection": true,
+    "all_conditions_use_identical_paired_synaptic_memory": true,
+    "all_conditions_use_identical_prefix_and_terminal_sequence": true,
+    "cross_pair_result_is_subsystem_localization_not_unique_state_causality": true,
+    "no_directional_pass_threshold": true
+  },
+  "claim_policy": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "prefix_sequence_specificity_confirmed": false,
+    "transient_state_carrier_confirmed": false,
+    "memory_expression_causal": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
