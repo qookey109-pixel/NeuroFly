@@ -1,0 +1,125 @@
+name: Research Authenticated FANC Hook Stable IDs
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export-fanc-hook-stable-ids:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      FANC_CAVE_TOKEN: ${{ secrets.FANC_CAVE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Require configured FANC CAVE token
+        shell: bash
+        run: |
+          if [ -z "${FANC_CAVE_TOKEN:-}" ]; then
+            echo "::error::Repository secret FANC_CAVE_TOKEN is not configured."
+            exit 2
+          fi
+
+      - name: Install read-only CAVE dependencies
+        run: python -m pip install --disable-pip-version-check caveclient pandas
+
+      - name: Materialize CAVE credential file
+        shell: bash
+        run: |
+          umask 077
+          mkdir -p "$HOME/.cloudvolume/secrets"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          token = os.environ["FANC_CAVE_TOKEN"]
+          path = Path.home() / ".cloudvolume" / "secrets" / "cave-secret.json"
+          path.write_text(
+              json.dumps({
+                  "token": token,
+                  "fanc_production_mar2021": token,
+              }),
+              encoding="utf-8",
+          )
+          path.chmod(0o600)
+          print("CAVE credential file materialized with restrictive permissions.")
+          PY
+
+      - name: Export 13 frozen hook_flx stable IDs
+        run: |
+          python scripts/research/export_fanc_hook_flx_stable_ids.py \
+            --roots data/research/feco/fanc_v840_t1l_hook_flx_roots.csv \
+            --output artifacts/fanc_v840_t1l_hook_flx_stable_ids.csv \
+            --datastack fanc_production_mar2021 \
+            --materialization 840
+
+      - name: Build non-secret receipt
+        if: always()
+        shell: bash
+        run: |
+          python - <<'PY'
+          import csv
+          import hashlib
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          out = Path("artifacts/fanc_v840_t1l_hook_flx_stable_ids.csv")
+          receipt = {
+              "schema": "neurofly-fanc-hook-stable-id-export-receipt-v0.1",
+              "generated_at": datetime.now(timezone.utc).isoformat(),
+              "datastack": "fanc_production_mar2021",
+              "materialization": 840,
+              "table": "cell_ids_v2",
+              "expected_root_count": 13,
+              "output_exists": out.exists(),
+              "row_count": None,
+              "mapping_recovered_count": None,
+              "id_equals_user_id_count": None,
+              "output_sha256": None,
+              "credential_material_included": False,
+          }
+          if out.exists():
+              raw = out.read_bytes()
+              receipt["output_sha256"] = hashlib.sha256(raw).hexdigest()
+              rows = list(csv.DictReader(raw.decode("utf-8").splitlines()))
+              receipt["row_count"] = len(rows)
+              receipt["mapping_recovered_count"] = sum(
+                  str(r.get("mapping_recovered", "")).lower() == "true"
+                  for r in rows
+              )
+              receipt["id_equals_user_id_count"] = sum(
+                  str(r.get("id_equals_user_id", "")).lower() == "true"
+                  for r in rows
+              )
+          Path("artifacts").mkdir(exist_ok=True)
+          Path("artifacts/fanc_hook_stable_id_export_receipt.json").write_text(
+              json.dumps(receipt, indent=2, sort_keys=True),
+              encoding="utf-8",
+          )
+          print(json.dumps(receipt, indent=2, sort_keys=True))
+          PY
+
+      - name: Remove credential file
+        if: always()
+        shell: bash
+        run: rm -f "$HOME/.cloudvolume/secrets/cave-secret.json"
+
+      - name: Upload non-secret evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fanc-hook-stable-id-export
+          path: |
+            artifacts/fanc_v840_t1l_hook_flx_stable_ids.csv
+            artifacts/fanc_hook_stable_id_export_receipt.json
+          if-no-files-found: warn
+          retention-days: 30
