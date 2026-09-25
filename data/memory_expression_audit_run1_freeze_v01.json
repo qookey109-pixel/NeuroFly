@@ -1,0 +1,56 @@
+{
+  "schema": "neurofly-memory-expression-audit-run1-freeze-v0.1",
+  "status": "EXPLORATORY_EXPRESSION_AUDIT_COMPLETE",
+  "successful_run": {
+    "run_id": 36095246269,
+    "head_sha": "bd8deefe86f377a02d6a82af0975c92fd4c9452f",
+    "artifact_id": 10847815197,
+    "artifact_name": "neurofly-memory-expression-audit-36095246269",
+    "artifact_sha256": "96196df2069176c49c29676a9eac7e1d60e36439a9fa33cfa5260e363a04de13",
+    "receipt_sha256": "a44838d604a8f277b877bcd8195ff69604b9d0f35cdb8b45bf1270dff0b9bbca"
+  },
+  "source_checkpoint": {
+    "sha256_before": "067f4897fd50eeb011865c18898f47184721f81e3866774bbe68a78478f481c9",
+    "sha256_after": "067f4897fd50eeb011865c18898f47184721f81e3866774bbe68a78478f481c9",
+    "mutated": false
+  },
+  "aggregate": {
+    "replicate_count": 4,
+    "mean_changed_reward_edge_count": 1522,
+    "mean_changed_reward_edge_active_presynaptic_fraction": 0.0,
+    "mean_changed_reward_l1_on_active_presynaptic_fraction": 0.0,
+    "mean_changed_presynaptic_kc_active_fraction": 0.0,
+    "mean_paired_weighted_presynaptic_drive_proxy": 0.0,
+    "mean_mbon07_total_spike_delta": 0.0,
+    "mean_mbon07_max_abs_membrane_delta": 0.0,
+    "mean_mbon07_max_abs_conductance_delta": 0.0,
+    "mean_dnp20_max_abs_membrane_delta": 0.0,
+    "mean_dnpe017_max_abs_membrane_delta": 0.0,
+    "recall_action_divergence_fraction": 0.0
+  },
+  "replicate_invariants": {
+    "changed_reward_edge_count": 1522,
+    "unique_changed_presynaptic_kc_count": 768,
+    "active_changed_presynaptic_kc_count": 0,
+    "mbon07_ids": ["12859", "15626", "18603", "515338"],
+    "mbon07_spikes_both_branches": [0, 0, 0, 0]
+  },
+  "interpretation": {
+    "stored_reward_memory_reengaged_by_single_state_cleared_reward_cue": false,
+    "changed_presynaptic_kc_ensemble_active_during_recall": false,
+    "mbon07_expression_difference_detected": false,
+    "decoder_difference_detected": false,
+    "mechanistic_localization": "single-cue recall fails upstream of MBON07 expression because the changed-edge presynaptic KC ensemble is not reactivated",
+    "cue_indexing_failure_confirmed": false,
+    "reason_for_not_marking_confirmed": "This assay localizes the operational failure under one exact state-cleared reward cue, but does not yet test the prereward sensory/eligibility sequence that may define the learned index.",
+    "next_question": "Audit the frozen pre-reward temporal eligibility window: determine when the 768 changed-edge presynaptic KCs were active relative to reward and whether replaying that fixed prereward sequence re-engages the stored memory."
+  },
+  "claims": {
+    "learning_validated": false,
+    "memory_expression_causal": false,
+    "cue_indexing_failure_confirmed": false,
+    "downstream_readout_failure_confirmed": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
