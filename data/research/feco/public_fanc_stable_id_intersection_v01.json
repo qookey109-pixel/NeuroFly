@@ -1,0 +1,35 @@
+{
+  "schema": "neurofly-public-fanc-stable-id-intersection-summary-v0.1",
+  "source_run_id": 36088719107,
+  "source_artifact_id": 10844986476,
+  "source_artifact_sha256": "09d2cd3846560e73c35d425ba560fea9957bf26cc1098f05ae98f79349b80655",
+  "segment_properties": {
+    "stable_id_count": 21952,
+    "exact_hook_flx_count": 0,
+    "broader_feco_sensory_count": 3795,
+    "candidate_20201": {
+      "label": "unknown",
+      "tags": ["central neuron", "right"]
+    }
+  },
+  "banc_snpp41": {
+    "pt_root_id": "720575941508169089",
+    "public_fanc_candidate_row_count": 1,
+    "match_id": "20201",
+    "score": 0.1,
+    "validation": false,
+    "exact_hook_flx_intersection_count": 0,
+    "broader_feco_sensory_intersection_count": 0
+  },
+  "interpretation": {
+    "public_stable_id_annotation_shortcut_closed": true,
+    "candidate_20201_retired_as_identity_bridge": true,
+    "root_to_stable_cell_id_recovered": false
+  },
+  "gates": {
+    "bridge_is_curated_identity": false,
+    "exact_polarity_verified": false,
+    "current_calibration_authorized": false,
+    "runtime_stimulation_authorized": false
+  }
+}
