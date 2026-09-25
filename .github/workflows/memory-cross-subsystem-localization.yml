@@ -1,0 +1,118 @@
+name: NeuroFly Memory Cross Subsystem Localization
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/v1-memory-cross-subsystem-localization
+    paths:
+      - "data/memory_cross_subsystem_localization_v01.json"
+      - "src/neurofly/memory_cross_subsystem_localization.py"
+      - "tests/test_memory_cross_subsystem_localization.py"
+      - "docs/experiments/V1_MEMORY_CROSS_SUBSYSTEM_LOCALIZATION.md"
+      - ".github/workflows/memory-cross-subsystem-localization.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: neurofly-memory-cross-subsystem-localization
+  cancel-in-progress: true
+
+jobs:
+  memory-cross-subsystem-localization:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      SOURCE_STATE: runs/free-malecns
+      STUDY_DIR: runs/memory-cross-subsystem-localization
+      BASE_CHECKPOINT: runs/memory-cross-subsystem-localization/base-brain.npz
+      RECEIPT: runs/memory-cross-subsystem-localization/memory-cross-subsystem-localization-receipt.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+
+      - name: Restore latest production checkpoint read-only source
+        uses: actions/cache/restore@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-v06-state-memory-cross-subsystem-localization-${{ github.run_id }}
+          restore-keys: |
+            neurofly-v06-state-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Validate preregistered contract
+        run: pytest -q tests/test_memory_cross_subsystem_localization.py
+
+      - name: Prepare and verify MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$STUDY_DIR"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+          python -m neurofly host-preflight | tee "$STUDY_DIR/preflight.json"
+
+      - name: Copy production brain into isolated baseline
+        run: |
+          test -f "$SOURCE_STATE/brain.npz"
+          cp "$SOURCE_STATE/brain.npz" "$BASE_CHECKPOINT"
+          test "$(realpath "$SOURCE_STATE/brain.npz")" != "$(realpath "$BASE_CHECKPOINT")"
+          sha256sum "$SOURCE_STATE/brain.npz" "$BASE_CHECKPOINT"
+
+      - name: Select neural-diverse histories then execute cross-subsystem localization
+        run: |
+          python -m neurofly.memory_cross_subsystem_localization \
+            --base-checkpoint "$BASE_CHECKPOINT" \
+            --output-dir "$STUDY_DIR" \
+            --receipt "$RECEIPT"
+
+      - name: Validate localization evidence without opening claims
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("runs/memory-cross-subsystem-localization/memory-cross-subsystem-localization-receipt.json")
+          r=json.loads(p.read_text())
+          assert r["schema"]=="neurofly-memory-cross-subsystem-localization-receipt-v0.1"
+          assert r["status"]=="EXPLORATORY_MEMORY_CROSS_SUBSYSTEM_LOCALIZATION_COMPLETE"
+          assert r["execution_valid"] is True
+          assert all(r["config_gates"].values())
+          assert all(r["evidence_gates"].values())
+          selected=r["selection_manifest"]["selected"]
+          assert len(selected)==4
+          assert len({x["pre_event_checkpoint_sha256"] for x in selected})==4
+          assert len({x["stable_sensory_sequence_sha256"] for x in selected})==4
+          for key in (
+              "learning_validated","temporal_cue_index_confirmed","prefix_sequence_specificity_confirmed",
+              "transient_state_carrier_confirmed","memory_expression_causal",
+              "replacement_confirmatory_authorized","behavioral_promotion_authorized",
+          ):
+              assert r[key] is False
+          assert r["production_checkpoint_mutated"] is False
+          print("MEMORY_CROSS_SUBSYSTEM_LOCALIZATION_VALID",r["receipt_sha256"],selected,r["aggregate"])
+          PY
+
+      - name: Publish evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-memory-cross-subsystem-localization-${{ github.run_id }}
+          path: |
+            runs/memory-cross-subsystem-localization/preflight.json
+            runs/memory-cross-subsystem-localization/selected-neural-histories.json
+            runs/memory-cross-subsystem-localization/memory-cross-subsystem-localization-receipt.json
+          if-no-files-found: error
+          retention-days: 14
