@@ -1,0 +1,74 @@
+{
+  "schema": "neurofly-memory-physical-state-interaction-v0.1",
+  "status": "PREREGISTERED_EXPLORATORY_EXECUTION",
+  "scope": "real-malecns-reward-memory-physical-state-interaction",
+  "question": "Does the broad physical-transient suppression arise from the v/g-plus-adaptation subsystem, the luminance-plus-refractory/delay subsystem, or an interaction between the two?",
+  "origin": {
+    "scheduler_distributed_run_id": 36116327415,
+    "scheduler_distributed_receipt_sha256": "cafe01b55cafba293bd0f9025dbc4fa832de3a2aa643dbbb2f352b633ce34bfb",
+    "scheduler_distributed_freeze": "data/memory_scheduler_distributed_control_run1_freeze_v01.json"
+  },
+  "runtime": {
+    "event_selection": "first natural reward at or after decision index 60",
+    "maximum_acquisition_decisions": 300,
+    "post_reward_delay_decisions": 5,
+    "prefix_sequence": "exact source lags -60 through -21",
+    "boundary": "after source lag -21 and before source lag -20",
+    "terminal_sequence": "exact source lags -20 through -1 followed by exact reward cue at lag 0",
+    "recall_plasticity_frozen": true,
+    "recall_external_reinforcement": "none",
+    "conditions": [
+      {"id": "intact", "intervention": "none"},
+      {"id": "coherent_scheduler_rebuild", "intervention": "same proven equivalence-control reindex/rebuild used in scheduler-distributed Run 1"},
+      {"id": "clear_vg_adaptation", "intervention": "set only v, g, and adaptation to constructor initial arrays"},
+      {"id": "clear_input_delay", "intervention": "set only luminance, refractory, queue, and queue_count to constructor initial arrays"},
+      {"id": "clear_broad_physical_transient", "intervention": "set v, g, adaptation, luminance, refractory, queue, and queue_count to constructor initial arrays"}
+    ],
+    "primary_comparison_window": "common terminal replay lags -20 through 0 inclusive",
+    "no_model_parameter_change": true
+  },
+  "replicates": [
+    {"id": "PI1", "trajectory_seed": 3607},
+    {"id": "PI2", "trajectory_seed": 3613},
+    {"id": "PI3", "trajectory_seed": 3617},
+    {"id": "PI4", "trajectory_seed": 3623}
+  ],
+  "interaction_analysis": {
+    "subsystem_a": "clear_vg_adaptation",
+    "subsystem_b": "clear_input_delay",
+    "combined": "clear_broad_physical_transient",
+    "descriptive_interaction_contrast": "combined - subsystem_a - subsystem_b + intact",
+    "negative_contrast_interpretation": "combined clear suppresses the endpoint more than expected from additive subsystem effects",
+    "no_formal_significance_threshold": true
+  },
+  "primary_descriptive_endpoints": [
+    "mean_changed_kc_active_fraction",
+    "mean_changed_l1_engaged_fraction",
+    "mean_mbon07_state_difference_fraction",
+    "mean_mbon07_spike_difference_fraction",
+    "mean_action_divergence_fraction",
+    "reward_cue_action_divergence_fraction",
+    "paired_terminal_per_lag_expression_metrics"
+  ],
+  "interpretation_policy": {
+    "no_parameter_tuning": true,
+    "no_posthoc_event_selection": true,
+    "no_posthoc_condition_selection": true,
+    "all_conditions_use_same_trajectory": true,
+    "all_conditions_use_identical_exact_prefix": true,
+    "all_conditions_use_identical_terminal_sequence": true,
+    "all_conditions_use_identical_paired_synaptic_memory": true,
+    "scheduler_rebuild_is_equivalence_control": true,
+    "composite_conditions_are_interaction_probes_not_single-state_attribution": true,
+    "no_directional_pass_threshold": true
+  },
+  "claim_policy": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "prefix_sequence_specificity_confirmed": false,
+    "transient_state_carrier_confirmed": false,
+    "memory_expression_causal": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
