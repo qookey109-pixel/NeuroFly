@@ -1,0 +1,101 @@
+{
+  "schema": "neurofly-memory-interaction-diversity-recovery-run1-freeze-v0.1",
+  "status": "EXPLORATORY_MEMORY_INTERACTION_DIVERSITY_RECOVERY_COMPLETE",
+  "successful_run": {
+    "run_id": 36121847253,
+    "head_sha": "534842993208a53a3a99eda003ce917897ad226f",
+    "artifact_id": 10857919835,
+    "artifact_sha256": "f63bab9f9e93ae148b9d621fe13d5aa11a3a4f1025d1f1235070773f28f2a7e7",
+    "receipt_sha256": "281d9fd7fc77752a7cab450c880c26437549e8e77674b6dfcb53c391435d88fd"
+  },
+  "source_checkpoint": {
+    "sha256_before": "a2972a6234cb60e67f311300d352d8083d6e4ba79be042a77eeaf1c7c11160a0",
+    "sha256_after": "a2972a6234cb60e67f311300d352d8083d6e4ba79be042a77eeaf1c7c11160a0",
+    "mutated": false
+  },
+  "selection": {
+    "selection_sha256": "b8dd1db9229ca11eb9adada405e4aa8f0699e37268642180345182ecd18deac8",
+    "selection_manifest_file_sha256": "8d46b4ffcd02b079a06697507c426f554ce98a14f0884c831ab054a2e3e3d013",
+    "selected": [
+      {"replicate_id":"DR1","trajectory_seed":5003,"event_index":62,"pre_event_checkpoint_sha256":"b88733dea654dd0c1f8a38040e8fa3e328c36d9cf474140e78257bce4bb1b39e","stable_sensory_sequence_sha256":"c35083f9fea68f18abaafb1a92e3eccf18ee247d9c847f535e219ea608af505a"},
+      {"replicate_id":"DR2","trajectory_seed":5009,"event_index":65,"pre_event_checkpoint_sha256":"b82bd7668f04646544de763602a40e360cc2bc7d73d520b78ed4096218204280","stable_sensory_sequence_sha256":"5fb62edb18efd22548818647b8cdfa8b04de5996a894c745d63879e162abbd7b"},
+      {"replicate_id":"DR3","trajectory_seed":5011,"event_index":80,"pre_event_checkpoint_sha256":"f218df0ed811f96a367fb5700a6883da8bb59e4613ad9d08a3a628cbd4e90c9e","stable_sensory_sequence_sha256":"f7f0e29b75ab607034f7388e069b38cb1e63a2a62551bfa8895901a00a54dd15"},
+      {"replicate_id":"DR4","trajectory_seed":5021,"event_index":146,"pre_event_checkpoint_sha256":"1d59216dbfebd7ac93d2fa635a191924ed772a0385da4ee6fb4c0b106a3d70e8","stable_sensory_sequence_sha256":"7bd6e457e06d9d1b39cdaeeaa45197c75040a0e30ff8f79fafbce4fe5114cf33"}
+    ],
+    "unique_pre_event_checkpoint_count": 4,
+    "unique_stable_sensory_sequence_count": 4,
+    "outcome_blind": true
+  },
+  "aggregate": {
+    "replicate_count": 4,
+    "mean_changed_reward_edge_count": 1487.75,
+    "intact": {
+      "mean_changed_kc_active_fraction": 0.338899748545,
+      "mean_changed_l1_engaged_fraction": 0.509324692575,
+      "mean_mbon07_state_difference_fraction": 1.0,
+      "mean_mbon07_spike_difference_fraction": 0.25,
+      "mean_action_divergence_fraction": 0.190476190476,
+      "reward_cue_action_divergence_fraction": 0.0
+    },
+    "coherent_scheduler_rebuild": {
+      "exactly_equal_to_intact_on_every_terminal_per_lag_endpoint": true
+    },
+    "clear_vg_adaptation": {
+      "mean_changed_kc_active_fraction": 0.343198614091,
+      "mean_changed_l1_engaged_fraction": 0.504666861071,
+      "mean_mbon07_state_difference_fraction": 1.0,
+      "mean_mbon07_spike_difference_fraction": 0.27380952381,
+      "mean_action_divergence_fraction": 0.22619047619,
+      "reward_cue_action_divergence_fraction": 0.25
+    },
+    "clear_input_delay": {
+      "mean_changed_kc_active_fraction": 0.341945108254,
+      "mean_changed_l1_engaged_fraction": 0.510869130594,
+      "mean_mbon07_state_difference_fraction": 1.0,
+      "mean_mbon07_spike_difference_fraction": 0.27380952381,
+      "mean_action_divergence_fraction": 0.190476190476,
+      "reward_cue_action_divergence_fraction": 0.0
+    },
+    "clear_broad_physical_transient": {
+      "mean_changed_kc_active_fraction": 0.088506808852,
+      "mean_changed_l1_engaged_fraction": 0.133756109301,
+      "mean_mbon07_state_difference_fraction": 0.261904761905,
+      "mean_mbon07_spike_difference_fraction": 0.047619047619,
+      "mean_action_divergence_fraction": 0.02380952381,
+      "reward_cue_action_divergence_fraction": 0.0
+    },
+    "interaction_contrasts": {
+      "mean_changed_kc_active_fraction": -0.257737164948,
+      "mean_changed_l1_engaged_fraction": -0.372455189789,
+      "mean_mbon07_state_difference_fraction": -0.738095238095,
+      "mean_mbon07_spike_difference_fraction": -0.250000000001,
+      "mean_action_divergence_fraction": -0.20238095238,
+      "reward_cue_action_divergence_fraction": -0.25
+    }
+  },
+  "replicate_pattern": {
+    "negative_kc_interaction_replicates": 4,
+    "negative_l1_interaction_replicates": 4,
+    "negative_mbon07_state_interaction_replicates": 4,
+    "dr3_broad_clear_terminal_expression_zero": true
+  },
+  "interpretation": {
+    "scheduler_bookkeeping_excluded_again": true,
+    "subsystem_a_clear_alone_materially_suppresses_expression": false,
+    "subsystem_b_clear_alone_materially_suppresses_expression": false,
+    "combined_clear_strongly_suppresses_expression": true,
+    "nonadditive_joint_physical_state_dependency_replicated_across_neural_histories": true,
+    "mechanistic_summary": "Memory expression is robust to clearing either v/g+adaptation or luminance+refractory/delay alone, but strongly collapses when both subsystems are cleared together. The replicated negative interaction contrasts are consistent with redundant or compensatory physical-state support distributed across the two subsystems, rather than scheduler bookkeeping or a single tested state class.",
+    "unique_transient_state_carrier_confirmed": false,
+    "next_question": "Which minimal cross-subsystem pair reproduces the broad-clear suppression: v/g+luminance, v/g+refractory/delay, adaptation+luminance, or adaptation+refractory/delay?"
+  },
+  "claims": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "prefix_sequence_specificity_confirmed": false,
+    "transient_state_carrier_confirmed": false,
+    "memory_expression_causal": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
