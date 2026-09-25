@@ -1,0 +1,123 @@
+{
+  "schema": "neurofly-memory-boundary-state-localization-run1-freeze-v0.1",
+  "status": "EXPLORATORY_MEMORY_BOUNDARY_STATE_LOCALIZATION_COMPLETE",
+  "successful_run": {
+    "run_id": 36108551430,
+    "head_sha": "f64ccc958a15859fd368e8f2d58e313114a234f3",
+    "artifact_id": 10852801468,
+    "artifact_name": "neurofly-memory-boundary-state-localization-36108551430",
+    "artifact_sha256": "7a052e634fd944eb3204f1aa45a70b76366a7941ca600e05cbbd03a3ad558128",
+    "receipt_sha256": "52b2d9cfe512e539c33a59899a0a6554cbc96455f249237bbd79eff04522ba91"
+  },
+  "source_checkpoint": {
+    "sha256_before": "e43ec25d407d465339911db388841a9b32effaa364d4354266e2332d22579c2b",
+    "sha256_after": "e43ec25d407d465339911db388841a9b32effaa364d4354266e2332d22579c2b",
+    "mutated": false
+  },
+  "replicate_count": 4,
+  "mean_changed_reward_edge_count": 1486.5,
+  "conditions": {
+    "intact": {
+      "replicates_with_changed_kc_activity": 3,
+      "replicates_with_mbon07_state_difference": 3,
+      "replicates_with_mbon07_spike_difference": 3,
+      "replicates_with_action_divergence": 3,
+      "reward_cue_action_divergence_fraction": 0.0,
+      "mean_changed_kc_active_fraction": 0.252869236632,
+      "mean_changed_l1_engaged_fraction": 0.372283195681,
+      "mean_mbon07_state_difference_fraction": 0.75,
+      "mean_mbon07_spike_difference_fraction": 0.142857142857,
+      "mean_action_divergence_fraction": 0.142857142857
+    },
+    "clear_rule_traces": {
+      "replicates_with_changed_kc_activity": 3,
+      "replicates_with_mbon07_state_difference": 3,
+      "replicates_with_mbon07_spike_difference": 3,
+      "replicates_with_action_divergence": 3,
+      "reward_cue_action_divergence_fraction": 0.0,
+      "mean_changed_kc_active_fraction": 0.252869236632,
+      "mean_changed_l1_engaged_fraction": 0.372283195681,
+      "mean_mbon07_state_difference_fraction": 0.75,
+      "mean_mbon07_spike_difference_fraction": 0.142857142857,
+      "mean_action_divergence_fraction": 0.142857142857,
+      "exactly_equal_to_intact_on_all_aggregate_and_per_lag_endpoints": true
+    },
+    "clear_wrapper_visual_history": {
+      "replicates_with_changed_kc_activity": 3,
+      "replicates_with_mbon07_state_difference": 3,
+      "replicates_with_mbon07_spike_difference": 3,
+      "replicates_with_action_divergence": 3,
+      "reward_cue_action_divergence_fraction": 0.0,
+      "mean_changed_kc_active_fraction": 0.252869236632,
+      "mean_changed_l1_engaged_fraction": 0.372283195681,
+      "mean_mbon07_state_difference_fraction": 0.75,
+      "mean_mbon07_spike_difference_fraction": 0.142857142857,
+      "mean_action_divergence_fraction": 0.142857142857,
+      "exactly_equal_to_intact_on_all_aggregate_and_per_lag_endpoints": true
+    },
+    "clear_membrane_conductance": {
+      "replicates_with_changed_kc_activity": 4,
+      "replicates_with_mbon07_state_difference": 4,
+      "replicates_with_mbon07_spike_difference": 4,
+      "replicates_with_action_divergence": 4,
+      "reward_cue_action_divergence_fraction": 0.25,
+      "mean_changed_kc_active_fraction": 0.317367740445,
+      "mean_changed_l1_engaged_fraction": 0.470302395984,
+      "mean_mbon07_state_difference_fraction": 0.952380952381,
+      "mean_mbon07_spike_difference_fraction": 0.25,
+      "mean_action_divergence_fraction": 0.22619047619
+    }
+  },
+  "replicate_action_divergence_lags": {
+    "BL1": {
+      "intact": [-17, -13, -9, -5],
+      "clear_rule_traces": [-17, -13, -9, -5],
+      "clear_wrapper_visual_history": [-17, -13, -9, -5],
+      "clear_membrane_conductance": [-20, -18, -16, -15, -14, -1, 0]
+    },
+    "BL2": {
+      "intact": [],
+      "clear_rule_traces": [],
+      "clear_wrapper_visual_history": [],
+      "clear_membrane_conductance": [-13, -1]
+    },
+    "BL3": {
+      "intact": [-20, -13, -12, -5, -3],
+      "clear_rule_traces": [-20, -13, -12, -5, -3],
+      "clear_wrapper_visual_history": [-20, -13, -12, -5, -3],
+      "clear_membrane_conductance": [-20, -19, -18, -13, -12, -6]
+    },
+    "BL4": {
+      "intact": [-20, -16, -4],
+      "clear_rule_traces": [-20, -16, -4],
+      "clear_wrapper_visual_history": [-20, -16, -4],
+      "clear_membrane_conductance": [-19, -15, -11, -6]
+    }
+  },
+  "intervention_integrity": {
+    "clear_rule_traces_changed_only": ["rate_dan", "rate_kc"],
+    "clear_membrane_conductance_changed_only": ["g", "v"],
+    "clear_wrapper_visual_history_changed_only": ["visual"],
+    "all_interventions_preserved_synaptic_memory": true,
+    "all_conditions_used_identical_terminal_sequence": true,
+    "all_conditions_used_identical_paired_memory": true
+  },
+  "interpretation": {
+    "rule_traces_are_expression_carrier_candidate": false,
+    "wrapper_visual_history_is_expression_carrier_candidate": false,
+    "membrane_conductance_is_positive_expression_carrier_candidate": false,
+    "membrane_conductance_is_expression_modulator": true,
+    "transient_state_carrier_confirmed": false,
+    "mechanistic_summary": "Clearing centered-rule rate_kc/rate_dan traces at the -20 boundary produced results exactly identical to intact recall on every aggregate and per-lag endpoint, consistent with frozen plasticity making those traces irrelevant to neural expression. Clearing NeuroFly wrapper visual-history state was likewise exactly neutral. Clearing only membrane potential and conductance materially changed expression, but in the opposite direction from a positive carrier: changed-KC, MBON07 and action expression increased, including recovery of BL2 and reward-cue action divergence in BL1. Thus v/g state modulates or suppresses paired-memory expression in this assay rather than carrying the extra-runtime benefit. The positive carrier remains among other Stonkfly transient state classes.",
+    "next_question": "Localize the remaining carrier using fresh preregistered trajectories and single-class boundary clears for synaptic-delay/refractory state, retinal-luminance state, adaptation state, and kernel eligibility/modulation state, while keeping paired memory, prefix, terminal sequence, decoder, and learning locks unchanged."
+  },
+  "claims": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "prefix_sequence_specificity_confirmed": false,
+    "transient_state_carrier_confirmed": false,
+    "memory_expression_causal": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
