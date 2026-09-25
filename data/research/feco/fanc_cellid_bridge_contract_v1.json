@@ -1,0 +1,48 @@
+{
+  "schema": "neurofly-feco-fanc-cellid-bridge-contract-v1",
+  "source_commit_bancpipeline": "5c333c12f0b9e03873f88cf4e23cad34c0bb49c1",
+  "source_commit_fanc_auto_recon": "89d9769457583051e3ec9ec7b34a5f3575537bf5",
+  "fanc_root_set_source": {
+    "repo": "sagrawal/Lee_2024",
+    "commit": "4328b1d5549749f1014c4d73cccc0c5241d98ae4",
+    "path": "synapse_tables/feco_annotation_table.csv",
+    "classification_system": "T1L",
+    "cell_type": "hook_flx",
+    "count": 13
+  },
+  "identifier_contract": {
+    "raw_fanc_nblast_fanc_match": "FANC pt_root_id",
+    "raw_fanc_nblast_cell_id": "stable FANC cell ID joined from fanc_meta.csv",
+    "compiled_banc_fanc_match_id": "stable FANC cell ID",
+    "reviewed_png_hit_identifier_before_compile": "FANC pt_root_id",
+    "reviewed_compiled_match_id": "stable FANC cell ID"
+  },
+  "root_to_cell_id_source": {
+    "cave_table": "cell_ids_v2",
+    "bancpipeline_materialization": "fanc_meta.csv",
+    "join_key": "pt_root_id/root_id",
+    "output_key": "cell_id"
+  },
+  "public_segment_properties": {
+    "id_column": "cell_id",
+    "contains_root_id_property": false,
+    "sufficient_for_root_to_cell_id_join": false
+  },
+  "target": {
+    "banc_root": "720575941508169089",
+    "banc_type": "SNpp41",
+    "malecns_body": "911942",
+    "required_endpoint": "one of 13 FANC hook_flx roots -> stable FANC cell_id -> accepted BANC/MaleCNS cross-dataset identity"
+  },
+  "candidate_20201": {
+    "identifier_kind": "stable FANC cell ID",
+    "promotion_status": "not accepted",
+    "reason": "prior public compiled evidence had low score / no validated promoted identity; no root-level identity bridge has been recovered"
+  },
+  "gates": {
+    "bridge_is_curated_identity": false,
+    "exact_polarity_verified": false,
+    "current_calibration_authorized": false,
+    "runtime_stimulation_authorized": false
+  }
+}
