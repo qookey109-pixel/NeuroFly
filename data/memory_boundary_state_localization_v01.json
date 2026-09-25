@@ -1,0 +1,96 @@
+{
+  "schema": "neurofly-memory-boundary-state-localization-v0.1",
+  "status": "PREREGISTERED_EXPLORATORY_EXECUTION",
+  "scope": "real-malecns-reward-memory-boundary-state-localization",
+  "question": "Which transient state class carries the extra-runtime benefit of exact three-tau prereward history into the identical terminal -20 through 0 memory-expression window?",
+  "origin": {
+    "prefix_specificity_run_id": 36105949179,
+    "prefix_specificity_receipt_sha256": "d0f0089aa19749be6bebb8c64de50576fc0d0452527bd3b1110dd97da37c2cfd",
+    "prefix_specificity_artifact_sha256": "76a0174c2fa0324bb2cf84a26919da9f406eef043b0f4a4c91c0766d06f0bda1",
+    "prefix_specificity_freeze": "data/memory_prefix_specificity_control_run1_freeze_v01.json"
+  },
+  "model_clock": {
+    "kc_trace_seconds": 1.0,
+    "neural_ms_per_decision": 50,
+    "prefix_decisions": 40,
+    "terminal_decisions": 20,
+    "full_history_decisions": 60
+  },
+  "runtime": {
+    "event_selection": "first natural reward at or after decision index 60",
+    "maximum_acquisition_decisions": 300,
+    "post_reward_delay_decisions": 5,
+    "history_and_delay_external_reinforcement": "none",
+    "initial_recall_state_clear": "brain.reset(keep_memory=true) plus wrapper visual history clear before every condition",
+    "recall_plasticity_frozen": true,
+    "recall_external_reinforcement": "none",
+    "prefix_sequence": "exact source lags -60 through -21",
+    "terminal_sequence": "exact source lags -20 through -1 followed by exact reward cue at lag 0",
+    "boundary": "after source lag -21 and before source lag -20",
+    "conditions": [
+      {
+        "id": "intact",
+        "intervention": "none"
+      },
+      {
+        "id": "clear_rule_traces",
+        "intervention": "set only brain.rate_kc and brain.rate_dan to their constructor initial arrays at the boundary"
+      },
+      {
+        "id": "clear_membrane_conductance",
+        "intervention": "set only brain.v and brain.g to their constructor initial arrays at the boundary"
+      },
+      {
+        "id": "clear_wrapper_visual_history",
+        "intervention": "set only NeuroFly wrapper _last_visual_rgb to null at the boundary"
+      }
+    ],
+    "primary_comparison_window": "common terminal replay lags -20 through 0 inclusive",
+    "changed_edge_tolerance_fraction": 1e-12,
+    "state_difference_tolerance": 1e-12,
+    "no_model_parameter_change": true
+  },
+  "replicates": [
+    {"id": "BL1", "trajectory_seed": 3301},
+    {"id": "BL2", "trajectory_seed": 3307},
+    {"id": "BL3", "trajectory_seed": 3313},
+    {"id": "BL4", "trajectory_seed": 3319}
+  ],
+  "primary_descriptive_endpoints": [
+    "changed_reward_edge_count",
+    "condition_terminal_any_changed_kc_activity",
+    "condition_terminal_any_mbon07_state_difference",
+    "condition_terminal_any_mbon07_spike_difference",
+    "condition_terminal_any_action_divergence",
+    "condition_reward_cue_action_divergence",
+    "condition_mean_changed_kc_active_fraction",
+    "condition_mean_changed_l1_engaged_fraction",
+    "condition_mean_mbon07_state_difference_fraction",
+    "condition_mean_mbon07_spike_difference_fraction",
+    "condition_mean_action_divergence_fraction",
+    "paired_terminal_per_lag_expression_metrics"
+  ],
+  "interpretation_policy": {
+    "no_parameter_tuning": true,
+    "no_posthoc_event_selection": true,
+    "no_posthoc_state_class_selection": true,
+    "all_conditions_use_same_trajectory": true,
+    "all_conditions_use_identical_exact_prefix": true,
+    "all_conditions_use_identical_terminal_sequence": true,
+    "all_conditions_use_identical_paired_synaptic_memory": true,
+    "boundary_interventions_are_single_state_class_only": true,
+    "changed_edges_defined_before_recall_from_paired_synaptic_difference": true,
+    "primary_comparison_uses_identical_terminal_lags": true,
+    "no_directional_pass_threshold": true,
+    "result_is_transient_state_localization_only": true
+  },
+  "claim_policy": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "prefix_sequence_specificity_confirmed": false,
+    "transient_state_carrier_confirmed": false,
+    "memory_expression_causal": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
