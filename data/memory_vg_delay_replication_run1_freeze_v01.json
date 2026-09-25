@@ -1,0 +1,91 @@
+{
+  "schema": "neurofly-memory-vg-delay-replication-run1-freeze-v0.1",
+  "status": "EXPLORATORY_MEMORY_VG_DELAY_REPLICATION_COMPLETE",
+  "successful_run": {
+    "run_id": 36148793925,
+    "head_sha": "ff539e38c0f38955f4d128712cec594f34af8d69",
+    "artifact_id": 10871256365,
+    "artifact_sha256": "80c6501f91ae768a540d31de0c20ddc5ea31970b12c00a9db2e3d69cf6bc769b",
+    "receipt_sha256": "bbdc1132f72ee59577859ffd56bd73fc66db447476f21664a96e6c67af95a40e"
+  },
+  "source_checkpoint": {
+    "sha256_before": "4530cb286a2dcaf8a3cc938cc70453983c868065f945b1ad0b77306ff2779a71",
+    "sha256_after": "4530cb286a2dcaf8a3cc938cc70453983c868065f945b1ad0b77306ff2779a71",
+    "mutated": false
+  },
+  "selection": {
+    "outcome_blind": true,
+    "selected": [
+      {"replicate_id":"VR1","trajectory_seed":5407,"event_index":63,"pre_event_checkpoint_sha256":"e8649e4735f066e7ef3c93daae795b184aa99f0cfc5ac17cfb9aba8bc0517fca","stable_sensory_sequence_sha256":"2c58e6dd244fab832b69c47bdb353f3c0df41d60dbaf139523abd61bbb0b8137"},
+      {"replicate_id":"VR2","trajectory_seed":5413,"event_index":90,"pre_event_checkpoint_sha256":"7797adc4d2ccc28b11b386e3e5e92dc5bdf89100f4c769106c68ccc5915a16c2","stable_sensory_sequence_sha256":"bf6e8fd482671b1d7c525548399535f1196f6bfce23669e1a0fcfa67218af39f"},
+      {"replicate_id":"VR3","trajectory_seed":5417,"event_index":62,"pre_event_checkpoint_sha256":"8303a71ba9db030f5241d56a52e2e26a479e97a5c83445fbdd08ecd12615b283","stable_sensory_sequence_sha256":"d56d8b7e9a47f5cdfabe7665ac27363eb66f98830664d9dac0dc88cb9339aef0"},
+      {"replicate_id":"VR4","trajectory_seed":5419,"event_index":69,"pre_event_checkpoint_sha256":"1f14543be1896d5fe7ed8f4ffa4b889b086d89af6659a5dff796876eb9194dfb","stable_sensory_sequence_sha256":"88eb3e1735b2fb7af81568938d103feca210478a975278ffa120a4a4c058eb7d"}
+    ],
+    "unique_pre_event_checkpoint_count": 4,
+    "unique_stable_sensory_sequence_count": 4
+  },
+  "aggregate": {
+    "intact": {
+      "mean_changed_kc_active_fraction": 0.218218015224,
+      "mean_changed_l1_engaged_fraction": 0.324843073722,
+      "mean_mbon07_state_difference_fraction": 0.654761904762,
+      "mean_mbon07_spike_difference_fraction": 0.190476190476,
+      "mean_action_divergence_fraction": 0.059523809524,
+      "reward_cue_action_divergence_fraction": 0.25
+    },
+    "clear_vg_delay": {
+      "mean_changed_kc_active_fraction": 0.077491100607,
+      "mean_changed_l1_engaged_fraction": 0.117592092806,
+      "mean_mbon07_state_difference_fraction": 0.238095238095,
+      "mean_mbon07_spike_difference_fraction": 0.035714285714,
+      "mean_action_divergence_fraction": 0.035714285714,
+      "reward_cue_action_divergence_fraction": 0.25
+    },
+    "clear_broad_physical_transient": {
+      "mean_changed_kc_active_fraction": 0.108515624149,
+      "mean_changed_l1_engaged_fraction": 0.164620740864,
+      "mean_mbon07_state_difference_fraction": 0.333333333333,
+      "mean_mbon07_spike_difference_fraction": 0.035714285714,
+      "mean_action_divergence_fraction": 0.035714285714,
+      "reward_cue_action_divergence_fraction": 0.0
+    }
+  },
+  "candidate_minus_intact": {
+    "mean_changed_kc_active_fraction": -0.140726914617,
+    "mean_changed_l1_engaged_fraction": -0.207250980916,
+    "mean_mbon07_state_difference_fraction": -0.416666666667,
+    "mean_mbon07_spike_difference_fraction": -0.154761904762,
+    "mean_action_divergence_fraction": -0.02380952381,
+    "reward_cue_action_divergence_fraction": 0.0
+  },
+  "replication_pattern": {
+    "preregistered_target": "4/4 selected histories lower than intact on KC activity, changed-edge L1 engagement, and MBON07 state expression",
+    "observed": "3/4",
+    "full_replication": false,
+    "aggregate_suppression_replicated": true,
+    "history_general_robustness_replicated": false,
+    "VR1_all_three_primary_suppressed": true,
+    "VR2_all_three_primary_suppressed": true,
+    "VR3_all_three_primary_suppressed": true,
+    "VR4_all_three_primary_suppressed": false,
+    "VR4_direction": "all three primary endpoints increased under v/g+delay clear relative to intact"
+  },
+  "interpretation": {
+    "vg_delay_is_history_general_robust_suppressive_ensemble": false,
+    "vg_delay_shows_aggregate_suppressive_effect": true,
+    "history_dependent_interaction_supported": true,
+    "unique_transient_state_carrier_confirmed": false,
+    "decompose_v_vs_g_authorized_by_this_result": false,
+    "mechanistic_summary": "The fresh neural-diverse cohort reproduces strong aggregate suppression after clearing v/g plus refractory/delay state, but the preregistered 4/4 history-level replication criterion fails. VR1, VR2 and VR3 show suppression on all three primary neural-expression endpoints, whereas VR4 reverses direction on all three. This rules out treating v/g+delay as a history-general robust suppressive ensemble. The result instead supports strong history dependence in how this physical-state intervention modulates stored-memory expression.",
+    "next_question": "Perform an explicitly exploratory pre-intervention moderator audit across the neural-diverse histories from #159 and #160 to identify state or trajectory features associated with suppression versus reversal. Any moderator hypothesis must then be preregistered and tested in a new outcome-blind cohort before further v-versus-g decomposition."
+  },
+  "claims": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "prefix_sequence_specificity_confirmed": false,
+    "transient_state_carrier_confirmed": false,
+    "memory_expression_causal": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
