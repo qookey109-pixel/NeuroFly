@@ -1,0 +1,69 @@
+{
+  "schema": "neurofly-memory-trace-reconstruction-audit-v0.1",
+  "status": "PREREGISTERED_EXPLORATORY_EXECUTION",
+  "scope": "real-malecns-reward-memory-trace-reconstruction",
+  "question": "How much of the original reward-time KC eligibility vector is reconstructed after transient-state clearing by replaying one versus three frozen KC-trace time constants of prereward sensory history?",
+  "origin": {
+    "temporal_index_run_id": 36095883843,
+    "temporal_index_receipt_sha256": "573c10a5f52a03fa7a04226979c14594b59eb56da763a150057ff2137289ed72",
+    "temporal_index_artifact_sha256": "947633623b5a8f6071833abf7f04283e6a0f3a7c147183f79a199ce9b90c16ba",
+    "temporal_index_freeze": "data/memory_temporal_index_audit_run1_freeze_v01.json"
+  },
+  "model_clock": {
+    "kc_trace_seconds": 1.0,
+    "neural_ms_per_decision": 50,
+    "one_tau_decisions": 20,
+    "three_tau_decisions": 60,
+    "three_tau_older_history_residual_fraction": 0.049787068368
+  },
+  "runtime": {
+    "event_selection": "first natural reward at or after decision index 60",
+    "maximum_acquisition_decisions": 300,
+    "post_reward_delay_decisions": 5,
+    "history_and_delay_external_reinforcement": "none",
+    "state_clear_before_trace_replay": true,
+    "trace_replay_plasticity_frozen": true,
+    "trace_replay_external_reinforcement": "none",
+    "one_tau_sequence": "exact 20 recorded prereward decisions ending immediately before reward",
+    "three_tau_sequence": "exact 60 recorded prereward decisions ending immediately before reward",
+    "target_vector": "original pre-event reward-edge rate_kc vector immediately before reward",
+    "changed_edge_tolerance_fraction": 1e-12,
+    "trace_zero_tolerance": 1e-12,
+    "no_model_parameter_change": true
+  },
+  "replicates": [
+    {"id": "TR1", "trajectory_seed": 3001},
+    {"id": "TR2", "trajectory_seed": 3011},
+    {"id": "TR3", "trajectory_seed": 3019},
+    {"id": "TR4", "trajectory_seed": 3023}
+  ],
+  "primary_descriptive_endpoints": [
+    "changed_reward_edge_count",
+    "target_changed_edge_trace_positive_fraction",
+    "one_tau_final_changed_trace_cosine_similarity",
+    "three_tau_final_changed_trace_cosine_similarity",
+    "one_tau_final_changed_trace_l1_overlap_fraction",
+    "three_tau_final_changed_trace_l1_overlap_fraction",
+    "three_tau_minus_one_tau_l1_overlap_delta",
+    "one_tau_final_target_positive_edge_recovery_fraction",
+    "three_tau_final_target_positive_edge_recovery_fraction",
+    "per_lag_three_tau_changed_trace_metrics"
+  ],
+  "interpretation_policy": {
+    "no_parameter_tuning": true,
+    "no_posthoc_event_selection": true,
+    "no_posthoc_window_selection": true,
+    "one_tau_and_three_tau_compared_on_same_trajectory": true,
+    "all_replayed_lags_reported": true,
+    "no_directional_pass_threshold": true,
+    "result_is_eligibility_reconstruction_localization_only": true
+  },
+  "claim_policy": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "cue_indexing_failure_confirmed": false,
+    "memory_expression_causal": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
