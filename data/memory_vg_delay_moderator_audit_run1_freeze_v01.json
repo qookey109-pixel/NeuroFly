@@ -1,0 +1,95 @@
+{
+  "schema": "neurofly-memory-vg-delay-moderator-audit-run1-freeze-v0.1",
+  "status": "EXPLORATORY_MEMORY_VG_DELAY_MODERATOR_AUDIT_COMPLETE",
+  "successful_run": {
+    "run_id": 36150726009,
+    "head_sha": "2e97523eb4789f0d3a832ae6369159de83871e19",
+    "artifact_id": 10873087880,
+    "artifact_sha256": "0b835ae11a8eaf8b634ca392e3752944ec9218ac06fcd7927bad8ed6768c7a0b",
+    "receipt_sha256": "59021b8dc34afba8225f5cc148805d40fb9e8c80f633f40df320ae2d89d780d1"
+  },
+  "source_checkpoint": {
+    "sha256_before": "e0830260a4e5c9c732537118037447183cd7c639c01f85a6c9d154fc6a03ae00",
+    "sha256_after": "e0830260a4e5c9c732537118037447183cd7c639c01f85a6c9d154fc6a03ae00",
+    "mutated": false
+  },
+  "evidence_order": {
+    "selection_manifest_file_sha256": "eb799af63ffb80cc8e61ed8289e8b6d7b2da17fab8337bad9f4942e829b2724e",
+    "pre_intervention_feature_manifest_sha256": "93d4406946e08af8659fb49da416288332025fb31c30a66652f3d2cb6f66f859",
+    "pre_intervention_feature_manifest_file_sha256": "42a0ddf93a4ab15e602e0c2e46fb30e23ada90e4cb6312287c96fd7167059488",
+    "effect_endpoints_evaluated_before_feature_manifest": false
+  },
+  "selected_histories": [
+    {"replicate_id":"MA1","trajectory_seed":5603,"event_index":62,"effect_label":"suppression"},
+    {"replicate_id":"MA2","trajectory_seed":5609,"event_index":61,"effect_label":"suppression"},
+    {"replicate_id":"MA3","trajectory_seed":5623,"event_index":67,"effect_label":"mixed"},
+    {"replicate_id":"MA4","trajectory_seed":5639,"event_index":71,"effect_label":"suppression"},
+    {"replicate_id":"MA5","trajectory_seed":5641,"event_index":107,"effect_label":"reversal"},
+    {"replicate_id":"MA6","trajectory_seed":5647,"event_index":60,"effect_label":"suppression"},
+    {"replicate_id":"MA7","trajectory_seed":5651,"event_index":68,"effect_label":"suppression"},
+    {"replicate_id":"MA8","trajectory_seed":5653,"event_index":74,"effect_label":"suppression"}
+  ],
+  "label_counts": {
+    "suppression": 6,
+    "reversal": 1,
+    "mixed": 1
+  },
+  "aggregate": {
+    "intact": {
+      "mean_changed_kc_active_fraction": 0.263250326827,
+      "mean_changed_l1_engaged_fraction": 0.388355229284,
+      "mean_mbon07_state_difference_fraction": 0.761904761905
+    },
+    "clear_vg_delay": {
+      "mean_changed_kc_active_fraction": 0.11893025767,
+      "mean_changed_l1_engaged_fraction": 0.177166378507,
+      "mean_mbon07_state_difference_fraction": 0.363095238095
+    }
+  },
+  "primary_exploratory_moderator_family": {
+    "family": "boundary adaptation engagement",
+    "lead_feature": "adaptation.paired_mean.std",
+    "suppression_group_n": 6,
+    "non_suppression_group_n": 2,
+    "suppression_group_mean": 1.103538160834,
+    "non_suppression_group_mean": 0.053529558114,
+    "standardized_mean_difference": 86.687549668438,
+    "suppression_values": [1.088254622192,1.086583385252,1.0892183552,1.132785631722,1.115099135198,1.109287835439],
+    "non_suppression_values": [0.054963294786,0.052095821442],
+    "observed_gap": {
+      "max_non_suppression": 0.054963294786,
+      "min_suppression": 1.086583385252
+    },
+    "supporting_family_features": {
+      "adaptation.true.std_smd": 92.488287226491,
+      "adaptation.paired_mean.mean_smd": 69.79305750058,
+      "adaptation.paired_mean.nonzero_fraction_smd": 51.29073623533,
+      "adaptation.paired_mean.max_abs_smd": 29.211740403127
+    }
+  },
+  "secondary_correlated_discovery": {
+    "description": "Both non-suppression histories had zero changed-KC and changed-edge engagement at prefix lag -21, while all six suppression histories had nonzero lag -21 expression.",
+    "lag_minus_21_changed_kc_active_fraction_smd": 9.318098418528,
+    "lag_minus_21_changed_l1_engaged_fraction_smd": 9.971840624814,
+    "causal_independence_from_adaptation_not_established": true
+  },
+  "interpretation": {
+    "history_dependence_replicated": true,
+    "adaptation_engagement_is_exploratory_moderator_candidate": true,
+    "adaptation_moderator_confirmed": false,
+    "prefix_expression_moderator_confirmed": false,
+    "causal_moderator_confirmed": false,
+    "mechanistic_summary": "Across a fresh outcome-blind eight-history cohort, v/g+delay clearing produced six suppression histories, one reversal and one mixed history. Pre-intervention boundary adaptation engagement was sharply separated: all six suppression histories had adaptation.paired_mean.std around 1.09-1.13, while the reversal and mixed histories were near 0.05. Several other adaptation summaries showed the same separation. The two non-suppression histories also had zero lag -21 changed-KC and changed-edge expression, so adaptation engagement and immediate prefix expression may be correlated markers rather than independent mechanisms. This is exploratory discovery only.",
+    "next_question": "Test the discovery-derived adaptation-engagement moderator in a new outcome-blind cohort using a preregistered gap-based classification before effect labels are computed."
+  },
+  "claims": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "prefix_sequence_specificity_confirmed": false,
+    "transient_state_carrier_confirmed": false,
+    "memory_expression_causal": false,
+    "moderator_confirmed": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
