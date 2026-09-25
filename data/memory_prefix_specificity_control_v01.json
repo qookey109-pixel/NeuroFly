@@ -1,0 +1,75 @@
+{
+  "schema": "neurofly-memory-prefix-specificity-control-v0.1",
+  "status": "PREREGISTERED_EXPLORATORY_EXECUTION",
+  "scope": "real-malecns-reward-memory-prefix-specificity",
+  "question": "Does the exact -60 through -21 prereward prefix contribute sequence-specific causal context to persistent reward-memory expression beyond generic extra runtime, when compared against the same 40 frame/context pairs circularly rotated by 20 positions while the terminal -20 through 0 sequence remains identical?",
+  "origin": {
+    "history_expression_run_id": 36104612747,
+    "history_expression_receipt_sha256": "f61d6b9078cb43e80fdcf2bace26034cdb2b362739fd91119c450d54bf14162a",
+    "history_expression_artifact_sha256": "45cf654bcceda452564a731b60ef84bdcc1b7f51c8ffa72cd26bdbb8f9bbc863",
+    "history_expression_freeze": "data/memory_history_expression_bridge_run1_freeze_v01.json"
+  },
+  "model_clock": {
+    "kc_trace_seconds": 1.0,
+    "neural_ms_per_decision": 50,
+    "terminal_decisions": 20,
+    "prefix_decisions": 40,
+    "full_history_decisions": 60
+  },
+  "runtime": {
+    "event_selection": "first natural reward at or after decision index 60",
+    "maximum_acquisition_decisions": 300,
+    "post_reward_delay_decisions": 5,
+    "history_and_delay_external_reinforcement": "none",
+    "state_clear_before_recall": true,
+    "recall_plasticity_frozen": true,
+    "recall_external_reinforcement": "none",
+    "exact_condition": "exact lags -60 through -1 followed by exact reward cue at lag 0",
+    "rotated_prefix_condition": "the same 40 frame/context pairs from source lags -60 through -21 circularly rotated left by 20 positions, followed by exact source lags -20 through -1 and exact reward cue at lag 0",
+    "prefix_rotation_positions": 20,
+    "primary_comparison_window": "common terminal replay lags -20 through 0 inclusive",
+    "changed_edge_tolerance_fraction": 1e-12,
+    "state_difference_tolerance": 1e-12,
+    "no_model_parameter_change": true
+  },
+  "replicates": [
+    {"id": "PS1", "trajectory_seed": 3203},
+    {"id": "PS2", "trajectory_seed": 3209},
+    {"id": "PS3", "trajectory_seed": 3217},
+    {"id": "PS4", "trajectory_seed": 3221}
+  ],
+  "primary_descriptive_endpoints": [
+    "changed_reward_edge_count",
+    "exact_terminal_any_changed_kc_activity",
+    "rotated_terminal_any_changed_kc_activity",
+    "exact_terminal_any_mbon07_state_difference",
+    "rotated_terminal_any_mbon07_state_difference",
+    "exact_terminal_any_mbon07_spike_difference",
+    "rotated_terminal_any_mbon07_spike_difference",
+    "exact_terminal_any_action_divergence",
+    "rotated_terminal_any_action_divergence",
+    "exact_reward_cue_action_divergence",
+    "rotated_reward_cue_action_divergence",
+    "paired_terminal_per_lag_expression_metrics"
+  ],
+  "interpretation_policy": {
+    "no_parameter_tuning": true,
+    "no_posthoc_event_selection": true,
+    "no_posthoc_control_selection": true,
+    "exact_and_rotated_conditions_use_same_trajectory": true,
+    "prefix_frame_context_multiset_identical": true,
+    "terminal_sequence_identical": true,
+    "changed_edges_defined_before_recall_from_paired_synaptic_difference": true,
+    "primary_comparison_uses_identical_terminal_lags": true,
+    "no_directional_pass_threshold": true,
+    "result_is_prefix_specificity_localization_only": true
+  },
+  "claim_policy": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "prefix_sequence_specificity_confirmed": false,
+    "memory_expression_causal": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
