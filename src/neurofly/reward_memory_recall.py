@@ -162,6 +162,22 @@ def _reward_difference(none_state: dict[str, Any], true_state: dict[str, Any]) -
     }
 
 
+def _receipt_plastic_state(state: dict[str, Any]) -> dict[str, Any]:
+    """Remove runtime-only ndarray fields before JSON evidence serialization."""
+    return {
+        key: value
+        for key, value in state.items()
+        if key not in {"fraction", "reward_mask", "aversive_mask"}
+    }
+
+
+def _receipt_branch(branch: dict[str, Any]) -> dict[str, Any]:
+    cleaned = dict(branch)
+    for key in ("pre", "post_event", "post_delay", "post_reset"):
+        cleaned[key] = _receipt_plastic_state(branch[key])
+    return cleaned
+
+
 def _telemetry(decision: Any) -> dict[str, Any]:
     t = copy.deepcopy(decision.telemetry)
     return {
@@ -315,8 +331,8 @@ def _run_replicate(
             _digest_json(row["context"]) for row in delay_rows
         ],
         "pre_event_checkpoint_sha256": pre_sha,
-        "none": none,
-        "true_external": true,
+        "none": _receipt_branch(none),
+        "true_external": _receipt_branch(true),
         "post_event_difference": post_event_diff,
         "post_delay_difference": post_delay_diff,
         "reward_compartment_l1_retention_ratio": round(
