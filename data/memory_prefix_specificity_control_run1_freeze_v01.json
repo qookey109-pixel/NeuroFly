@@ -1,0 +1,104 @@
+{
+  "schema": "neurofly-memory-prefix-specificity-control-run1-freeze-v0.1",
+  "status": "EXPLORATORY_MEMORY_PREFIX_SPECIFICITY_CONTROL_COMPLETE",
+  "successful_run": {
+    "run_id": 36105949179,
+    "head_sha": "d4dfb515803fa156d57b06236aab2373b6263c4a",
+    "artifact_id": 10851751103,
+    "artifact_name": "neurofly-memory-prefix-specificity-control-36105949179",
+    "artifact_sha256": "76a0174c2fa0324bb2cf84a26919da9f406eef043b0f4a4c91c0766d06f0bda1",
+    "receipt_sha256": "d0f0089aa19749be6bebb8c64de50576fc0d0452527bd3b1110dd97da37c2cfd"
+  },
+  "source_checkpoint": {
+    "sha256_before": "d2dd1cf9bd19c02f7d6cd8de5ab4d44ff3891c59744609e62ef7f79bd60e42e2",
+    "sha256_after": "d2dd1cf9bd19c02f7d6cd8de5ab4d44ff3891c59744609e62ef7f79bd60e42e2",
+    "mutated": false
+  },
+  "primary_aggregate": {
+    "replicate_count": 4,
+    "mean_changed_reward_edge_count": 1500.25,
+    "exact_terminal_replicates_with_changed_kc_activity": 4,
+    "rotated_terminal_replicates_with_changed_kc_activity": 4,
+    "exact_terminal_replicates_with_mbon07_state_difference": 4,
+    "rotated_terminal_replicates_with_mbon07_state_difference": 4,
+    "exact_terminal_replicates_with_mbon07_spike_difference": 4,
+    "rotated_terminal_replicates_with_mbon07_spike_difference": 4,
+    "exact_terminal_replicates_with_action_divergence": 4,
+    "rotated_terminal_replicates_with_action_divergence": 4,
+    "exact_reward_cue_action_divergence_fraction": 0.0,
+    "rotated_reward_cue_action_divergence_fraction": 0.25
+  },
+  "derived_common_terminal_window_summary": {
+    "window": "lags -20 through 0 inclusive",
+    "note": "Derived only from preregistered paired terminal per-lag endpoints; no new threshold or post-hoc window selection.",
+    "exact_mean_changed_kc_active_fraction": 0.340829706889,
+    "rotated_mean_changed_kc_active_fraction": 0.318178082032,
+    "exact_mean_changed_l1_engaged_fraction": 0.505810082096,
+    "rotated_mean_changed_l1_engaged_fraction": 0.474958955507,
+    "exact_mean_mbon07_state_difference_fraction": 1.0,
+    "rotated_mean_mbon07_state_difference_fraction": 0.964285714286,
+    "exact_mean_mbon07_spike_difference_fraction": 0.202380952381,
+    "rotated_mean_mbon07_spike_difference_fraction": 0.238095238095,
+    "exact_mean_action_divergence_fraction": 0.166666666667,
+    "rotated_mean_action_divergence_fraction": 0.083333333333
+  },
+  "replicates": [
+    {
+      "id": "PS1",
+      "trajectory_seed": 3203,
+      "event_index": 101,
+      "changed_reward_edge_count": 1505,
+      "exact_action_divergence_lags": [-20, -19, -15, -13, -12, -2],
+      "rotated_action_divergence_lags": [-13, -10, -3],
+      "exact_reward_cue_action_divergence": false,
+      "rotated_reward_cue_action_divergence": false
+    },
+    {
+      "id": "PS2",
+      "trajectory_seed": 3209,
+      "event_index": 77,
+      "changed_reward_edge_count": 1496,
+      "exact_action_divergence_lags": [-20, -19, -15, -11, -2],
+      "rotated_action_divergence_lags": [-1],
+      "exact_reward_cue_action_divergence": false,
+      "rotated_reward_cue_action_divergence": false
+    },
+    {
+      "id": "PS3",
+      "trajectory_seed": 3217,
+      "event_index": 94,
+      "changed_reward_edge_count": 1501,
+      "exact_action_divergence_lags": [-11],
+      "rotated_action_divergence_lags": [-15, -7],
+      "exact_reward_cue_action_divergence": false,
+      "rotated_reward_cue_action_divergence": false
+    },
+    {
+      "id": "PS4",
+      "trajectory_seed": 3221,
+      "event_index": 99,
+      "changed_reward_edge_count": 1499,
+      "exact_action_divergence_lags": [-3, -1],
+      "rotated_action_divergence_lags": [0],
+      "exact_reward_cue_action_divergence": false,
+      "rotated_reward_cue_action_divergence": true
+    }
+  ],
+  "interpretation": {
+    "exact_prefix_has_modest_average_expression_advantage": true,
+    "rotated_prefix_preserves_terminal_memory_expression": true,
+    "prefix_sequence_specificity_confirmed": false,
+    "generic_extra_runtime_or_state_accumulation_remains_sufficient_explanation": true,
+    "reward_cue_specificity_supported": false,
+    "mechanistic_summary": "Exact early history modestly increased mean changed-KC activity, changed-edge L1 engagement, MBON07-state continuity, and the fraction of action-divergent terminal lags. However, the rotated-prefix control preserved changed-KC, MBON07-state, MBON07-spike, and action-divergence coverage in all 4/4 replicates, and produced reward-cue action divergence in 1/4 where exact history produced 0/4. Therefore the current evidence does not confirm that precise early prefix ordering is required; much of the 3-tau benefit can still be explained by longer temporal warmup or accumulated internal state.",
+    "next_question": "Localize which state variable carries the extra-runtime benefit by comparing exact 3-tau history against matched controls that preserve runtime while selectively clearing candidate transient states at the -20 boundary before the identical terminal sequence, without changing learning parameters or decoder."
+  },
+  "claims": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "prefix_sequence_specificity_confirmed": false,
+    "memory_expression_causal": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
