@@ -4,11 +4,14 @@ import argparse
 import copy
 import hashlib
 import json
+import shutil
+from collections import Counter
 from pathlib import Path
 from statistics import mean
 from typing import Any
 
 from .brain_runtime import MaleCNSBrain
+from .dan_baseline_intervention import _memory_snapshot
 from .compartment_plasticity_diagnostic import (
     _plastic_edge_state,
     _vector_digest,
@@ -18,29 +21,39 @@ from .event_local_reinforcement_pulse import (
     _build_pre_event_checkpoint,
     _restore_recentered,
 )
-from .full_network_reinforcement_pulse_replay import _record_trajectory
+from .full_network_reinforcement_pulse_replay import (
+    FixedTrajectoryRecorder,
+    _trajectory_receipt_rows,
+)
+from .goal_training import GoalMazeEnvironment, GoalMazeSession
 from .learning_control_study import _sha256_file
-from .smoke import _digest_json
+from .smoke import _digest_json, _neural_decision_verified
 
 
-CONFIG_SCHEMA = "neurofly-reward-memory-recall-v0.1"
-RECEIPT_SCHEMA = "neurofly-reward-memory-recall-receipt-v0.1"
+CONFIG_SCHEMA = "neurofly-reward-memory-recall-v0.2"
+RECEIPT_SCHEMA = "neurofly-reward-memory-recall-receipt-v0.2"
 STATUS = "PREREGISTERED_EXPLORATORY_EXECUTION"
-SCOPE = "real-malecns-single-reward-event-state-cleared-cue-recall"
+SCOPE = "real-malecns-event-triggered-reward-memory-state-cleared-cue-recall"
 
-EXPECTED_DECISIONS = 60
+MAX_ACQUISITION_DECISIONS = 300
 DELAY_DECISIONS = 5
 EXPECTED_REPLICATES = (
-    ("R1", 2609),
-    ("R2", 2617),
-    ("R3", 2621),
-    ("R4", 2633),
+    ("R2-1", 2711),
+    ("R2-2", 2713),
+    ("R2-3", 2719),
+    ("R2-4", 2729),
 )
 PRIOR_COMPARTMENT_SEEDS = {2309, 2311, 2333, 2339}
-PRIOR_USED_SEEDS = set(EVENT_LOCAL_USED_SEEDS) | PRIOR_COMPARTMENT_SEEDS
+INVALID_V01_SEEDS = {2609, 2617, 2621, 2633}
+PRIOR_USED_SEEDS = (
+    set(EVENT_LOCAL_USED_SEEDS)
+    | PRIOR_COMPARTMENT_SEEDS
+    | INVALID_V01_SEEDS
+)
 ORIGIN_RUN_ID = 36090134339
 ORIGIN_RECEIPT = "19802e5a95243b55f1712b313e6e844637a85eff4c35e405d8d4b8a936e71308"
 ORIGIN_ARTIFACT = "5e7c347af0adc0d4dad1b94812012413423d5ac34d48e319eb9920b61c25f8be"
+V01_INVALID_FREEZE = "data/reward_memory_recall_v01_invalid_freeze.json"
 
 CLAIM_KEYS = {
     "learning_validated",
@@ -72,28 +85,39 @@ def validate_config(config: dict[str, Any]) -> dict[str, bool]:
         "status_exact": config.get("status") == STATUS,
         "scope_exact": config.get("scope") == SCOPE,
         "question_frozen": config.get("question") == (
-            "After one natural reward event, does the compartment-local synaptic "
-            "difference produced by true external reinforcement survive five "
-            "identical no-reinforcement replay decisions and, after clearing "
+            "After the first natural reward event, does the compartment-local "
+            "synaptic difference produced by true external reinforcement survive "
+            "five identical no-reinforcement replay decisions and, after clearing "
             "transient neural state, change the response to the identical reward cue?"
         ),
         "origin_exact": (
             origin.get("compartment_plasticity_run_id") == ORIGIN_RUN_ID
             and origin.get("compartment_plasticity_receipt_sha256") == ORIGIN_RECEIPT
             and origin.get("compartment_plasticity_artifact_sha256") == ORIGIN_ARTIFACT
+            and origin.get("v01_invalid_freeze") == V01_INVALID_FREEZE
         ),
         "runtime_exact": (
             runtime.get("decision_synchronous_world") is True
-            and runtime.get("trajectory_decisions") == EXPECTED_DECISIONS
-            and runtime.get("event_selection")
-            == "first natural reward event with at least 5 subsequent recorded decisions"
+            and runtime.get("event_acquisition")
+            == (
+                "record from decision 0 through the first natural reward event "
+                "plus exactly 5 subsequent decisions"
+            )
+            and runtime.get("maximum_acquisition_decisions")
+            == MAX_ACQUISITION_DECISIONS
             and runtime.get("post_event_replay_decisions") == DELAY_DECISIONS
             and runtime.get("post_event_replay_external_reinforcement") == "none"
-            and runtime.get("recall_cue") == "exact original reward-event frame and context"
+            and runtime.get("trajectory_driver_learning") is False
+            and runtime.get("trajectory_driver_external_reinforcement") == "none"
+            and runtime.get("recall_cue")
+            == "exact original reward-event frame and context"
             and runtime.get("recall_external_reinforcement") == "none"
             and runtime.get("recall_plasticity_frozen") is True
             and runtime.get("transient_state_policy")
-            == "brain.reset(keep_memory=true) before recall; wrapper visual-history state cleared"
+            == (
+                "brain.reset(keep_memory=true) before recall; "
+                "wrapper visual-history state cleared"
+            )
             and runtime.get("pulse_ms") == 20
             and runtime.get("pulse_current") == 20.0
             and runtime.get("baseline_mode") == "calibrated"
@@ -117,6 +141,8 @@ def validate_config(config: dict[str, Any]) -> dict[str, bool]:
         ),
         "interpretation_locked": (
             interpretation.get("no_posthoc_event_selection") is True
+            and interpretation.get("first_natural_reward_only") is True
+            and interpretation.get("no_seed_replacement_after_execution") is True
             and interpretation.get("no_parameter_tuning") is True
             and interpretation.get("no_behavioral_pass_threshold") is True
             and interpretation.get("same_cue_same_context_required") is True
@@ -253,12 +279,76 @@ def _branch(
     }
 
 
-def _first_eligible_reward_event(trajectory: list[dict[str, Any]]) -> int:
-    last = len(trajectory) - DELAY_DECISIONS - 1
-    for index, row in enumerate(trajectory):
-        if index <= last and row["true_reinforcement"] == "reward":
-            return index
-    raise RuntimeError("No eligible reward event with sufficient post-event replay window")
+def _record_reward_anchored_trajectory(
+    *,
+    base_checkpoint: Path,
+    driver_checkpoint: Path,
+    trajectory_seed: int,
+) -> tuple[list[dict[str, Any]], dict[str, Any], int]:
+    shutil.copy2(base_checkpoint, driver_checkpoint)
+    driver = MaleCNSBrain(checkpoint=driver_checkpoint, learning=False)
+    driver.brain.weights_frozen = True
+    initial_memory = _memory_snapshot(driver)
+    recorder = FixedTrajectoryRecorder(driver)
+    session = GoalMazeSession(
+        recorder,
+        environment=GoalMazeEnvironment(seed=trajectory_seed),
+        checkpoint=None,
+        world_tick_seconds=3600.0,
+        decision_synchronous_world=True,
+    )
+
+    states: list[dict[str, Any]] = []
+    reward_index: int | None = None
+    for decision_index in range(MAX_ACQUISITION_DECISIONS):
+        state = session.tick()
+        if not _neural_decision_verified(state):
+            raise RuntimeError("Trajectory driver lacks verifiable neural activity")
+        states.append(
+            {
+                "action": str(state.get("decision_action") or "UNKNOWN"),
+                "task_reward": float(state.get("last_reward") or 0.0),
+            }
+        )
+        row = recorder.rows[-1]
+        if reward_index is None and row["true_reinforcement"] == "reward":
+            reward_index = decision_index
+        if (
+            reward_index is not None
+            and decision_index >= reward_index + DELAY_DECISIONS
+        ):
+            break
+
+    if reward_index is None:
+        raise RuntimeError(
+            "No natural reward event within preregistered acquisition maximum"
+        )
+    expected_decisions = reward_index + DELAY_DECISIONS + 1
+    if len(recorder.rows) != expected_decisions:
+        raise RuntimeError("Event-triggered trajectory did not stop at the frozen boundary")
+
+    final_memory = _memory_snapshot(driver)
+    receipt_rows = _trajectory_receipt_rows(recorder.rows)
+    reinforcements = Counter(row["true_reinforcement"] for row in recorder.rows)
+    report = {
+        "decisions": len(recorder.rows),
+        "maximum_acquisition_decisions": MAX_ACQUISITION_DECISIONS,
+        "reward_event_index": reward_index,
+        "post_reward_decisions": DELAY_DECISIONS,
+        "trajectory_digest": _digest_json(receipt_rows),
+        "trajectory_receipt_rows": receipt_rows,
+        "true_reinforcement_counts": dict(sorted(reinforcements.items())),
+        "driver_delivered_reinforcement": dict(
+            sorted(recorder.delivered_to_driver.items())
+        ),
+        "driver_initial_memory": initial_memory,
+        "driver_final_memory": final_memory,
+        "driver_frozen_memory_unchanged": (
+            initial_memory["sha256"] == final_memory["sha256"]
+        ),
+        "driver_state_digest": _digest_json(states),
+    }
+    return recorder.rows, report, reward_index
 
 
 def _run_replicate(
@@ -269,15 +359,11 @@ def _run_replicate(
     rep_dir: Path,
 ) -> dict[str, Any]:
     rep_dir.mkdir(parents=True, exist_ok=True)
-    trajectory, driver = _record_trajectory(
+    trajectory, driver, event_index = _record_reward_anchored_trajectory(
         base_checkpoint=base_checkpoint,
         driver_checkpoint=rep_dir / "trajectory-driver.npz",
         trajectory_seed=trajectory_seed,
     )
-    if len(trajectory) != EXPECTED_DECISIONS:
-        raise RuntimeError("Unexpected trajectory length")
-
-    event_index = _first_eligible_reward_event(trajectory)
     event = trajectory[event_index]
     delay_rows = trajectory[event_index + 1 : event_index + 1 + DELAY_DECISIONS]
     if len(delay_rows) != DELAY_DECISIONS:
@@ -320,7 +406,9 @@ def _run_replicate(
         "replicate_id": replicate_id,
         "trajectory_seed": trajectory_seed,
         "driver": driver,
+        "acquisition_decisions": len(trajectory),
         "event_index": event_index,
+        "event_true_reinforcement": str(event["true_reinforcement"]),
         "event_frame_sha256": hashlib.sha256(event["frame"].tobytes()).hexdigest(),
         "event_context_sha256": _digest_json(event["context"]),
         "delay_frame_sha256": [
@@ -435,8 +523,14 @@ def run_reward_memory_recall(
     evidence_gates = {
         "source_checkpoint_unchanged": source_before == source_after,
         "all_replicates_executed": len(replicates) == len(EXPECTED_REPLICATES),
-        "all_trajectories_complete": all(
-            row["driver"]["decisions"] == EXPECTED_DECISIONS for row in replicates
+        "all_event_acquisitions_within_max": all(
+            1 <= row["acquisition_decisions"] <= MAX_ACQUISITION_DECISIONS
+            for row in replicates
+        ),
+        "all_trajectories_stop_at_frozen_boundary": all(
+            row["acquisition_decisions"]
+            == row["event_index"] + DELAY_DECISIONS + 1
+            for row in replicates
         ),
         "trajectory_digests_unique": len(
             {row["driver"]["trajectory_digest"] for row in replicates}
@@ -446,8 +540,10 @@ def run_reward_memory_recall(
             row["driver"]["driver_frozen_memory_unchanged"] is True
             for row in replicates
         ),
-        "all_events_are_reward": all(
-            row["none"]["reinforcement"] == "none"
+        "all_events_are_first_natural_reward": all(
+            row["event_true_reinforcement"] == "reward"
+            and row["driver"]["reward_event_index"] == row["event_index"]
+            and row["none"]["reinforcement"] == "none"
             and row["true_external"]["reinforcement"] == "reward"
             for row in replicates
         ),
@@ -518,7 +614,7 @@ def run_reward_memory_recall(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Preregistered reward-memory cue recall diagnostic")
-    parser.add_argument("--config", default="data/reward_memory_recall_v01.json")
+    parser.add_argument("--config", default="data/reward_memory_recall_v02.json")
     parser.add_argument("--base-checkpoint", required=True)
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--receipt", required=True)
