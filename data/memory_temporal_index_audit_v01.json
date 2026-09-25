@@ -1,0 +1,76 @@
+{
+  "schema": "neurofly-memory-temporal-index-audit-v0.1",
+  "status": "PREREGISTERED_EXPLORATORY_EXECUTION",
+  "scope": "real-malecns-reward-memory-temporal-index",
+  "question": "Does the 1-second frozen KC eligibility history identify and re-engage the presynaptic KC ensemble carrying the persistent reward-memory difference when the full prereward sensory sequence is replayed after transient-state clearing?",
+  "origin": {
+    "memory_expression_run_id": 36095246269,
+    "memory_expression_receipt_sha256": "a44838d604a8f277b877bcd8195ff69604b9d0f35cdb8b45bf1270dff0b9bbca",
+    "memory_expression_artifact_sha256": "96196df2069176c49c29676a9eac7e1d60e36439a9fa33cfa5260e363a04de13",
+    "memory_expression_freeze": "data/memory_expression_audit_run1_freeze_v01.json"
+  },
+  "model_clock": {
+    "kc_trace_seconds": 1,
+    "neural_ms_per_decision": 50,
+    "trace_window_decisions": 20,
+    "trace_window_interpretation": "one frozen KC-trace time constant; not a hard biological cutoff"
+  },
+  "runtime": {
+    "event_selection": "first natural reward at or after decision index 20",
+    "maximum_acquisition_decisions": 300,
+    "post_reward_delay_decisions": 5,
+    "history_and_delay_external_reinforcement": "none",
+    "state_clear_before_sequence_recall": true,
+    "sequence_recall_plasticity_frozen": true,
+    "sequence_recall_external_reinforcement": "none",
+    "sequence": "exact 20 recorded decisions preceding reward followed by exact reward-event cue",
+    "changed_edge_tolerance_fraction": 1e-12,
+    "no_model_parameter_change": true,
+    "state_difference_tolerance": 1e-12
+  },
+  "replicates": [
+    {
+      "id": "TI1",
+      "trajectory_seed": 2903
+    },
+    {
+      "id": "TI2",
+      "trajectory_seed": 2909
+    },
+    {
+      "id": "TI3",
+      "trajectory_seed": 2917
+    },
+    {
+      "id": "TI4",
+      "trajectory_seed": 2927
+    }
+  ],
+  "primary_descriptive_endpoints": [
+    "changed_reward_edge_count",
+    "changed_edge_pre_event_trace_positive_fraction",
+    "changed_edge_pre_event_mean_kc_trace_hz",
+    "per_lag_changed_presynaptic_kc_active_fraction",
+    "per_lag_changed_reward_l1_engaged_fraction",
+    "first_lag_with_changed_kc_activity",
+    "first_lag_with_mbon07_state_difference",
+    "sequence_any_mbon07_spike_difference",
+    "reward_cue_action_divergence"
+  ],
+  "interpretation_policy": {
+    "no_parameter_tuning": true,
+    "no_posthoc_event_selection": true,
+    "no_posthoc_lag_selection": true,
+    "all_lags_minus20_through_zero_reported": true,
+    "no_directional_pass_threshold": true,
+    "result_is_temporal_mechanism_localization_only": true
+  },
+  "claim_policy": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "cue_indexing_failure_confirmed": false,
+    "memory_expression_causal": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
