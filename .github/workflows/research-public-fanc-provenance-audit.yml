@@ -1,0 +1,40 @@
+name: Research Public FANC Provenance Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/v1-feco-public-provenance-audit
+    paths:
+      - "scripts/research_probe_public_fanc_provenance.py"
+      - "docs/experiments/V1_PUBLIC_FANC_PROVENANCE_AUDIT.md"
+      - ".github/workflows/research-public-fanc-provenance-audit.yml"
+  pull_request:
+    paths:
+      - "scripts/research_probe_public_fanc_provenance.py"
+      - "docs/experiments/V1_PUBLIC_FANC_PROVENANCE_AUDIT.md"
+      - ".github/workflows/research-public-fanc-provenance-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  public-fanc-provenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run exact public provenance audit
+        run: |
+          python scripts/research_probe_public_fanc_provenance.py \
+            --output artifacts/public_fanc_provenance_audit.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-fanc-provenance-audit
+          path: artifacts/public_fanc_provenance_audit.json
+          if-no-files-found: error
+          retention-days: 30
