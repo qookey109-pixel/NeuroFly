@@ -1,0 +1,77 @@
+{
+  "schema": "neurofly-memory-adaptation-moderator-validation-v0.1",
+  "status": "PREREGISTERED_EXPLORATORY_VALIDATION",
+  "scope": "real-malecns-reward-memory-adaptation-moderator-validation",
+  "question": "Does discovery-derived boundary adaptation engagement predict whether v/g + refractory/delay clearing suppresses stored-memory expression in a fresh outcome-blind cohort?",
+  "origin": {
+    "moderator_audit_run_id": 36150726009,
+    "moderator_audit_receipt_sha256": "59021b8dc34afba8225f5cc148805d40fb9e8c80f633f40df320ae2d89d780d1",
+    "moderator_audit_freeze": "data/memory_vg_delay_moderator_audit_run1_freeze_v01.json"
+  },
+  "candidate_pool": [
+    5903,5909,5923,5927,5939,5953,5981,5987,6007,6011,6029,6037,
+    6043,6047,6053,6067,6073,6079,6089,6091,6101,6113,6121,6131,
+    6133,6143,6151,6163,6173,6197,6203,6211,6221,6229,6247,6257,
+    6263,6271,6287,6299,6301,6311,6323,6329,6337,6343,6353,6361
+  ],
+  "selection": {
+    "target_engaged": 4,
+    "target_quiescent": 4,
+    "candidate_order_is_frozen": true,
+    "event_selection": "first natural reward at or after decision index 60",
+    "maximum_acquisition_decisions": 300,
+    "unique_pre_event_checkpoint_required": true,
+    "unique_stable_sensory_sequence_required": true,
+    "selection_is_effect_outcome_blind": true,
+    "no_seed_replacement_after_selection": true,
+    "fail_if_either_stratum_has_fewer_than_four_histories": true
+  },
+  "moderator": {
+    "feature": "adaptation.paired_mean.std",
+    "timing": "after exact prefix lag -21 and before boundary intervention",
+    "quiescent_max": 0.10,
+    "engaged_min": 0.50,
+    "intermediate_policy": "record and skip from target strata",
+    "thresholds_are_discovery_derived_and_frozen_before_new_effect_outcomes": true
+  },
+  "runtime": {
+    "post_reward_delay_decisions": 5,
+    "prefix_sequence": "exact source lags -60 through -21",
+    "boundary": "after source lag -21 and before source lag -20",
+    "terminal_sequence": "exact source lags -20 through -1 followed by exact reward cue at lag 0",
+    "conditions": [
+      {"id": "intact", "target_fields": []},
+      {"id": "clear_vg_delay", "target_fields": ["v","g","refractory","queue","queue_count"]}
+    ],
+    "recall_plasticity_frozen": true,
+    "recall_external_reinforcement": "none",
+    "no_model_parameter_change": true
+  },
+  "effect_label": {
+    "primary_endpoints": [
+      "mean_changed_kc_active_fraction",
+      "mean_changed_l1_engaged_fraction",
+      "mean_mbon07_state_difference_fraction"
+    ],
+    "suppression": "clear_vg_delay is lower than intact on all three primary endpoints",
+    "reversal": "clear_vg_delay is higher than intact on all three primary endpoints",
+    "mixed": "all other endpoint-sign patterns"
+  },
+  "validation": {
+    "primary_directional_target": "engaged suppression count is greater than quiescent suppression count",
+    "secondary_directional_target": "engaged mean candidate-minus-intact delta is more negative than quiescent mean delta on all three primary endpoints",
+    "prefix_crosscheck": "report whether lag -21 changed-KC and changed-edge expression are jointly nonzero within each adaptation stratum",
+    "no_significance_threshold": true,
+    "passing_both_targets_supports_replication_not_confirmation": true
+  },
+  "claim_policy": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "prefix_sequence_specificity_confirmed": false,
+    "transient_state_carrier_confirmed": false,
+    "memory_expression_causal": false,
+    "moderator_confirmed": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}

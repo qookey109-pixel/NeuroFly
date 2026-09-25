@@ -1,0 +1,75 @@
+{
+  "schema": "neurofly-memory-adaptation-moderator-validation-run1-freeze-v0.1",
+  "status": "EXPLORATORY_ADAPTATION_MODERATOR_VALIDATION_COMPLETE",
+  "successful_run": {
+    "run_id": 36157686990,
+    "head_sha": "01c50082361786f2b1393a90adefdf4de1694c01",
+    "artifact_id": 10875926632,
+    "artifact_sha256": "c80eba385f72c0897011759f05593bcda2bf233763e9bb6902bcaef20b32955e",
+    "receipt_sha256": "cb21d9243f6ca311808b5e8403a016dc545567201606bdd0e39ecbb61030cd2c"
+  },
+  "source_checkpoint": {
+    "sha256_before": "bcb022cab328827de69b25a5b64fc6065dcf53b9a8143420e883f4117f556979",
+    "sha256_after": "bcb022cab328827de69b25a5b64fc6065dcf53b9a8143420e883f4117f556979",
+    "mutated": false
+  },
+  "moderator_definition": {
+    "feature": "adaptation.paired_mean.std",
+    "engaged_min": 0.50,
+    "quiescent_max": 0.10,
+    "thresholds_frozen_before_new_effect_outcomes": true
+  },
+  "stratified_cohort": {
+    "engaged": [
+      {"replicate_id":"AV1","trajectory_seed":5903,"event_index":95,"moderator_value":1.064015694857,"prefix_joint_nonzero":true},
+      {"replicate_id":"AV2","trajectory_seed":5909,"event_index":72,"moderator_value":1.121771355186,"prefix_joint_nonzero":true},
+      {"replicate_id":"AV3","trajectory_seed":5923,"event_index":85,"moderator_value":1.114007256455,"prefix_joint_nonzero":true},
+      {"replicate_id":"AV4","trajectory_seed":5927,"event_index":63,"moderator_value":1.065602704823,"prefix_joint_nonzero":true}
+    ],
+    "quiescent": [
+      {"replicate_id":"AV5","trajectory_seed":5939,"event_index":77,"moderator_value":0.041781656514,"prefix_joint_nonzero":false},
+      {"replicate_id":"AV6","trajectory_seed":5981,"event_index":108,"moderator_value":0.018564513131,"prefix_joint_nonzero":false},
+      {"replicate_id":"AV7","trajectory_seed":6037,"event_index":60,"moderator_value":0.032721559010,"prefix_joint_nonzero":false},
+      {"replicate_id":"AV8","trajectory_seed":6043,"event_index":101,"moderator_value":0.031115011153,"prefix_joint_nonzero":false}
+    ]
+  },
+  "validation": {
+    "engaged_effect_labels": {"suppression":4,"reversal":0,"mixed":0},
+    "quiescent_effect_labels": {"suppression":0,"reversal":3,"mixed":1},
+    "engaged_mean_candidate_minus_intact": {
+      "mean_changed_kc_active_fraction": -0.281232411559,
+      "mean_changed_l1_engaged_fraction": -0.419542752031,
+      "mean_mbon07_state_difference_fraction": -0.821428571429
+    },
+    "quiescent_mean_candidate_minus_intact": {
+      "mean_changed_kc_active_fraction": 0.125773403823,
+      "mean_changed_l1_engaged_fraction": 0.190511013424,
+      "mean_mbon07_state_difference_fraction": 0.392857142857
+    },
+    "primary_directional_target_passed": true,
+    "secondary_directional_target_passed": true,
+    "adaptation_moderator_replication_supported": true,
+    "moderator_confirmed": false
+  },
+  "interpretation": {
+    "supported": "Boundary adaptation engagement is a replicated predictor of the direction of the v/g + refractory/delay intervention effect in this assay.",
+    "not_supported": [
+      "adaptation is a confirmed causal moderator",
+      "adaptation is the transient memory carrier",
+      "memory-expression causality is established",
+      "behavioral promotion is justified"
+    ],
+    "correlated_prefix_signal": "All four engaged histories had nonzero lag -21 changed-KC and changed-edge expression, while all four quiescent histories had zero on both measures. Adaptation and immediate prefix expression are therefore not causally disentangled.",
+    "closure_decision": "Close the current memory-expression mechanism localization line here. Reopen only with a separately authorized causal-disambiguation study that distinguishes adaptation state from correlated prefix expression."
+  },
+  "claims": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "prefix_sequence_specificity_confirmed": false,
+    "transient_state_carrier_confirmed": false,
+    "memory_expression_causal": false,
+    "moderator_confirmed": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
