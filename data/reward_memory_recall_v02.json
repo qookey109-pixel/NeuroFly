@@ -1,0 +1,65 @@
+{
+  "schema": "neurofly-reward-memory-recall-v0.2",
+  "status": "PREREGISTERED_EXPLORATORY_EXECUTION",
+  "scope": "real-malecns-event-triggered-reward-memory-state-cleared-cue-recall",
+  "question": "After the first natural reward event, does the compartment-local synaptic difference produced by true external reinforcement survive five identical no-reinforcement replay decisions and, after clearing transient neural state, change the response to the identical reward cue?",
+  "origin": {
+    "compartment_plasticity_run_id": 36090134339,
+    "compartment_plasticity_receipt_sha256": "19802e5a95243b55f1712b313e6e844637a85eff4c35e405d8d4b8a936e71308",
+    "compartment_plasticity_artifact_sha256": "5e7c347af0adc0d4dad1b94812012413423d5ac34d48e319eb9920b61c25f8be",
+    "v01_invalid_freeze": "data/reward_memory_recall_v01_invalid_freeze.json",
+    "v01_failure_reason": "fixed 60-decision acquisition did not guarantee an eligible reward event on every fresh seed under the current production checkpoint"
+  },
+  "runtime": {
+    "decision_synchronous_world": true,
+    "event_acquisition": "record from decision 0 through the first natural reward event plus exactly 5 subsequent decisions",
+    "maximum_acquisition_decisions": 300,
+    "post_event_replay_decisions": 5,
+    "post_event_replay_external_reinforcement": "none",
+    "trajectory_driver_learning": false,
+    "trajectory_driver_external_reinforcement": "none",
+    "recall_cue": "exact original reward-event frame and context",
+    "recall_external_reinforcement": "none",
+    "recall_plasticity_frozen": true,
+    "transient_state_policy": "brain.reset(keep_memory=true) before recall; wrapper visual-history state cleared",
+    "pulse_ms": 20,
+    "pulse_current": 20.0,
+    "baseline_mode": "calibrated",
+    "trace_state_mode": "subtract_baseline"
+  },
+  "replicates": [
+    {"id": "R2-1", "trajectory_seed": 2711},
+    {"id": "R2-2", "trajectory_seed": 2713},
+    {"id": "R2-3", "trajectory_seed": 2719},
+    {"id": "R2-4", "trajectory_seed": 2729}
+  ],
+  "primary_descriptive_endpoints": [
+    "post_event_reward_compartment_l1",
+    "post_delay_reward_compartment_l1",
+    "reward_compartment_l1_retention_ratio",
+    "recall_action_divergence",
+    "recall_difference_hz_delta",
+    "recall_gate_spike_delta",
+    "recall_total_spike_delta",
+    "recall_kc_spike_delta"
+  ],
+  "interpretation_policy": {
+    "no_posthoc_event_selection": true,
+    "first_natural_reward_only": true,
+    "no_seed_replacement_after_execution": true,
+    "no_parameter_tuning": true,
+    "no_behavioral_pass_threshold": true,
+    "same_cue_same_context_required": true,
+    "recall_memory_frozen_required": true,
+    "result_is_exploratory_memory_function_evidence_only": true
+  },
+  "claim_policy": {
+    "learning_validated": false,
+    "reward_memory_persistence_causal": false,
+    "cue_conditioned_behavior_effect_causal": false,
+    "reinforcement_mechanism_validated": false,
+    "causal_learning_claim_authorized": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}

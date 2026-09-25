@@ -1,0 +1,72 @@
+{
+  "schema": "neurofly-reward-memory-recall-v0.2-run1-freeze",
+  "status": "EXPLORATORY_RECALL_COMPLETE",
+  "scientific_claim_status": "MECHANISTIC_MEMORY_PERSISTS_WITHOUT_DETECTED_RECALL_READOUT_EFFECT",
+  "successful_run": {
+    "run_id": 36094504041,
+    "head_sha": "d1efb932bdcbbb2bc90ba97dacfccd47cc86014e",
+    "artifact_id": 10847430494,
+    "artifact_name": "neurofly-reward-memory-recall-36094504041",
+    "artifact_sha256": "be99048d5feb253e65418dbaedd8f3eff49be6f5e5e5abd9c68a937fd13febfc",
+    "receipt_sha256": "79eda0b1cf440e7e7bbe99233784b01789d010e16e136128dd8cdbbbe3431ca3"
+  },
+  "source_checkpoint": {
+    "sha256_before": "331a9a32ba39ec38bd205297ce28ae42467ad661b3b87ac6ab4435d2cc23b1ab",
+    "sha256_after": "331a9a32ba39ec38bd205297ce28ae42467ad661b3b87ac6ab4435d2cc23b1ab",
+    "mutated": false
+  },
+  "design": {
+    "replicate_count": 4,
+    "replicates": [
+      {"id": "R2-1", "seed": 2711, "acquisition_decisions": 9, "reward_event_index": 3},
+      {"id": "R2-2", "seed": 2713, "acquisition_decisions": 9, "reward_event_index": 3},
+      {"id": "R2-3", "seed": 2719, "acquisition_decisions": 9, "reward_event_index": 3},
+      {"id": "R2-4", "seed": 2729, "acquisition_decisions": 9, "reward_event_index": 3}
+    ],
+    "post_reward_replay_decisions": 5,
+    "transient_state_cleared_before_recall": true,
+    "recall_plasticity_frozen": true,
+    "trajectory_digests_unique": true
+  },
+  "aggregate": {
+    "mean_post_event_reward_compartment_l1": 4.600586304257245,
+    "mean_post_delay_reward_compartment_l1": 7.02223958687067,
+    "mean_reward_compartment_l1_retention_ratio": 1.526379274827,
+    "recall_action_divergence_fraction": 0.0,
+    "mean_recall_difference_hz_delta": 0.0,
+    "mean_abs_recall_difference_hz_delta": 0.0,
+    "mean_recall_gate_spike_delta": 0.0,
+    "mean_recall_total_spike_delta": 0.0,
+    "mean_recall_kc_spike_delta": 0.0,
+    "nonzero_recall_difference_hz_fraction": 0.0,
+    "nonzero_recall_total_spike_fraction": 0.0
+  },
+  "execution_gates": {
+    "all_config_gates_true": true,
+    "all_evidence_gates_true": true,
+    "all_replicates_executed": true,
+    "all_event_acquisitions_within_max": true,
+    "all_events_are_first_natural_reward": true,
+    "post_event_effect_reward_local": true,
+    "state_clear_preserved_memory": true,
+    "recall_memory_frozen": true,
+    "no_recall_stimulus": true
+  },
+  "interpretation": {
+    "reward_compartment_synaptic_difference_persisted": true,
+    "reward_compartment_synaptic_difference_amplified_over_five_no_reinforcement_steps": true,
+    "detected_state_cleared_recall_neural_difference": false,
+    "detected_state_cleared_recall_action_difference": false,
+    "behavioral_confirmatory_justified_by_this_run": false,
+    "next_question": "Audit memory expression: determine whether changed KC-to-MBON07 edges are engaged by the recall cue and whether any MBON07 difference reaches the current DNp20/DNpe017 decoder pathway."
+  },
+  "claims": {
+    "learning_validated": false,
+    "reward_memory_persistence_causal": false,
+    "cue_conditioned_behavior_effect_causal": false,
+    "reinforcement_mechanism_validated": false,
+    "causal_learning_claim_authorized": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}

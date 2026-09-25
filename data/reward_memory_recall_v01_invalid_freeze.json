@@ -1,0 +1,36 @@
+{
+  "schema": "neurofly-reward-memory-recall-v0.1-invalid-freeze",
+  "status": "INVALID_DESIGN_FEASIBILITY_NO_SCIENTIFIC_RESULT",
+  "pr": 146,
+  "invalid_runs": [
+    {
+      "run_id": 36091139488,
+      "head_sha": "cbc518d816fd419460d0d925c4d0004549c24f29",
+      "reason": "receipt_serialization_failure_after_runtime_computation",
+      "scientific_result_accepted": false
+    },
+    {
+      "run_id": 36093996850,
+      "head_sha": "4eb7f431f1d562a0bd0e27ca208fb951de3efabe",
+      "source_checkpoint_sha256": "c12b13d93104671cf43391e047558674a2b012889a17841409b5523553735c4b",
+      "reason": "at_least_one_preregistered_fresh_seed_had_no_natural_reward_with_five_subsequent_decisions_inside_the_fixed_60_decision_window",
+      "failure_stage": "event_acquisition_before_recall_endpoints",
+      "scientific_result_accepted": false
+    }
+  ],
+  "interpretation": {
+    "seed_replacement_after_failure_allowed": false,
+    "v01_endpoint_result_exists": false,
+    "learning_claim_changed": false,
+    "next_design_must_be_separately_preregistered": true
+  },
+  "claims": {
+    "learning_validated": false,
+    "reward_memory_persistence_causal": false,
+    "cue_conditioned_behavior_effect_causal": false,
+    "reinforcement_mechanism_validated": false,
+    "causal_learning_claim_authorized": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}

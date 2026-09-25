@@ -1,0 +1,107 @@
+name: NeuroFly Reward Memory Recall
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/v1-reward-memory-recall
+    paths:
+      - "data/reward_memory_recall_v02.json"
+      - "data/reward_memory_recall_v01_invalid_freeze.json"
+      - "src/neurofly/reward_memory_recall.py"
+      - "tests/test_reward_memory_recall.py"
+      - "docs/experiments/V1_REWARD_MEMORY_RECALL.md"
+      - ".github/workflows/reward-memory-recall.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: neurofly-reward-memory-recall
+  cancel-in-progress: true
+
+jobs:
+  reward-memory-recall:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      SOURCE_STATE: runs/free-malecns
+      STUDY_DIR: runs/reward-memory-recall
+      BASE_CHECKPOINT: runs/reward-memory-recall/base-brain.npz
+      RECEIPT: runs/reward-memory-recall/reward-memory-recall-receipt.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Restore prepared MaleCNS cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+      - name: Restore latest production checkpoint read-only source
+        uses: actions/cache/restore@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-v06-state-reward-memory-recall-${{ github.run_id }}
+          restore-keys: |
+            neurofly-v06-state-
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+      - name: Validate preregistered contract
+        run: pytest -q tests/test_reward_memory_recall.py
+      - name: Prepare and verify MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$STUDY_DIR"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+          python -m neurofly host-preflight | tee "$STUDY_DIR/preflight.json"
+      - name: Copy production brain into isolated baseline
+        run: |
+          test -f "$SOURCE_STATE/brain.npz"
+          cp "$SOURCE_STATE/brain.npz" "$BASE_CHECKPOINT"
+          test "$(realpath "$SOURCE_STATE/brain.npz")" != "$(realpath "$BASE_CHECKPOINT")"
+          sha256sum "$SOURCE_STATE/brain.npz" "$BASE_CHECKPOINT"
+      - name: Execute reward-memory recall diagnostic
+        run: |
+          python -m neurofly.reward_memory_recall \
+            --base-checkpoint "$BASE_CHECKPOINT" \
+            --output-dir "$STUDY_DIR/replicates" \
+            --receipt "$RECEIPT"
+      - name: Validate receipt without opening claims
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("runs/reward-memory-recall/reward-memory-recall-receipt.json")
+          r=json.loads(p.read_text())
+          assert r["schema"]=="neurofly-reward-memory-recall-receipt-v0.2"
+          assert r["status"]=="EXPLORATORY_RECALL_COMPLETE"
+          assert r["execution_valid"] is True
+          assert all(r["config_gates"].values())
+          assert all(r["evidence_gates"].values())
+          for key in (
+              "learning_validated",
+              "reward_memory_persistence_causal",
+              "cue_conditioned_behavior_effect_causal",
+              "reinforcement_mechanism_validated",
+              "causal_learning_claim_authorized",
+              "replacement_confirmatory_authorized",
+              "behavioral_promotion_authorized",
+          ):
+              assert r[key] is False
+          assert r["production_checkpoint_mutated"] is False
+          print("REWARD_MEMORY_RECALL_VALID",r["receipt_sha256"],r["aggregate"])
+          PY
+      - name: Publish recall evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-reward-memory-recall-${{ github.run_id }}
+          path: |
+            runs/reward-memory-recall/preflight.json
+            runs/reward-memory-recall/reward-memory-recall-receipt.json
+          if-no-files-found: error
+          retention-days: 14
