@@ -18,10 +18,11 @@ permissions:
 
 concurrency:
   group: neurofly-paired-recall-diagnostic
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   paired-recall-diagnostic:
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 360
     env:
