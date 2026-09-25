@@ -10,7 +10,7 @@
     "memory_expression_freeze": "data/memory_expression_audit_run1_freeze_v01.json"
   },
   "model_clock": {
-    "kc_trace_seconds": 1.0,
+    "kc_trace_seconds": 1,
     "neural_ms_per_decision": 50,
     "trace_window_decisions": 20,
     "trace_window_interpretation": "one frozen KC-trace time constant; not a hard biological cutoff"
@@ -25,13 +25,26 @@
     "sequence_recall_external_reinforcement": "none",
     "sequence": "exact 20 recorded decisions preceding reward followed by exact reward-event cue",
     "changed_edge_tolerance_fraction": 1e-12,
-    "no_model_parameter_change": true
+    "no_model_parameter_change": true,
+    "state_difference_tolerance": 1e-12
   },
   "replicates": [
-    {"id": "TI1", "trajectory_seed": 2903},
-    {"id": "TI2", "trajectory_seed": 2909},
-    {"id": "TI3", "trajectory_seed": 2917},
-    {"id": "TI4", "trajectory_seed": 2927}
+    {
+      "id": "TI1",
+      "trajectory_seed": 2903
+    },
+    {
+      "id": "TI2",
+      "trajectory_seed": 2909
+    },
+    {
+      "id": "TI3",
+      "trajectory_seed": 2917
+    },
+    {
+      "id": "TI4",
+      "trajectory_seed": 2927
+    }
   ],
   "primary_descriptive_endpoints": [
     "changed_reward_edge_count",
