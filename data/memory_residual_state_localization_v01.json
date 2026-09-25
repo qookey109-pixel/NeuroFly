@@ -1,0 +1,98 @@
+{
+  "schema": "neurofly-memory-residual-state-localization-v0.1",
+  "status": "PREREGISTERED_EXPLORATORY_EXECUTION",
+  "scope": "real-malecns-reward-memory-residual-state-localization",
+  "question": "Which remaining safely isolatable Stonkfly transient state class carries the exact three-tau prefix benefit into the identical terminal -20 through 0 memory-expression window after rule traces and wrapper visual history were excluded and v/g clearing was found to enhance rather than abolish expression?",
+  "origin": {
+    "boundary_state_run_id": 36108551430,
+    "boundary_state_receipt_sha256": "52b2d9cfe512e539c33a59899a0a6554cbc96455f249237bbd79eff04522ba91",
+    "boundary_state_artifact_sha256": "7a052e634fd944eb3204f1aa45a70b76366a7941ca600e05cbbd03a3ad558128",
+    "boundary_state_freeze": "data/memory_boundary_state_localization_run1_freeze_v01.json"
+  },
+  "model_clock": {
+    "neural_ms_per_decision": 50,
+    "prefix_decisions": 40,
+    "terminal_decisions": 20,
+    "full_history_decisions": 60
+  },
+  "runtime": {
+    "event_selection": "first natural reward at or after decision index 60",
+    "maximum_acquisition_decisions": 300,
+    "post_reward_delay_decisions": 5,
+    "initial_recall_state_clear": "brain.reset(keep_memory=true) plus wrapper visual history clear before every condition",
+    "prefix_sequence": "exact source lags -60 through -21",
+    "boundary": "after source lag -21 and before source lag -20",
+    "terminal_sequence": "exact source lags -20 through -1 followed by exact reward cue at lag 0",
+    "recall_plasticity_frozen": true,
+    "recall_external_reinforcement": "none",
+    "conditions": [
+      {
+        "id": "intact",
+        "intervention": "none"
+      },
+      {
+        "id": "clear_refractory_delay",
+        "intervention": "set only brain.refractory, brain.queue, and brain.queue_count to their constructor initial arrays"
+      },
+      {
+        "id": "clear_luminance",
+        "intervention": "set only brain.luminance to its constructor initial array"
+      },
+      {
+        "id": "clear_adaptation",
+        "intervention": "set only brain.adaptation to its constructor initial array"
+      },
+      {
+        "id": "clear_kernel_credit",
+        "intervention": "set only brain.eligibility, brain.eligibility_last, brain.modulation, and brain.modulation_last to their constructor initial arrays"
+      }
+    ],
+    "primary_comparison_window": "common terminal replay lags -20 through 0 inclusive",
+    "changed_edge_tolerance_fraction": 1e-12,
+    "no_model_parameter_change": true
+  },
+  "replicates": [
+    {"id": "RL1", "trajectory_seed": 3407},
+    {"id": "RL2", "trajectory_seed": 3413},
+    {"id": "RL3", "trajectory_seed": 3419},
+    {"id": "RL4", "trajectory_seed": 3433}
+  ],
+  "primary_descriptive_endpoints": [
+    "changed_reward_edge_count",
+    "condition_terminal_any_changed_kc_activity",
+    "condition_terminal_any_mbon07_state_difference",
+    "condition_terminal_any_mbon07_spike_difference",
+    "condition_terminal_any_action_divergence",
+    "condition_reward_cue_action_divergence",
+    "condition_mean_changed_kc_active_fraction",
+    "condition_mean_changed_l1_engaged_fraction",
+    "condition_mean_mbon07_state_difference_fraction",
+    "condition_mean_mbon07_spike_difference_fraction",
+    "condition_mean_action_divergence_fraction",
+    "paired_terminal_per_lag_expression_metrics"
+  ],
+  "interpretation_policy": {
+    "no_parameter_tuning": true,
+    "no_posthoc_event_selection": true,
+    "no_posthoc_state_class_selection": true,
+    "all_conditions_use_same_trajectory": true,
+    "all_conditions_use_identical_exact_prefix": true,
+    "all_conditions_use_identical_terminal_sequence": true,
+    "all_conditions_use_identical_paired_synaptic_memory": true,
+    "boundary_interventions_change_only_preregistered_checkpoint_fields": true,
+    "active_last_previous_drive_scheduler_state_deferred": true,
+    "changed_edges_defined_before_recall_from_paired_synaptic_difference": true,
+    "primary_comparison_uses_identical_terminal_lags": true,
+    "no_directional_pass_threshold": true,
+    "result_is_transient_state_localization_only": true
+  },
+  "claim_policy": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "prefix_sequence_specificity_confirmed": false,
+    "transient_state_carrier_confirmed": false,
+    "memory_expression_causal": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
