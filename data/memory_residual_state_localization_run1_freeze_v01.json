@@ -1,0 +1,116 @@
+{
+  "schema": "neurofly-memory-residual-state-localization-run1-freeze-v0.1",
+  "status": "EXPLORATORY_MEMORY_RESIDUAL_STATE_LOCALIZATION_COMPLETE",
+  "successful_run": {
+    "run_id": 36113626269,
+    "head_sha": "696d1d94d2ff53141d07a8c9e58795ec7ab4ad5c",
+    "artifact_id": 10854912760,
+    "artifact_name": "neurofly-memory-residual-state-localization-36113626269",
+    "artifact_sha256": "60656077fbc0282fabc1535087c4987577474a4aea88b189c8ef85dfc757a292",
+    "receipt_sha256": "9a0c9595ef53824690ebac0f661e04ff3b0803f78a2052905c4a5641bf4f55d6"
+  },
+  "source_checkpoint": {
+    "sha256_before": "c9d7cdcee82b97042360d2c63b24876e515774e9d69624585e38cf49d29d91e3",
+    "sha256_after": "c9d7cdcee82b97042360d2c63b24876e515774e9d69624585e38cf49d29d91e3",
+    "mutated": false
+  },
+  "replicate_count": 4,
+  "mean_changed_reward_edge_count": 1488.75,
+  "conditions": {
+    "intact": {
+      "replicates_with_changed_kc_activity": 3,
+      "replicates_with_mbon07_state_difference": 3,
+      "replicates_with_mbon07_spike_difference": 3,
+      "replicates_with_action_divergence": 2,
+      "reward_cue_action_divergence_fraction": 0.0,
+      "mean_changed_kc_active_fraction": 0.239526305917,
+      "mean_changed_l1_engaged_fraction": 0.358375049722,
+      "mean_mbon07_state_difference_fraction": 0.72619047619,
+      "mean_mbon07_spike_difference_fraction": 0.130952380952,
+      "mean_action_divergence_fraction": 0.02380952381
+    },
+    "clear_kernel_credit": {
+      "replicates_with_changed_kc_activity": 3,
+      "replicates_with_mbon07_state_difference": 3,
+      "replicates_with_mbon07_spike_difference": 3,
+      "replicates_with_action_divergence": 2,
+      "reward_cue_action_divergence_fraction": 0.0,
+      "mean_changed_kc_active_fraction": 0.239526305917,
+      "mean_changed_l1_engaged_fraction": 0.358375049722,
+      "mean_mbon07_state_difference_fraction": 0.72619047619,
+      "mean_mbon07_spike_difference_fraction": 0.130952380952,
+      "mean_action_divergence_fraction": 0.02380952381,
+      "exactly_equal_to_intact_on_all_aggregate_and_per_lag_endpoints": true
+    },
+    "clear_luminance": {
+      "replicates_with_changed_kc_activity": 4,
+      "replicates_with_mbon07_state_difference": 4,
+      "replicates_with_mbon07_spike_difference": 4,
+      "replicates_with_action_divergence": 3,
+      "reward_cue_action_divergence_fraction": 0.25,
+      "mean_changed_kc_active_fraction": 0.31135857742,
+      "mean_changed_l1_engaged_fraction": 0.468581640657,
+      "mean_mbon07_state_difference_fraction": 0.964285714286,
+      "mean_mbon07_spike_difference_fraction": 0.166666666667,
+      "mean_action_divergence_fraction": 0.059523809524
+    },
+    "clear_refractory_delay": {
+      "replicates_with_changed_kc_activity": 4,
+      "replicates_with_mbon07_state_difference": 4,
+      "replicates_with_mbon07_spike_difference": 3,
+      "replicates_with_action_divergence": 3,
+      "reward_cue_action_divergence_fraction": 0.25,
+      "mean_changed_kc_active_fraction": 0.236641808536,
+      "mean_changed_l1_engaged_fraction": 0.357291957334,
+      "mean_mbon07_state_difference_fraction": 0.714285714286,
+      "mean_mbon07_spike_difference_fraction": 0.095238095238,
+      "mean_action_divergence_fraction": 0.119047619048
+    },
+    "clear_adaptation": {
+      "replicates_with_changed_kc_activity": 4,
+      "replicates_with_mbon07_state_difference": 4,
+      "replicates_with_mbon07_spike_difference": 3,
+      "replicates_with_action_divergence": 2,
+      "reward_cue_action_divergence_fraction": 0.0,
+      "mean_changed_kc_active_fraction": 0.203139825073,
+      "mean_changed_l1_engaged_fraction": 0.297823489804,
+      "mean_mbon07_state_difference_fraction": 0.571428571429,
+      "mean_mbon07_spike_difference_fraction": 0.142857142857,
+      "mean_action_divergence_fraction": 0.059523809524
+    }
+  },
+  "replicate_specific_heterogeneity": {
+    "RL1": "intact was silent; adaptation, luminance, and refractory-delay clears each created some terminal expression",
+    "RL2": "all clears preserved expression; luminance and refractory-delay increased action divergence",
+    "RL3": "adaptation clear strongly reduced KC/L1/MBON-state density; refractory-delay also reduced density, while luminance was near intact",
+    "RL4": "adaptation and luminance were near intact on neural density; adaptation and refractory-delay increased action divergence"
+  },
+  "intervention_integrity": {
+    "clear_refractory_delay_changed_only": ["queue", "queue_count", "refractory"],
+    "clear_luminance_changed_only": ["luminance"],
+    "clear_adaptation_changed_only": ["adaptation"],
+    "clear_kernel_credit_changed_only": ["eligibility", "eligibility_last", "modulation", "modulation_last"],
+    "all_interventions_preserved_synaptic_memory": true,
+    "all_conditions_used_identical_prefix_and_terminal_sequence": true,
+    "all_conditions_used_identical_paired_memory": true
+  },
+  "interpretation": {
+    "kernel_credit_is_expression_carrier_candidate": false,
+    "luminance_is_positive_expression_carrier_candidate": false,
+    "refractory_delay_is_positive_expression_carrier_candidate": false,
+    "adaptation_is_confirmed_positive_expression_carrier": false,
+    "adaptation_is_mixed_expression_modulator_candidate": true,
+    "transient_state_carrier_confirmed": false,
+    "mechanistic_summary": "Kernel eligibility/modulation clearing was exactly neutral relative to intact on every aggregate and terminal per-lag endpoint, excluding it as the frozen-recall expression carrier in this assay. Luminance clearing increased expression and recovered the silent RL1 trajectory, so luminance behaves as a suppressive/input-state modulator rather than a positive carrier. Refractory/queue clearing produced mixed neural-density changes but increased action divergence and also recovered RL1, so it is not a clean positive carrier. Adaptation clearing lowered aggregate KC/L1/MBON-state density, driven especially by a strong RL3 reduction, but it recovered expression in silent RL1 and increased action divergence elsewhere; therefore adaptation is mechanistically relevant but heterogeneous and not a confirmed carrier. The remaining unresolved state is concentrated in deferred lazy-integration scheduler state and/or interactions among adaptation, v/g, and scheduler bookkeeping.",
+    "next_question": "Use a fresh preregistered boundary study that tests coherent scheduler-state interventions rather than independently zeroing coupled lazy-integration fields. First compare intact against a fully materialized-and-reindexed scheduler control that preserves v/g/adaptation/drive and synaptic memory while rebuilding active/active_flag/nactive/last/previous_drive consistently at the -20 boundary."
+  },
+  "claims": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "prefix_sequence_specificity_confirmed": false,
+    "transient_state_carrier_confirmed": false,
+    "memory_expression_causal": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
