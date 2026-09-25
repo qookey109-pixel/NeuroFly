@@ -154,15 +154,25 @@ def _plastic_edge_state(inner: MaleCNSBrain) -> dict[str, Any]:
     brain = inner.brain
     circuit = brain.circuit
     edges = np.asarray(circuit["edges"])
-    baseline = np.asarray(brain.baseline_plastic, dtype=np.float64)
-    fraction = np.asarray(brain.weight[edges], dtype=np.float64) / baseline
+    weight_values = np.asarray(brain.weight[edges])
+    baseline_values = np.asarray(brain.baseline_plastic)
+    if not np.issubdtype(weight_values.dtype, np.floating):
+        raise RuntimeError("Plastic weights must use a floating dtype")
+    baseline = baseline_values.astype(np.float64)
+    fraction = weight_values.astype(np.float64) / baseline
     memory_w = np.asarray(brain.memory_w, dtype=np.float64)
 
     if fraction.shape != memory_w.shape:
         raise RuntimeError("Plastic edge state shape mismatch")
     reconstruction_error = float(np.max(np.abs((fraction - 1.0) - memory_w)))
-    if reconstruction_error > 1e-10:
-        raise RuntimeError("Weight fraction and memory_w disagree")
+    reconstruction_scale = max(1.0, float(np.max(np.abs(fraction))))
+    reconstruction_tolerance = (
+        8.0 * float(np.finfo(weight_values.dtype).eps) * reconstruction_scale
+    )
+    if reconstruction_error > reconstruction_tolerance:
+        raise RuntimeError(
+            "Weight fraction and memory_w disagree beyond dtype-aware quantization bound"
+        )
 
     reward_count = len(circuit["reward"])
     gain = np.asarray(circuit["gain"], dtype=np.float64)
@@ -185,7 +195,9 @@ def _plastic_edge_state(inner: MaleCNSBrain) -> dict[str, Any]:
         "reward_mask_digest": _digest_json([bool(x) for x in reward_mask.tolist()]),
         "aversive_mask_digest": _digest_json([bool(x) for x in aversive_mask.tolist()]),
         "fraction_digest": _vector_digest(fraction),
+        "weight_dtype": str(weight_values.dtype),
         "memory_w_reconstruction_max_abs_error": round(reconstruction_error, 15),
+        "memory_w_reconstruction_tolerance": round(reconstruction_tolerance, 15),
     }
 
 
@@ -354,6 +366,13 @@ def _paired_event(
             true["pre"]["memory_w_reconstruction_max_abs_error"],
             true["post"]["memory_w_reconstruction_max_abs_error"],
         ),
+        "memory_w_reconstruction_tolerance": max(
+            none["pre"]["memory_w_reconstruction_tolerance"],
+            none["post"]["memory_w_reconstruction_tolerance"],
+            true["pre"]["memory_w_reconstruction_tolerance"],
+            true["post"]["memory_w_reconstruction_tolerance"],
+        ),
+        "weight_dtype": none["pre"]["weight_dtype"],
         "none": {
             "action": none["action"],
             "reward_spikes": none["reward_spikes"],
@@ -542,8 +561,9 @@ def run_compartment_plasticity_diagnostic(
             }
         )
         == 1,
-        "memory_w_reconstruction_exact": all(
-            event["memory_w_reconstruction_max_abs_error"] <= 1e-10
+        "memory_w_reconstruction_within_dtype_bound": all(
+            event["memory_w_reconstruction_max_abs_error"]
+            <= event["memory_w_reconstruction_tolerance"]
             for event in all_events
         ),
         "none_branches_have_no_stimulus": all(
