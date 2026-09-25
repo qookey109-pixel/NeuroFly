@@ -254,7 +254,7 @@ def _execute_selected(selected):
                 raise RuntimeError("Paired memory differs across conditions")
             conditions[condition]=result
         reps.append({
-            "replicate_id":f"CS{i}","trajectory_seed":item["candidate_seed"],"event_index":event_index,
+            "replicate_id":f"VR{i}","trajectory_seed":item["candidate_seed"],"event_index":event_index,
             "trajectory_digest":item["trajectory_digest"],
             "pre_event_checkpoint_sha256":item["pre_event_checkpoint_sha256"],
             "stable_sensory_sequence_sha256":item["stable_sensory_sequence_sha256"],
