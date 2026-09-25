@@ -1,0 +1,113 @@
+{
+  "schema": "neurofly-memory-trace-reconstruction-audit-run1-freeze-v0.1",
+  "status": "EXPLORATORY_TRACE_RECONSTRUCTION_AUDIT_COMPLETE",
+  "successful_run": {
+    "run_id": 36103039412,
+    "head_sha": "4239a7240fd070854874b1750d28f6410e6adf95",
+    "artifact_id": 10850146795,
+    "artifact_name": "neurofly-memory-trace-reconstruction-audit-36103039412",
+    "artifact_sha256": "590d0fd9eae139a8374c93ec314f02b35428a901fed59dfb83907a5b21c31ecd",
+    "receipt_sha256": "fb5538afb4aab6a1f1608e054bf9b5c6852c867945d0e6c198b381b6537be131"
+  },
+  "source_checkpoint": {
+    "sha256_before": "7e4746d08c9bca7d71403fccf0ffb0334a6098720c6fbd7d696a8fd8394ff284",
+    "sha256_after": "7e4746d08c9bca7d71403fccf0ffb0334a6098720c6fbd7d696a8fd8394ff284",
+    "mutated": false
+  },
+  "aggregate": {
+    "replicate_count": 4,
+    "mean_changed_reward_edge_count": 1517.5,
+    "mean_target_changed_edge_trace_positive_fraction": 1.0,
+    "mean_one_tau_final_changed_trace_cosine_similarity": 0.627708547173,
+    "mean_three_tau_final_changed_trace_cosine_similarity": 0.995035129993,
+    "mean_one_tau_final_changed_trace_l1_overlap_fraction": 0.286251777639,
+    "mean_three_tau_final_changed_trace_l1_overlap_fraction": 0.807160125576,
+    "mean_three_tau_minus_one_tau_l1_overlap_delta": 0.520908347938,
+    "mean_one_tau_final_target_positive_edge_recovery_fraction": 0.450101550306,
+    "mean_three_tau_final_target_positive_edge_recovery_fraction": 0.904601345329,
+    "replicates_with_three_tau_higher_l1_overlap": 4
+  },
+  "replicates": [
+    {
+      "id": "TR1",
+      "trajectory_seed": 3001,
+      "event_index": 76,
+      "acquisition_decisions": 82,
+      "changed_reward_edge_count": 1530,
+      "target_changed_edge_trace_positive_fraction": 1.0,
+      "one_tau_final_cosine_similarity": 0.525733214405,
+      "three_tau_final_cosine_similarity": 0.99619391681,
+      "one_tau_final_l1_overlap_fraction": 0.015917586426,
+      "three_tau_final_l1_overlap_fraction": 0.920615513138,
+      "three_tau_minus_one_tau_l1_overlap_delta": 0.904697926712,
+      "one_tau_target_positive_edge_recovery_fraction": 0.065359477124,
+      "three_tau_target_positive_edge_recovery_fraction": 0.930718954248,
+      "normalized_l1_error_reduction": 0.878637804487
+    },
+    {
+      "id": "TR2",
+      "trajectory_seed": 3011,
+      "event_index": 105,
+      "acquisition_decisions": 111,
+      "changed_reward_edge_count": 1506,
+      "target_changed_edge_trace_positive_fraction": 1.0,
+      "one_tau_final_cosine_similarity": 0.992722637623,
+      "three_tau_final_cosine_similarity": 0.992711638961,
+      "one_tau_final_l1_overlap_fraction": 0.539424258866,
+      "three_tau_final_l1_overlap_fraction": 0.554460865446,
+      "three_tau_minus_one_tau_l1_overlap_delta": 0.01503660658,
+      "one_tau_target_positive_edge_recovery_fraction": 0.870517928287,
+      "three_tau_target_positive_edge_recovery_fraction": 0.8598937583,
+      "normalized_l1_error_reduction": 0.014747182489
+    },
+    {
+      "id": "TR3",
+      "trajectory_seed": 3019,
+      "event_index": 60,
+      "acquisition_decisions": 66,
+      "changed_reward_edge_count": 1528,
+      "target_changed_edge_trace_positive_fraction": 1.0,
+      "one_tau_final_cosine_similarity": 0.992378336663,
+      "three_tau_final_cosine_similarity": 0.995144383566,
+      "one_tau_final_l1_overlap_fraction": 0.589665265263,
+      "three_tau_final_l1_overlap_fraction": 0.89387098848,
+      "three_tau_minus_one_tau_l1_overlap_delta": 0.304205723217,
+      "one_tau_target_positive_edge_recovery_fraction": 0.864528795812,
+      "three_tau_target_positive_edge_recovery_fraction": 0.924738219895,
+      "normalized_l1_error_reduction": 0.281066841505
+    },
+    {
+      "id": "TR4",
+      "trajectory_seed": 3023,
+      "event_index": 93,
+      "acquisition_decisions": 99,
+      "changed_reward_edge_count": 1506,
+      "target_changed_edge_trace_positive_fraction": 1.0,
+      "one_tau_final_cosine_similarity": 0.0,
+      "three_tau_final_cosine_similarity": 0.996090580637,
+      "one_tau_final_l1_overlap_fraction": 0.0,
+      "three_tau_final_l1_overlap_fraction": 0.859693135242,
+      "three_tau_minus_one_tau_l1_overlap_delta": 0.859693135242,
+      "one_tau_target_positive_edge_recovery_fraction": 0.0,
+      "three_tau_target_positive_edge_recovery_fraction": 0.903054448871,
+      "normalized_l1_error_reduction": 0.850990364238
+    }
+  ],
+  "interpretation": {
+    "reward_time_changed_edge_eligibility_supported": true,
+    "one_tau_history_often_insufficient_for_eligibility_reconstruction": true,
+    "three_tau_higher_l1_overlap_observed_in_all_replicates": true,
+    "three_tau_reconstruction_substantial_but_incomplete": true,
+    "three_tau_uniformly_better_on_every_metric": false,
+    "mechanistic_summary": "On the same frozen trajectories, replaying 60 prereward decisions reconstructed substantially more of the original reward-time changed-edge KC eligibility vector than replaying only the last 20 decisions. L1 overlap improved in 4/4 replicates, but reconstruction remained incomplete and TR2 showed essentially unchanged/slightly lower cosine similarity despite a small L1-overlap improvement.",
+    "next_question": "With fresh preregistered trajectories, test whether a full 3-tau prereward replay after state clearing stabilizes expression of persistent reward-memory differences through changed KCs and MBON07, while retaining a paired 1-tau comparator and keeping all behavioral promotion claims locked."
+  },
+  "claims": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "cue_indexing_failure_confirmed": false,
+    "memory_expression_causal": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
