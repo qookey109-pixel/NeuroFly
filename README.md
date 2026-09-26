@@ -34,8 +34,10 @@ The decoded MaleCNS locomotor action is authoritative. NeuroFly may change only 
 environmental sensory/reinforcement inputs presented to the agent; it must not
 replace a decoded `HOLD`, `FORWARD`, `TURN_LEFT` or `TURN_RIGHT` with a
 hand-authored movement. Stall detection never changes the decoded action. Under curriculum v4, sustained
-translational stalls may produce a bounded, non-directional aversive stimulus;
-the fly still decides whether to hold, move forward or turn. If behavior needs
+translational stalls produce the same bounded, non-directional aversive pulse
+after four stalled decisions and on each subsequent stalled decision until the
+fly autonomously turns or moves. The fly still decides whether to hold, move
+forward or turn. If behavior needs
 to change further, the experiment must do so through reviewed sensory or
 reinforcement stimuli rather than direct action overrides.
 
