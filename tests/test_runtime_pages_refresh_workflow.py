@@ -54,19 +54,25 @@ def test_runtime_pages_dispatch_failure_is_nonfatal_and_visible():
     assert "The runtime chain may continue." in text
 
 
-def test_runtime_v3_gate_accepts_predator_free_stage_one():
+def test_runtime_v4_gate_accepts_predator_free_stage_one_and_sensory_only_actions():
     text = RUNTIME.read_text()
 
     build = text.index("- name: Build verified curriculum state")
     warn = text.index("- name: Warn if verified curriculum state could not be built")
     build_block = text[build:warn]
 
-    assert "state['curriculum_version'] == 'neurofly-curriculum-v3'" in build_block
-    assert "final['curriculum_version'] == 'neurofly-curriculum-v3'" in build_block
+    assert "state['curriculum_version'] == 'neurofly-curriculum-v4'" in build_block
+    assert "final['curriculum_version'] == 'neurofly-curriculum-v4'" in build_block
     assert "final['curriculum_stage_name'] == 'full-maze-foraging'" in build_block
     assert "if stage == 1:" in build_block
     assert "assert enemies == 0" in build_block
     assert "assert enemies >= 1" in build_block
+    assert "neurofly-sensory-only-action-autonomy-v1" in build_block
+    assert "direct_action_override_enabled" in build_block
+    assert "raw_brain_action" in build_block
+    assert "applied_action" in build_block
+    assert "action_overridden" in build_block
+    assert "override_reason" in build_block
     assert "state['curriculum_version'] == 'neurofly-curriculum-v2'" not in build_block
 
 
