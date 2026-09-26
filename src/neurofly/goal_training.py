@@ -10,12 +10,35 @@ from .brain_runtime import BrainBackend, BrainDecision
 from .maze_runtime import MazeEnvironment, StepResult
 
 
+REINFORCEMENT_TRAIN_POLICY = "neurofly-event-reinforcement-train-v1"
+REINFORCEMENT_EVENT_STEPS = {
+    "food": 1,
+    "energy_food": 2,
+    "maze_cleared": 4,
+    "captured": 2,
+}
+
+
 def _reinforcement_for_reward(reward: float) -> str:
     if reward >= 0.5:
         return "reward"
     if reward <= -0.5:
         return "aversive"
     return "none"
+
+
+def _reinforcement_train_for_event(reward: float, event: str | None) -> tuple[str, int]:
+    """Encode event salience as a short bounded pulse train.
+
+    The retained MaleCNS receives the same reviewed pulse amplitude per neural
+    decision. Salience is represented by repeating that pulse across a small,
+    fixed number of subsequent decisions instead of multiplying current.
+    """
+    kind = _reinforcement_for_reward(reward)
+    if kind == "none":
+        return "none", 0
+    steps = REINFORCEMENT_EVENT_STEPS.get(str(event), 1)
+    return kind, int(steps)
 
 
 class GoalMazeEnvironment(MazeEnvironment):
@@ -230,6 +253,7 @@ class GoalMazeSession:
         self.last_checkpoint = time.monotonic()
         self.last_decision: BrainDecision | None = None
         self.pending_reinforcement = "none"
+        self.pending_reinforcement_steps = 0
         self._lock = threading.RLock()
 
         if self.checkpoint:
@@ -242,6 +266,9 @@ class GoalMazeSession:
                 pending = str(payload.get("_pending_reinforcement", "none"))
                 if pending in {"none", "reward", "aversive"}:
                     self.pending_reinforcement = pending
+                restored_steps = int(payload.get("_pending_reinforcement_steps", 0))
+                if self.pending_reinforcement != "none":
+                    self.pending_reinforcement_steps = max(1, restored_steps)
 
         # Keep one absolute world-clock deadline across neural decisions. The old
         # per-decision timer restarted from a full interval every time tick() was
@@ -251,6 +278,24 @@ class GoalMazeSession:
         self._world_next_tick_monotonic = (
             time.monotonic() + self._effective_world_tick_seconds()
         )
+
+    def _queue_reinforcement(self, reward: float, event: str | None) -> None:
+        kind, steps = _reinforcement_train_for_event(reward, event)
+        if steps <= 0:
+            return
+        self.pending_reinforcement = kind
+        self.pending_reinforcement_steps = steps
+
+    def _take_reinforcement(self) -> str:
+        if self.pending_reinforcement_steps <= 0 or self.pending_reinforcement == "none":
+            self.pending_reinforcement = "none"
+            self.pending_reinforcement_steps = 0
+            return "none"
+        kind = self.pending_reinforcement
+        self.pending_reinforcement_steps -= 1
+        if self.pending_reinforcement_steps <= 0:
+            self.pending_reinforcement = "none"
+        return kind
 
     def _effective_world_tick_seconds(self) -> float:
         interval = float(self.environment.effective_world_tick_seconds(self.world_tick_seconds))
@@ -326,7 +371,7 @@ class GoalMazeSession:
                 )
                 terminal = result.terminal
                 if terminal:
-                    self.pending_reinforcement = _reinforcement_for_reward(result.reward)
+                    self._queue_reinforcement(result.reward, result.event)
                     self.environment.reset(result.event or "terminal")
                     self._reset_world_clock_deadline()
                     emitted.append(
@@ -351,10 +396,9 @@ class GoalMazeSession:
             observed_episode = self.environment.episode
             context = self.environment.snapshot(include_grid=False)
             frame = self.environment.render_rgb()
-            reinforcement = self.pending_reinforcement
+            reinforcement = self._take_reinforcement()
             if reinforcement == "none":
                 reinforcement = self.environment.reinforcement()
-            self.pending_reinforcement = "none"
 
         stop_event = threading.Event()
         world_thread: threading.Thread | None = None
@@ -395,7 +439,7 @@ class GoalMazeSession:
                 decision.action,
                 move_enemies=self.decision_synchronous_world,
             )
-            self.pending_reinforcement = _reinforcement_for_reward(result.reward)
+            self._queue_reinforcement(result.reward, result.event)
             terminal_snapshot = self._snapshot_locked(
                 decision=decision,
                 state_kind="neural_decision",
@@ -427,6 +471,8 @@ class GoalMazeSession:
             temporary = state_path.with_suffix(state_path.suffix + ".partial")
             payload = self.environment.persistence_snapshot()
             payload["_pending_reinforcement"] = self.pending_reinforcement
+            payload["_pending_reinforcement_steps"] = self.pending_reinforcement_steps
+            payload["_reinforcement_train_policy"] = REINFORCEMENT_TRAIN_POLICY
             temporary.write_text(json.dumps(payload, indent=2) + "\n")
             temporary.replace(state_path)
 
