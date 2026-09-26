@@ -1,0 +1,46 @@
+name: Research Walking DN Population Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/walking-dn-population-audit
+    paths:
+      - "scripts/research_probe_walking_dn_population.py"
+      - ".github/workflows/research-walking-dn-population.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  walking-dn-population:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Restore prepared MaleCNS cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[stonkfly]'
+      - name: Prepare and verify MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA"
+          python -m stonkfly prepare
+          python -m stonkfly verify
+      - name: Audit forward-walking DN candidates
+        run: python scripts/research_probe_walking_dn_population.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: walking-dn-population-audit
+          path: artifacts/walking_dn_population_audit.json
+          if-no-files-found: error
