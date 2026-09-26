@@ -2,7 +2,7 @@
   "schema": "neurofly-continuous-runtime-v1",
   "enabled": true,
   "authority_branch": "main",
-  "steps_per_run": 1200,
+  "steps_per_run": 5000,
   "runner": "ubuntu-latest",
   "paid_resources": false,
   "notes": "NeuroFly keeps the same MaleCNS brain alive across bounded GitHub Actions runs by restoring and saving the latest checkpoint. Set enabled=false to stop chaining after the current run saves safely."
