@@ -146,6 +146,7 @@ jobs:
           assert odor_report['model'] == 'neurofly-virtual-olfaction-v2'
           assert odor_report['food']['orn_type'] == 'ORN_DM1'
           assert odor_report['danger']['orn_type'] == 'ORN_DA2'
+          assert float(odor_report['max_external_current']) == 12.0
           for channel in ('food', 'danger'):
               report = odor_report[channel]
               assert report['side_policy'] == 'somaSide_then_curated_instance_suffix'
