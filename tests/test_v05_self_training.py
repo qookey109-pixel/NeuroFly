@@ -4,7 +4,11 @@ import time
 from pathlib import Path
 
 from neurofly.brain_runtime import BrainDecision
-from neurofly.goal_training import GoalMazeEnvironment, GoalMazeSession
+from neurofly.goal_training import (
+    GoalMazeEnvironment,
+    GoalMazeSession,
+    _reinforcement_train_for_event,
+)
 from neurofly.site_state import _digest_json, build_site_state
 from neurofly.upstream import STONKFLY_COMMIT
 
@@ -41,6 +45,14 @@ class SlowMaleCNSFixture:
 
     def save(self, path: str | Path) -> None:
         return None
+
+
+def test_event_scaled_reinforcement_train_is_bounded() -> None:
+    assert _reinforcement_train_for_event(0.99, "food") == ("reward", 1)
+    assert _reinforcement_train_for_event(1.99, "energy_food") == ("reward", 2)
+    assert _reinforcement_train_for_event(100.99, "maze_cleared") == ("reward", 4)
+    assert _reinforcement_train_for_event(-10.01, "captured") == ("aversive", 2)
+    assert _reinforcement_train_for_event(-0.01, None) == ("none", 0)
 
 
 def test_maze_clear_is_dominant_goal_and_records_first_clear() -> None:
