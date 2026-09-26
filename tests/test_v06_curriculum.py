@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from neurofly.brain_runtime import _distributed_pulse_windows
+from neurofly.brain_runtime import _distributed_pulse_windows, _temporal_food_levels
 from neurofly.curriculum import (
     ACTION_AUTONOMY_POLICY,
     ANTI_STALL_POLICY,
@@ -70,6 +70,41 @@ def test_virtual_odor_field_is_bilateral_and_directional() -> None:
     assert odor["danger"]["right"] > odor["danger"]["left"]
     assert odor["food"]["orn_type"] == FOOD_ORN_TYPE
     assert odor["danger"]["orn_type"] == DANGER_ORN_TYPE
+
+
+def test_food_odor_field_aggregates_multiple_sources_without_target_action() -> None:
+    fly = {"x": 3, "y": 3, "dir": "UP"}
+    one = [[" " for _ in range(7)] for _ in range(7)]
+    one[3][4] = "."
+    two = [row[:] for row in one]
+    two[3][5] = "."
+
+    single = virtual_olfaction(grid=one, fly=fly, enemies=[])["food"]
+    multi = virtual_olfaction(grid=two, fly=fly, enemies=[])["food"]
+
+    assert single["source_count"] == 1
+    assert multi["source_count"] == 2
+    assert multi["aggregation"] == "lp4-all-sources"
+    assert multi["intensity"] > single["intensity"]
+    assert multi["right"] > multi["left"]
+    assert "source" not in multi
+
+
+def test_temporal_food_gradient_strengthens_rising_and_weakens_falling_odor() -> None:
+    rising_left, rising_right, rising_delta, rising_mean = _temporal_food_levels(
+        0.20, 0.40, 0.20
+    )
+    assert rising_delta > 0
+    assert rising_mean == 0.30
+    assert rising_left > 0.20
+    assert rising_right > 0.40
+
+    falling_left, falling_right, falling_delta, _ = _temporal_food_levels(
+        0.20, 0.40, 0.40
+    )
+    assert falling_delta < 0
+    assert falling_left < 0.20
+    assert falling_right < 0.40
 
 
 def test_high_frequency_stall_train_preserves_total_stimulus_budget() -> None:
