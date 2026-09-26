@@ -479,3 +479,10 @@ body {
   }
 }
 
+/* Interface V2.3 — remove remaining floating overlays from inside the maze.
+   Keep their DOM nodes for runtime compatibility; only the public presentation changes. */
+.hud-overlay-top-left,
+.hud-overlay-top-right {
+  display: none !important;
+}
+
