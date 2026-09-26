@@ -194,6 +194,10 @@ jobs:
           assert final.get('olfaction', {}).get('model') == 'neurofly-virtual-olfaction-v2'
           assert final.get('action_autonomy_policy') == 'neurofly-sensory-only-action-autonomy-v1'
           assert final.get('direct_action_override_enabled') is False
+          assert final.get('enemy_navigation_policy') == 'maze-intercept-pursuit-v3'
+          assert float(final.get('enemy_pursuit_probability', 0.0)) == 0.97
+          assert float(final.get('enemy_intercept_weight', 0.0)) == 0.45
+          assert float(final.get('enemy_secondary_intercept_weight', 0.0)) == 0.75
           assert final.get('stall_stimulus_policy') == 'neurofly-nondirectional-stall-aversive-hf-v3'
           assert float(final.get('stall_stimulus_frequency_hz', 0.0)) == 200.0
           assert int(final.get('stall_stimulus_pulses_per_decision', 0)) == 10
@@ -214,6 +218,10 @@ jobs:
               assert enemies == 0
           else:
               assert enemies >= 1
+          if stage == 3:
+              assert float(final['curriculum_world_tick_seconds']) == 0.8
+          if stage == 4:
+              assert float(final['curriculum_world_tick_seconds']) == 0.4
           print(
               'CURRICULUM_V4_SENSORY_ONLY_GATE_PASS',
               state['source_receipt_sha256'],
