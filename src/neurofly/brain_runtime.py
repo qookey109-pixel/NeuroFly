@@ -182,7 +182,7 @@ class MaleCNSBrain:
         neural_bin_ms: float = 10.0,
         pulse_ms: float = 20.0,
         pulse_current: float = 20.0,
-        odor_current: float = 8.0,
+        odor_current: float = 12.0,
         decoder_threshold_hz: float = 2.0,
         learning: bool = True,
         checkpoint: str | Path | None = None,
