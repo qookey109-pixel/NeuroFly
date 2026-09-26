@@ -141,7 +141,7 @@ def test_walking_decoder_uses_dna02_difference_for_turning() -> None:
     ) == "TURN_LEFT"
 
 
-def test_walking_decoder_uses_dnpo9_or_bilateral_activity_for_forward() -> None:
+def test_walking_decoder_uses_dnp09_or_bilateral_activity_for_forward() -> None:
     assert _walking_action(
         steering_left_hz=0.0,
         steering_right_hz=0.0,
