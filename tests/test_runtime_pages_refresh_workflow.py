@@ -89,3 +89,10 @@ def test_runtime_refuses_stale_state_publish_when_main_advanced():
     assert "skip stale verified-state publish" in publish_block
     assert "exit 1" in publish_block
     assert publish_block.index("CURRENT_AUTHORITY_SHA=") < publish_block.index("git checkout -B")
+
+
+def test_runtime_cancels_stale_code_runs_but_preserves_continuous_handoffs():
+    text = RUNTIME.read_text()
+
+    assert "group: neurofly-v06-curriculum-training" in text
+    assert "cancel-in-progress: ${{ github.event_name == 'push' }}" in text

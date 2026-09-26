@@ -24,7 +24,9 @@ permissions:
 
 concurrency:
   group: neurofly-v06-curriculum-training
-  cancel-in-progress: false
+  # A new main push means the runtime code changed, so an older-code run is stale.
+  # Continuous workflow_dispatch handoffs remain serialized and are not cancelled.
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   self-train-malecns:
