@@ -96,3 +96,6 @@ def test_runtime_cancels_stale_code_runs_but_preserves_continuous_handoffs():
 
     assert "group: neurofly-v06-curriculum-training" in text
     assert "cancel-in-progress: ${{ github.event_name == 'push' }}" in text
+    assert '"src/neurofly/**"' in text
+    assert '"config/neurofly_continuous_runtime.json"' in text
+    assert '"pyproject.toml"' in text
