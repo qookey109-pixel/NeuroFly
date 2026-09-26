@@ -76,20 +76,22 @@ def test_high_frequency_stall_train_preserves_total_stimulus_budget() -> None:
     windows = _distributed_pulse_windows(
         total_steps=50,
         pulse_budget_steps=20,
-        pulse_count=8,
+        pulse_count=10,
     )
 
     assert windows == [
-        (0, 3),
-        (6, 9),
-        (12, 15),
-        (18, 21),
+        (0, 2),
+        (5, 7),
+        (10, 12),
+        (15, 17),
+        (20, 22),
         (25, 27),
-        (31, 33),
-        (37, 39),
-        (43, 45),
+        (30, 32),
+        (35, 37),
+        (40, 42),
+        (45, 47),
     ]
-    assert len(windows) == 8
+    assert len(windows) == 10
     assert sum(end - start for start, end in windows) == 20
 
 
