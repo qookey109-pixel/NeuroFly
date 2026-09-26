@@ -89,7 +89,7 @@ jobs:
               'mazeCanvas', 'brainBadge', 'currentAction', 'lastReward',
               'survivalTime', 'episodeNumber', 'rawAction', 'appliedAction',
               'reinforcement', 'brainInput', 'brainOutput', 'neuralWindowMs',
-              'brainMs', 'computeSeconds', 'totalSpikes', 'gateSpikes',
+              'brainMs', 'computeSeconds', 'totalSpikes', 'walkingSpikes',
               'leftHz', 'rightHz', 'foodOdorSpikes', 'dangerOdorSpikes',
               'foodLeft', 'episodeFood', 'totalFood', 'totalDeaths',
               'enemyCount', 'decisionTicks', 'worldTicks', 'powerState',
