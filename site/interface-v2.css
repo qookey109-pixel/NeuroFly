@@ -310,3 +310,54 @@ body {
   .hud-action-block { min-width: 130px; }
   .hud-action-block > strong { font-size: 1.5rem; }
 }
+
+/* Interface V2.1 — remove low-priority panels marked for deletion.
+   Keep the underlying verified telemetry in the DOM for runtime compatibility,
+   but remove it from the public HUD and reclaim the space for the maze. */
+.hud-kpi-reward,
+.trend-deck,
+.neural-section {
+  display: none !important;
+}
+
+.arena-column {
+  grid-template-rows: minmax(0, 1fr) 68px;
+}
+
+.arena-dock {
+  grid-template-columns: minmax(190px, .55fr) minmax(0, 1.45fr);
+}
+
+.dock-kpis {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.brain-rail {
+  grid-template-rows: auto auto;
+  align-content: start;
+}
+
+@media (max-width: 1180px) and (min-width: 901px) {
+  .arena-column {
+    grid-template-rows: minmax(0, 1fr) 64px;
+  }
+
+  .arena-dock {
+    grid-template-columns: minmax(180px, .52fr) minmax(0, 1.48fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .arena-column {
+    grid-template-rows: auto auto;
+  }
+
+  .brain-rail {
+    grid-template-rows: auto auto;
+  }
+
+  .arena-dock {
+    grid-template-columns: 1fr;
+  }
+}
+
