@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import inspect
+
+from neurofly.brain_runtime import MaleCNSBrain
 from neurofly.olfaction_calibration import CONDITIONS, SCHEMA, _channel_gate
 
 
@@ -55,3 +58,8 @@ def test_channel_gate_requires_baseline_delta_and_lateralization() -> None:
     assert gate["positive_delta"] is True
     assert gate["ipsilateral_gt_contralateral"] is False
     assert gate["passed"] is False
+
+
+def test_default_malecns_olfactory_drive_is_12() -> None:
+    parameter = inspect.signature(MaleCNSBrain).parameters["odor_current"]
+    assert parameter.default == 12.0

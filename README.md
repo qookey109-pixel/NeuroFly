@@ -51,7 +51,10 @@ uses bounded Lp aggregation, increases left/right contrast without encoding a
 turn command, and adds a one-step temporal cue that represents whether appetitive
 odor is getting stronger, weaker or staying stable. Exact food/enemy source
 coordinates are not part of the olfactory sensory contract. MaleCNS still
-receives only sensory stimulation and chooses its own action.
+receives only sensory stimulation and chooses its own action. The default
+olfactory drive is 12 current units (up from 8) so the same bounded
+concentration field produces a clearer ORN response without changing its
+left/right ratio or encoding an action.
 
 ## V0.4 — Full MaleCNS Smoke + Zero-Cost Runner
 
