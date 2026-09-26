@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 from neurofly.curriculum import (
+    ACTION_AUTONOMY_POLICY,
     ANTI_STALL_POLICY,
     ANTI_STALL_STATIONARY_LIMIT,
     CURRICULUM_VERSION,
+    STALL_STIMULUS_AFTER,
+    STALL_STIMULUS_INTERVAL,
+    STALL_STIMULUS_POLICY,
     CurriculumMazeEnvironment,
 )
 from neurofly.goal_training import GoalMazeEnvironment
@@ -43,6 +47,8 @@ def test_curriculum_starts_on_full_canonical_maze_without_predator() -> None:
     assert state["olfaction"]["food"]["intensity"] > 0
     assert state["olfaction"]["danger"]["intensity"] == 0
     assert state["anti_stall_policy"] == ANTI_STALL_POLICY
+    assert state["action_autonomy_policy"] == ACTION_AUTONOMY_POLICY
+    assert state["direct_action_override_enabled"] is False
 
 
 def test_virtual_odor_field_is_bilateral_and_directional() -> None:
@@ -60,30 +66,64 @@ def test_virtual_odor_field_is_bilateral_and_directional() -> None:
     assert odor["danger"]["orn_type"] == DANGER_ORN_TYPE
 
 
-def test_anti_stall_preserves_raw_action_and_forces_one_forward_attempt() -> None:
+def test_sensory_only_autonomy_never_overrides_repeated_hold() -> None:
     env = CurriculumMazeEnvironment(seed=109)
     start = dict(env.fly)
 
-    for _ in range(ANTI_STALL_STATIONARY_LIMIT):
+    for _ in range(ANTI_STALL_STATIONARY_LIMIT + 4):
         env.agent_step("HOLD", move_enemies=False)
+        state = env.snapshot()
+        assert state["raw_brain_action"] == "HOLD"
+        assert state["applied_action"] == "HOLD"
+        assert state["last_action"] == "HOLD"
+        assert state["action_overridden"] is False
+        assert state["direct_action_override_enabled"] is False
+        assert state["override_reason"] is None
+        assert state["anti_stall_force_forward_next"] is False
 
-    assert env.fly["x"] == start["x"]
-    assert env.fly["y"] == start["y"]
+    assert env.fly == start
+    assert env.snapshot()["anti_stall_stationary_steps"] == ANTI_STALL_STATIONARY_LIMIT + 4
 
-    env.agent_step("HOLD", move_enemies=False)
+
+def test_repeated_stall_uses_nondirectional_stimulus_without_steering() -> None:
+    env = CurriculumMazeEnvironment(seed=109)
+    start = dict(env.fly)
+
+    for step in range(1, STALL_STIMULUS_AFTER + 1):
+        env.agent_step("HOLD", move_enemies=False)
+        expected = "aversive" if step == STALL_STIMULUS_AFTER else "none"
+        assert env.reinforcement() == expected
+
     state = env.snapshot()
-
+    assert env.fly == start
     assert state["raw_brain_action"] == "HOLD"
-    assert state["applied_action"] == "FORWARD"
-    assert state["action_overridden"] is True
-    assert state["override_reason"] == "anti_stall_hold_forward"
-    assert state["last_action"] == "FORWARD"
-    assert env.fly["x"] == start["x"] + 1
-    assert env.fly["y"] == start["y"]
-    assert state["anti_stall_stationary_steps"] == 0
+    assert state["applied_action"] == "HOLD"
+    assert state["action_overridden"] is False
+    assert state["override_reason"] is None
+    assert state["stall_stimulus_policy"] == STALL_STIMULUS_POLICY
+    assert state["stall_stimulus_after"] == STALL_STIMULUS_AFTER
+    assert state["stall_stimulus_interval"] == STALL_STIMULUS_INTERVAL
+
+    env.agent_step("TURN_LEFT", move_enemies=False)
+    assert env.reinforcement() == "none"
+    assert env.snapshot()["anti_stall_stationary_steps"] == 0
 
 
-def test_anti_stall_state_survives_curriculum_checkpoint() -> None:
+def test_sensory_only_autonomy_applies_every_decoded_action_verbatim() -> None:
+    env = CurriculumMazeEnvironment(seed=109)
+
+    for action in ("TURN_LEFT", "HOLD", "TURN_RIGHT", "HOLD", "FORWARD", "HOLD"):
+        env.agent_step(action, move_enemies=False)
+        state = env.snapshot()
+        assert state["raw_brain_action"] == action
+        assert state["applied_action"] == action
+        assert state["last_action"] == action
+        assert state["action_overridden"] is False
+        assert state["override_reason"] is None
+        assert state["direct_action_override_enabled"] is False
+
+
+def test_stall_observation_state_survives_curriculum_checkpoint() -> None:
     env = CurriculumMazeEnvironment(seed=109)
     env.agent_step("HOLD", move_enemies=False)
     env.agent_step("HOLD", move_enemies=False)
@@ -211,7 +251,39 @@ def test_v05_state_migrates_to_full_maze_stage_one_without_erasing_global_totals
     assert migrated.total_food == 3
 
 
-def test_v1_enemy_free_checkpoint_migrates_safely_to_v3_full_maze() -> None:
+def test_v3_checkpoint_migrates_to_v4_without_resetting_episode_progress() -> None:
+    source = CurriculumMazeEnvironment(seed=109)
+    source.agent_step("FORWARD", move_enemies=False)
+    source.agent_step("HOLD", move_enemies=False)
+    payload = source.persistence_snapshot()
+    payload["curriculum_version"] = "neurofly-curriculum-v3"
+    payload["anti_stall_force_forward_next"] = True
+    payload["applied_action"] = "FORWARD"
+    payload["action_overridden"] = True
+    payload["override_reason"] = "anti_stall_hold_forward"
+
+    expected_grid = list(payload["grid"])
+    expected_fly = dict(payload["fly"])
+    expected_ticks = int(payload["total_ticks"])
+    expected_food = int(payload["total_food"])
+
+    restored = CurriculumMazeEnvironment(seed=999)
+    restored.restore(payload)
+    state = restored.snapshot()
+
+    assert state["curriculum_version"] == CURRICULUM_VERSION
+    assert ["".join(row) for row in restored.grid] == expected_grid
+    assert restored.fly == expected_fly
+    assert restored.total_ticks == expected_ticks
+    assert restored.total_food == expected_food
+    assert state["applied_action"] == state["raw_brain_action"]
+    assert state["action_overridden"] is False
+    assert state["override_reason"] is None
+    assert state["anti_stall_force_forward_next"] is False
+    assert state["direct_action_override_enabled"] is False
+
+
+def test_v1_enemy_free_checkpoint_migrates_safely_to_v4_full_maze() -> None:
     source = CurriculumMazeEnvironment(seed=109)
     payload = source.persistence_snapshot()
     payload["curriculum_version"] = "neurofly-curriculum-v1"
