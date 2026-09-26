@@ -272,7 +272,7 @@ def test_v3_checkpoint_migrates_to_v4_without_resetting_episode_progress() -> No
     state = restored.snapshot()
 
     assert state["curriculum_version"] == CURRICULUM_VERSION
-    assert restored.grid == expected_grid
+    assert ["".join(row) for row in restored.grid] == expected_grid
     assert restored.fly == expected_fly
     assert restored.total_ticks == expected_ticks
     assert restored.total_food == expected_food
