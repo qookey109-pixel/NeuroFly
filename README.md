@@ -18,7 +18,7 @@ Maze Chase is an original maze-chase environment for connectome experiments. It 
 Maze RGB frame
    -> MaleCNS visual adapter
    -> 166,700-neuron retained runtime
-   -> DNp20 / DNpe017 readout
+   -> DNa02 steering + DNp09 forward-drive readout
    -> TURN_LEFT / TURN_RIGHT / FORWARD / HOLD
    -> Maze Chase
    -> reward / aversive stimulation
@@ -27,6 +27,18 @@ Maze RGB frame
 ```
 
 The action mapping is an engineered NeuroFly interface, not a biological claim about what those neurons naturally encode.
+
+### Walking motor decoder v2
+
+The maze runtime no longer reuses Stonkfly's DNp20/DNpe017 trading decoder. Walking
+actions are decoded from walking-related descending neurons already present in the
+pinned MaleCNS runtime: bilateral DNa02 activity supplies steering asymmetry and
+DNp09 supplies forward-drive activity. A zero-spike DNpe017 gate is not used.
+`HOLD` is emitted only when the selected walking readouts produce no spikes in
+the neural decision window; otherwise DNa02 right-minus-left activity selects a
+turn when it exceeds the steering threshold, and the remaining active state maps
+to `FORWARD`. This remains an engineered motor interface and does not claim an
+exact biological reconstruction.
 
 ### Action autonomy boundary
 
