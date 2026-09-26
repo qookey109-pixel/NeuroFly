@@ -11,6 +11,9 @@ CURRICULUM_VERSION = "neurofly-curriculum-v4"
 ACTION_AUTONOMY_POLICY = "neurofly-sensory-only-action-autonomy-v1"
 ANTI_STALL_POLICY = "neurofly-stall-observation-only-v2"
 ANTI_STALL_STATIONARY_LIMIT = 2
+STALL_STIMULUS_POLICY = "neurofly-nondirectional-stall-aversive-v1"
+STALL_STIMULUS_AFTER = 4
+STALL_STIMULUS_INTERVAL = 4
 
 
 @dataclass(frozen=True)
@@ -78,6 +81,18 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
         self.last_action_overridden = False
         self.last_override_reason = None
 
+    def reinforcement(self) -> str:
+        """Add only a non-directional stimulus when translationally stalled."""
+        base = super().reinforcement()
+        if base != "none":
+            return base
+        if (
+            self._stationary_agent_steps >= STALL_STIMULUS_AFTER
+            and self._stationary_agent_steps % STALL_STIMULUS_INTERVAL == 0
+        ):
+            return "aversive"
+        return "none"
+
     def _canonical_enemy_spawns(self) -> list[dict[str, int]]:
         return [
             {"x": self.cols - 2, "y": self.rows - 2},
@@ -139,7 +154,7 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
         self.last_override_reason = None
         self._force_forward_next = False
 
-        if result.terminal or after != before:
+        if result.terminal or after != before or raw_action in {"TURN_LEFT", "TURN_RIGHT"}:
             self._stationary_agent_steps = 0
         else:
             self._stationary_agent_steps += 1
@@ -249,6 +264,9 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
                 "curriculum_complete": stage.number == len(STAGES),
                 "action_autonomy_policy": ACTION_AUTONOMY_POLICY,
                 "direct_action_override_enabled": False,
+                "stall_stimulus_policy": STALL_STIMULUS_POLICY,
+                "stall_stimulus_after": STALL_STIMULUS_AFTER,
+                "stall_stimulus_interval": STALL_STIMULUS_INTERVAL,
                 "anti_stall_policy": ANTI_STALL_POLICY,
                 "anti_stall_stationary_steps": self._stationary_agent_steps,
                 "anti_stall_force_forward_next": self._force_forward_next,
@@ -276,6 +294,9 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
                 "advance_on_reset": self._advance_on_reset,
                 "action_autonomy_policy": ACTION_AUTONOMY_POLICY,
                 "direct_action_override_enabled": False,
+                "stall_stimulus_policy": STALL_STIMULUS_POLICY,
+                "stall_stimulus_after": STALL_STIMULUS_AFTER,
+                "stall_stimulus_interval": STALL_STIMULUS_INTERVAL,
                 "anti_stall_policy": ANTI_STALL_POLICY,
                 "anti_stall_stationary_steps": self._stationary_agent_steps,
                 "anti_stall_force_forward_next": self._force_forward_next,
