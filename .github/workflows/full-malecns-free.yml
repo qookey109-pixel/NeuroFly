@@ -133,10 +133,13 @@ jobs:
               for s in state['trajectory']
           )
           assert all(
-              s['brain']['telemetry'].get('motor_decoder') == 'neurofly-walking-decoder-v2'
+              s['brain']['telemetry'].get('motor_decoder') == 'neurofly-walking-decoder-v3'
               and s['brain']['telemetry'].get('steering_type') == 'DNa02'
-              and s['brain']['telemetry'].get('forward_type') == 'DNp09'
+              and s['brain']['telemetry'].get('walking_drive_type') == 'DNb05'
+              and s['brain']['telemetry'].get('forward_type') == 'DNb05'
+              and float(s['brain']['telemetry'].get('steering_threshold_hz', -1.0)) == 30.0
               and s['brain']['telemetry'].get('dnpe017_gate_used') is False
+              and int(s['brain']['telemetry'].get('walking_drive_spikes', -1)) >= 0
               and int(s['brain']['telemetry'].get('walking_spikes', -1)) >= 0
               for s in state['trajectory']
           )

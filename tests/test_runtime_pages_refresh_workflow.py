@@ -74,6 +74,13 @@ def test_runtime_v4_gate_accepts_predator_free_stage_one_and_sensory_only_action
     assert "action_overridden" in build_block
     assert "override_reason" in build_block
     assert "state['curriculum_version'] == 'neurofly-curriculum-v2'" not in build_block
+    assert "neurofly-walking-decoder-v3" in build_block
+    assert "walking_drive_type') == 'DNb05'" in build_block
+    assert "forward_type') == 'DNb05'" in build_block
+    assert "steering_threshold_hz', -1.0)) == 30.0" in build_block
+    assert "walking_drive_spikes" in build_block
+    assert "neurofly-walking-decoder-v2" not in build_block
+    assert "forward_type') == 'DNp09'" not in build_block
 
 
 def test_runtime_refuses_stale_state_publish_when_main_advanced():
