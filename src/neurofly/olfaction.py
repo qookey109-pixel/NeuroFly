@@ -64,8 +64,8 @@ def _strongest_source(
             "left": 0.0,
             "right": 0.0,
             "intensity": 0.0,
-            "distance_cells": None,
-            "source": None,
+            "source_count": 0,
+            "aggregation": "strongest-source-field",
         }
 
     best: dict[str, Any] | None = None
@@ -86,8 +86,8 @@ def _strongest_source(
                 "left": round(left, 6),
                 "right": round(right, 6),
                 "intensity": round((left + right) / 2.0, 6),
-                "distance_cells": round(distance, 4),
-                "source": {"x": int(x), "y": int(y)},
+                "source_count": len(sources),
+                "aggregation": "strongest-source-field",
             }
     assert best is not None
     return best
