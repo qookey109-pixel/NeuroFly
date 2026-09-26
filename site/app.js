@@ -401,8 +401,8 @@
 
     ui.brainInput.textContent = [
       '視覺：迷宮 RGB 畫面',
-      `食物嗅覺 左 ${formatOdorLevel(olfaction.food_left)}／右 ${formatOdorLevel(olfaction.food_right)}`,
-      `危險嗅覺 左 ${formatOdorLevel(olfaction.danger_left)}／右 ${formatOdorLevel(olfaction.danger_right)}`,
+      `食物嗅覺 前 ${formatOdorLevel(olfaction.food_front)}／後 ${formatOdorLevel(olfaction.food_back)}／左 ${formatOdorLevel(olfaction.food_left)}／右 ${formatOdorLevel(olfaction.food_right)}`,
+      `危險嗅覺 前 ${formatOdorLevel(olfaction.danger_front)}／後 ${formatOdorLevel(olfaction.danger_back)}／左 ${formatOdorLevel(olfaction.danger_left)}／右 ${formatOdorLevel(olfaction.danger_right)}`,
     ].join(' · ');
 
     ui.brainOutput.textContent = view.action_overridden === true && raw !== applied
