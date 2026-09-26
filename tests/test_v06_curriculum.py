@@ -28,8 +28,10 @@ from neurofly.curriculum import (
 )
 from neurofly.goal_training import GoalMazeEnvironment
 from neurofly.maze_runtime import (
+    ENEMY_INTERCEPT_WEIGHT,
     ENEMY_NAVIGATION_POLICY,
     ENEMY_PURSUIT_PROBABILITY,
+    ENEMY_SECONDARY_INTERCEPT_WEIGHT,
     MazeEnvironment,
 )
 from neurofly.olfaction import DANGER_ORN_TYPE, FOOD_ORN_TYPE, OLFACTION_MODEL, virtual_olfaction
@@ -194,23 +196,38 @@ class _AlwaysPursueRng:
         return values[0]
 
 
-def test_predator_uses_true_maze_shortest_path_instead_of_manhattan_greed() -> None:
+def test_predator_uses_predictive_maze_intercept_pursuit() -> None:
     env = MazeEnvironment(seed=109)
     env.fly = {"x": 1, "y": 1, "dir": "RIGHT"}
     env.enemies = [{"x": env.cols - 2, "y": env.rows - 2}]
     env.rng = _AlwaysPursueRng()
 
-    distances = env._maze_distance_map(env.fly["x"], env.fly["y"])
-    before = distances[(env.enemies[0]["x"], env.enemies[0]["y"])]
+    fly_cell = (env.fly["x"], env.fly["y"])
+    projected = env._projected_fly_target(2)
+    assert projected == (3, 1)
+
+    chase = env._maze_distance_map(*fly_cell)
+    intercept = env._maze_distance_map(*projected)
+    before_xy = (env.enemies[0]["x"], env.enemies[0]["y"])
+    before_score = (
+        (1.0 - ENEMY_INTERCEPT_WEIGHT) * chase[before_xy]
+        + ENEMY_INTERCEPT_WEIGHT * intercept[before_xy]
+    )
 
     env._move_enemies()
 
-    after = distances[(env.enemies[0]["x"], env.enemies[0]["y"])]
-    assert after == before - 1
+    after_xy = (env.enemies[0]["x"], env.enemies[0]["y"])
+    after_score = (
+        (1.0 - ENEMY_INTERCEPT_WEIGHT) * chase[after_xy]
+        + ENEMY_INTERCEPT_WEIGHT * intercept[after_xy]
+    )
+    assert after_score < before_score
     state = env.snapshot()
     assert state["enemy_navigation_policy"] == ENEMY_NAVIGATION_POLICY
-    assert ENEMY_NAVIGATION_POLICY == "maze-shortest-path-v2"
-    assert ENEMY_PURSUIT_PROBABILITY == 0.90
+    assert ENEMY_NAVIGATION_POLICY == "maze-intercept-pursuit-v3"
+    assert ENEMY_PURSUIT_PROBABILITY == 0.97
+    assert ENEMY_INTERCEPT_WEIGHT == 0.45
+    assert ENEMY_SECONDARY_INTERCEPT_WEIGHT == 0.75
 
 
 def test_multiple_predators_do_not_stack_when_alternate_open_cells_exist() -> None:
@@ -426,14 +443,14 @@ def test_predator_pressure_increases_without_changing_maze_geometry() -> None:
     env.reset("test")
     assert env.stage.name == "full-maze-predator"
     assert len(env.enemies) == 1
-    assert env.effective_world_tick_seconds(0.5) == 1.0
+    assert env.effective_world_tick_seconds(0.5) == 0.8
     assert env.grid == canonical.grid
 
     env.curriculum_stage = 4
     env.reset("test")
     assert env.stage.name == "full-live-maze"
     assert len(env.enemies) == 2
-    assert env.effective_world_tick_seconds(9.0) == 0.5
+    assert env.effective_world_tick_seconds(9.0) == 0.4
     assert env.grid == canonical.grid
 
 

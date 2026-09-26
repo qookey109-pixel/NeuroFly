@@ -86,6 +86,11 @@ def test_runtime_v4_gate_accepts_predator_free_stage_one_and_sensory_only_action
     assert "danger_current_gain']) == 1.6" in build_block
     assert "danger_max_external_current" in build_block
     assert "food_max_external_current" in build_block
+    assert "maze-intercept-pursuit-v3" in build_block
+    assert "enemy_pursuit_probability" in build_block
+    assert "enemy_intercept_weight" in build_block
+    assert "enemy_secondary_intercept_weight" in build_block
+    assert "curriculum_world_tick_seconds" in build_block
     assert "neurofly-walking-decoder-v2" not in build_block
     assert "forward_type') == 'DNp09'" not in build_block
 
