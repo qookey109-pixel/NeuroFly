@@ -30,8 +30,8 @@ class CurriculumStage:
 STAGES: tuple[CurriculumStage, ...] = (
     CurriculumStage(1, "full-maze-foraging", 2, 2.0, 0),
     CurriculumStage(2, "full-maze-slow-predator", 2, 2.0, 1),
-    CurriculumStage(3, "full-maze-predator", 3, 1.0, 1),
-    CurriculumStage(4, "full-live-maze", None, 0.5, 2),
+    CurriculumStage(3, "full-maze-predator", 3, 0.8, 1),
+    CurriculumStage(4, "full-live-maze", None, 0.4, 2),
 )
 
 
