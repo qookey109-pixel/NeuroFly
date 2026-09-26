@@ -13,6 +13,7 @@ from neurofly.curriculum import (
 from neurofly.goal_training import GoalMazeEnvironment
 from neurofly.olfaction import DANGER_ORN_TYPE, FOOD_ORN_TYPE, OLFACTION_MODEL, virtual_olfaction
 from neurofly.site_state import _digest_json, build_site_state
+from neurofly.training import _public_goal_state
 from neurofly.upstream import STONKFLY_COMMIT
 
 
@@ -297,6 +298,31 @@ def test_v1_enemy_free_checkpoint_migrates_safely_to_v4_full_maze() -> None:
     assert restored.stage.name == "full-maze-foraging"
     assert len(restored.enemies) == 0
     assert restored.grid == canonical.grid
+
+
+def test_public_goal_state_preserves_v4_action_autonomy_evidence() -> None:
+    env = CurriculumMazeEnvironment(seed=109)
+    env.agent_step("HOLD", move_enemies=False)
+    state = env.snapshot()
+    state["brain"] = {
+        "backend": "malecns",
+        "telemetry": {
+            "brain_ms": 500.0,
+            "total_spikes": 123,
+        },
+    }
+
+    public = _public_goal_state(state)
+
+    assert public["curriculum_version"] == CURRICULUM_VERSION
+    assert public["action_autonomy_policy"] == ACTION_AUTONOMY_POLICY
+    assert public["direct_action_override_enabled"] is False
+    assert public["stall_stimulus_policy"] == STALL_STIMULUS_POLICY
+    assert public["stall_stimulus_after"] == STALL_STIMULUS_AFTER
+    assert public["stall_stimulus_interval"] == STALL_STIMULUS_INTERVAL
+    assert public["raw_brain_action"] == public["applied_action"]
+    assert public["action_overridden"] is False
+    assert public["override_reason"] is None
 
 
 def test_v3_curriculum_receipt_is_verified_for_site_state() -> None:
