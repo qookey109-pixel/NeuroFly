@@ -52,3 +52,34 @@ def test_runtime_pages_dispatch_failure_is_nonfatal_and_visible():
     assert "- name: Warn if Pages refresh dispatch failed" in text
     assert "steps.refresh-pages.outcome == 'failure'" in text
     assert "The runtime chain may continue." in text
+
+
+def test_runtime_v3_gate_accepts_predator_free_stage_one():
+    text = RUNTIME.read_text()
+
+    build = text.index("- name: Build verified curriculum state")
+    warn = text.index("- name: Warn if verified curriculum state could not be built")
+    build_block = text[build:warn]
+
+    assert "state['curriculum_version'] == 'neurofly-curriculum-v3'" in build_block
+    assert "final['curriculum_version'] == 'neurofly-curriculum-v3'" in build_block
+    assert "final['curriculum_stage_name'] == 'full-maze-foraging'" in build_block
+    assert "if stage == 1:" in build_block
+    assert "assert enemies == 0" in build_block
+    assert "assert enemies >= 1" in build_block
+    assert "state['curriculum_version'] == 'neurofly-curriculum-v2'" not in build_block
+
+
+def test_runtime_refuses_stale_state_publish_when_main_advanced():
+    text = RUNTIME.read_text()
+
+    publish = text.index("- name: Publish latest verified curriculum trajectory to main")
+    warn = text.index("- name: Warn if verified state could not be published")
+    publish_block = text[publish:warn]
+
+    assert 'RUN_SOURCE_SHA="$GITHUB_SHA"' in publish_block
+    assert 'CURRENT_AUTHORITY_SHA="$(git rev-parse "origin/$AUTHORITY_BRANCH")"' in publish_block
+    assert 'if [ "$CURRENT_AUTHORITY_SHA" != "$RUN_SOURCE_SHA" ]; then' in publish_block
+    assert "skip stale verified-state publish" in publish_block
+    assert "exit 1" in publish_block
+    assert publish_block.index("CURRENT_AUTHORITY_SHA=") < publish_block.index("git checkout -B")

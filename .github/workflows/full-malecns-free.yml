@@ -117,7 +117,7 @@ jobs:
           assert state['source_receipt_schema'] == 'neurofly-self-training-v3'
           assert state['goal'] == 'maze_cleared'
           assert state['curriculum'] is True
-          assert state['curriculum_version'] == 'neurofly-curriculum-v2'
+          assert state['curriculum_version'] == 'neurofly-curriculum-v3'
           assert state['olfaction_model'] == 'neurofly-virtual-olfaction-v1'
           assert int(state['world_states_seen']) > 0
           assert state['trajectory']
@@ -155,9 +155,15 @@ jobs:
           stage = int(final['curriculum_stage'])
           assert 1 <= stage <= 4
           assert final['curriculum_stage_name']
+          assert final['curriculum_version'] == 'neurofly-curriculum-v3'
           assert int(final.get('total_world_ticks', 0)) > 0
           assert final.get('olfaction', {}).get('model') == 'neurofly-virtual-olfaction-v1'
-          assert len(final.get('enemies', [])) >= 1
+          enemies = len(final.get('enemies', []))
+          if stage == 1:
+              assert final['curriculum_stage_name'] == 'full-maze-foraging'
+              assert enemies == 0
+          else:
+              assert enemies >= 1
           print(
               'CURRICULUM_V3_OLFACTION_GATE_PASS',
               state['source_receipt_sha256'],
@@ -183,10 +189,16 @@ jobs:
         continue-on-error: true
         run: |
           AUTHORITY_BRANCH=main
+          RUN_SOURCE_SHA="$GITHUB_SHA"
           cp site/malecns-state.json /tmp/neurofly-malecns-state.json
           git config user.name "neurofly-bot"
           git config user.email "neurofly-bot@users.noreply.github.com"
           git fetch origin "$AUTHORITY_BRANCH"
+          CURRENT_AUTHORITY_SHA="$(git rev-parse "origin/$AUTHORITY_BRANCH")"
+          if [ "$CURRENT_AUTHORITY_SHA" != "$RUN_SOURCE_SHA" ]; then
+            echo "::warning::Authority main advanced during this training run; skip stale verified-state publish. run_source=${RUN_SOURCE_SHA} current_main=${CURRENT_AUTHORITY_SHA}"
+            exit 1
+          fi
           git checkout -B "$AUTHORITY_BRANCH" "origin/$AUTHORITY_BRANCH"
           cp /tmp/neurofly-malecns-state.json site/malecns-state.json
           git add site/malecns-state.json
