@@ -19,8 +19,10 @@ VECTORS = {
     "DOWN": (0, 1),
     "LEFT": (-1, 0),
 }
-ENEMY_NAVIGATION_POLICY = "maze-shortest-path-v2"
-ENEMY_PURSUIT_PROBABILITY = 0.90
+ENEMY_NAVIGATION_POLICY = "maze-intercept-pursuit-v3"
+ENEMY_PURSUIT_PROBABILITY = 0.97
+ENEMY_INTERCEPT_WEIGHT = 0.45
+ENEMY_SECONDARY_INTERCEPT_WEIGHT = 0.75
 
 
 @dataclass(slots=True)
@@ -246,16 +248,29 @@ class MazeEnvironment:
                     queue.append(key)
         return distances
 
+    def _projected_fly_target(self, steps: int = 2) -> tuple[int, int]:
+        """Project the fly's current heading through open maze cells only."""
+        x, y = int(self.fly["x"]), int(self.fly["y"])
+        dx, dy = VECTORS[str(self.fly["dir"])]
+        for _ in range(max(0, int(steps))):
+            nx, ny = x + dx, y + dy
+            if not self.is_open(nx, ny):
+                break
+            x, y = nx, ny
+        return x, y
+
     def _move_enemies(self) -> None:
         if not self.enemies:
             return
 
-        distances = self._maze_distance_map(self.fly["x"], self.fly["y"])
-        fly_cell = (self.fly["x"], self.fly["y"])
+        fly_cell = (int(self.fly["x"]), int(self.fly["y"]))
+        projected_cell = self._projected_fly_target(2)
+        chase_distances = self._maze_distance_map(*fly_cell)
+        intercept_distances = self._maze_distance_map(*projected_cell)
         occupied = {(enemy["x"], enemy["y"]) for enemy in self.enemies}
         unreachable = self.cols * self.rows * 4
 
-        for enemy in self.enemies:
+        for index, enemy in enumerate(self.enemies):
             current = (enemy["x"], enemy["y"])
             occupied.discard(current)
             options = self.neighbors(enemy["x"], enemy["y"])
@@ -270,16 +285,34 @@ class MazeEnvironment:
                 occupied.add(current)
                 continue
 
-            def route_distance(item: tuple[str, int, int]) -> int:
-                return distances.get((item[1], item[2]), unreachable)
+            def chase_distance(item: tuple[str, int, int]) -> int:
+                return chase_distances.get((item[1], item[2]), unreachable)
 
             flee = self.power_ticks > 0
-            target_distance = (
-                max(route_distance(item) for item in options)
-                if flee
-                else min(route_distance(item) for item in options)
-            )
-            best = [item for item in options if route_distance(item) == target_distance]
+            if flee:
+                target_score = max(chase_distance(item) for item in options)
+                best = [item for item in options if chase_distance(item) == target_score]
+            else:
+                intercept_weight = (
+                    ENEMY_SECONDARY_INTERCEPT_WEIGHT
+                    if len(self.enemies) > 1 and index % 2 == 1
+                    else ENEMY_INTERCEPT_WEIGHT
+                )
+
+                def pursuit_score(item: tuple[str, int, int]) -> float:
+                    chase = chase_distances.get((item[1], item[2]), unreachable)
+                    intercept = intercept_distances.get((item[1], item[2]), unreachable)
+                    return (
+                        (1.0 - intercept_weight) * float(chase)
+                        + intercept_weight * float(intercept)
+                    )
+
+                target_score = min(pursuit_score(item) for item in options)
+                best = [
+                    item
+                    for item in options
+                    if abs(pursuit_score(item) - target_score) <= 1e-12
+                ]
 
             if self.rng.random() < ENEMY_PURSUIT_PROBABILITY:
                 pick = self.rng.choice(best)
@@ -380,6 +413,8 @@ class MazeEnvironment:
             "demo_action": self.demo_action(),
             "enemy_navigation_policy": ENEMY_NAVIGATION_POLICY,
             "enemy_pursuit_probability": ENEMY_PURSUIT_PROBABILITY,
+            "enemy_intercept_weight": ENEMY_INTERCEPT_WEIGHT,
+            "enemy_secondary_intercept_weight": ENEMY_SECONDARY_INTERCEPT_WEIGHT,
         }
         if include_grid:
             snapshot["grid"] = ["".join(row) for row in self.grid]
