@@ -90,9 +90,9 @@ def test_repeated_stall_uses_nondirectional_stimulus_without_steering() -> None:
     env = CurriculumMazeEnvironment(seed=109)
     start = dict(env.fly)
 
-    for step in range(1, STALL_STIMULUS_AFTER + 1):
+    for step in range(1, STALL_STIMULUS_AFTER + 3):
         env.agent_step("HOLD", move_enemies=False)
-        expected = "aversive" if step == STALL_STIMULUS_AFTER else "none"
+        expected = "aversive" if step >= STALL_STIMULUS_AFTER else "none"
         assert env.reinforcement() == expected
 
     state = env.snapshot()

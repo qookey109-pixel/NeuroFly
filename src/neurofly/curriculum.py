@@ -11,9 +11,9 @@ CURRICULUM_VERSION = "neurofly-curriculum-v4"
 ACTION_AUTONOMY_POLICY = "neurofly-sensory-only-action-autonomy-v1"
 ANTI_STALL_POLICY = "neurofly-stall-observation-only-v2"
 ANTI_STALL_STATIONARY_LIMIT = 2
-STALL_STIMULUS_POLICY = "neurofly-nondirectional-stall-aversive-v1"
+STALL_STIMULUS_POLICY = "neurofly-nondirectional-stall-aversive-v2"
 STALL_STIMULUS_AFTER = 4
-STALL_STIMULUS_INTERVAL = 4
+STALL_STIMULUS_INTERVAL = 1
 
 
 @dataclass(frozen=True)
