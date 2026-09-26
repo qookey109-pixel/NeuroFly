@@ -160,6 +160,7 @@ jobs:
           assert final.get('olfaction', {}).get('model') == 'neurofly-virtual-olfaction-v1'
           assert final.get('action_autonomy_policy') == 'neurofly-sensory-only-action-autonomy-v1'
           assert final.get('direct_action_override_enabled') is False
+          assert final.get('stall_stimulus_policy') == 'neurofly-nondirectional-stall-aversive-v1'
           decision_states = [
               sample for sample in state['trajectory']
               if sample.get('decision_applied') is True
