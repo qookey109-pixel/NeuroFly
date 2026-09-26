@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from neurofly.brain_runtime import (
+    DANGER_ODOR_CURRENT_GAIN,
+    FOOD_ODOR_CURRENT_GAIN,
     WALKING_DECODER,
     WALKING_DRIVE_TYPE,
     WALKING_FORWARD_TYPE,
     WALKING_STEERING_THRESHOLD_HZ,
     WALKING_STEERING_TYPE,
     _distributed_pulse_windows,
+    _scaled_odor_current,
     _temporal_danger_levels,
     _temporal_food_levels,
     _walking_action,
@@ -24,6 +27,11 @@ from neurofly.curriculum import (
     CurriculumMazeEnvironment,
 )
 from neurofly.goal_training import GoalMazeEnvironment
+from neurofly.maze_runtime import (
+    ENEMY_NAVIGATION_POLICY,
+    ENEMY_PURSUIT_PROBABILITY,
+    MazeEnvironment,
+)
 from neurofly.olfaction import DANGER_ORN_TYPE, FOOD_ORN_TYPE, OLFACTION_MODEL, virtual_olfaction
 from neurofly.site_state import _digest_json, build_site_state
 from neurofly.training import _public_goal_state
@@ -167,6 +175,57 @@ def test_temporal_danger_gradient_amplifies_approach_and_relaxes_retreat() -> No
     assert falling_delta < 0
     assert falling_left < 0.20
     assert falling_right < 0.40
+
+
+def test_danger_sensory_current_has_priority_over_food_at_equal_intensity() -> None:
+    food_current = _scaled_odor_current(12.0, 0.75, FOOD_ODOR_CURRENT_GAIN)
+    danger_current = _scaled_odor_current(12.0, 0.75, DANGER_ODOR_CURRENT_GAIN)
+
+    assert FOOD_ODOR_CURRENT_GAIN == 1.0
+    assert DANGER_ODOR_CURRENT_GAIN == 1.6
+    assert danger_current > food_current
+
+
+class _AlwaysPursueRng:
+    def random(self) -> float:
+        return 0.0
+
+    def choice(self, values):
+        return values[0]
+
+
+def test_predator_uses_true_maze_shortest_path_instead_of_manhattan_greed() -> None:
+    env = MazeEnvironment(seed=109)
+    env.fly = {"x": 1, "y": 1, "dir": "RIGHT"}
+    env.enemies = [{"x": env.cols - 2, "y": env.rows - 2}]
+    env.rng = _AlwaysPursueRng()
+
+    distances = env._maze_distance_map(env.fly["x"], env.fly["y"])
+    before = distances[(env.enemies[0]["x"], env.enemies[0]["y"])]
+
+    env._move_enemies()
+
+    after = distances[(env.enemies[0]["x"], env.enemies[0]["y"])]
+    assert after == before - 1
+    state = env.snapshot()
+    assert state["enemy_navigation_policy"] == ENEMY_NAVIGATION_POLICY
+    assert ENEMY_NAVIGATION_POLICY == "maze-shortest-path-v2"
+    assert ENEMY_PURSUIT_PROBABILITY == 0.90
+
+
+def test_multiple_predators_do_not_stack_when_alternate_open_cells_exist() -> None:
+    env = MazeEnvironment(seed=109)
+    env.fly = {"x": 1, "y": 1, "dir": "RIGHT"}
+    env.enemies = [
+        {"x": 16, "y": 12},
+        {"x": 17, "y": 12},
+    ]
+    env.rng = _AlwaysPursueRng()
+
+    env._move_enemies()
+
+    positions = [(enemy["x"], enemy["y"]) for enemy in env.enemies]
+    assert len(set(positions)) == len(positions)
 
 
 def test_walking_decoder_holds_only_without_walking_dn_activity() -> None:

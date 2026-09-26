@@ -19,6 +19,8 @@ VECTORS = {
     "DOWN": (0, 1),
     "LEFT": (-1, 0),
 }
+ENEMY_NAVIGATION_POLICY = "maze-shortest-path-v2"
+ENEMY_PURSUIT_PROBABILITY = 0.90
 
 
 @dataclass(slots=True)
@@ -227,18 +229,64 @@ class MazeEnvironment:
         if self.is_open(nx, ny):
             self.fly["x"], self.fly["y"] = nx, ny
 
+    def _maze_distance_map(self, target_x: int, target_y: int) -> dict[tuple[int, int], int]:
+        """Return true shortest-path distances through the maze to a target cell."""
+        target = (int(target_x), int(target_y))
+        if not self.is_open(*target):
+            return {}
+        distances = {target: 0}
+        queue: deque[tuple[int, int]] = deque([target])
+        while queue:
+            x, y = queue.popleft()
+            next_distance = distances[(x, y)] + 1
+            for _, nx, ny in self.neighbors(x, y):
+                key = (nx, ny)
+                if key not in distances:
+                    distances[key] = next_distance
+                    queue.append(key)
+        return distances
+
     def _move_enemies(self) -> None:
+        if not self.enemies:
+            return
+
+        distances = self._maze_distance_map(self.fly["x"], self.fly["y"])
+        fly_cell = (self.fly["x"], self.fly["y"])
+        occupied = {(enemy["x"], enemy["y"]) for enemy in self.enemies}
+        unreachable = self.cols * self.rows * 4
+
         for enemy in self.enemies:
+            current = (enemy["x"], enemy["y"])
+            occupied.discard(current)
             options = self.neighbors(enemy["x"], enemy["y"])
+            coordinated = [
+                item
+                for item in options
+                if (item[1], item[2]) == fly_cell or (item[1], item[2]) not in occupied
+            ]
+            if coordinated:
+                options = coordinated
             if not options:
+                occupied.add(current)
                 continue
 
-            def distance(item: tuple[str, int, int]) -> int:
-                return abs(item[1] - self.fly["x"]) + abs(item[2] - self.fly["y"])
+            def route_distance(item: tuple[str, int, int]) -> int:
+                return distances.get((item[1], item[2]), unreachable)
 
-            options.sort(key=distance, reverse=self.power_ticks > 0)
-            pick = options[0] if self.rng.random() < 0.72 else self.rng.choice(options)
+            flee = self.power_ticks > 0
+            target_distance = (
+                max(route_distance(item) for item in options)
+                if flee
+                else min(route_distance(item) for item in options)
+            )
+            best = [item for item in options if route_distance(item) == target_distance]
+
+            if self.rng.random() < ENEMY_PURSUIT_PROBABILITY:
+                pick = self.rng.choice(best)
+            else:
+                pick = self.rng.choice(options)
             enemy["x"], enemy["y"] = pick[1], pick[2]
+            occupied.add((enemy["x"], enemy["y"]))
 
     def _collision(self) -> dict[str, int] | None:
         return next(
@@ -330,6 +378,8 @@ class MazeEnvironment:
             "survival_seconds": round(time.monotonic() - self.started_monotonic, 1),
             "reinforcement": self.reinforcement(),
             "demo_action": self.demo_action(),
+            "enemy_navigation_policy": ENEMY_NAVIGATION_POLICY,
+            "enemy_pursuit_probability": ENEMY_PURSUIT_PROBABILITY,
         }
         if include_grid:
             snapshot["grid"] = ["".join(row) for row in self.grid]

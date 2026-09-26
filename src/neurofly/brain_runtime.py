@@ -80,6 +80,8 @@ FOOD_TEMPORAL_GAIN = 1.5
 FOOD_TEMPORAL_MAX_OFFSET = 0.20
 DANGER_TEMPORAL_GAIN = 2.0
 DANGER_TEMPORAL_MAX_OFFSET = 0.30
+FOOD_ODOR_CURRENT_GAIN = 1.0
+DANGER_ODOR_CURRENT_GAIN = 1.6
 WALKING_DECODER = "neurofly-walking-decoder-v3"
 WALKING_STEERING_TYPE = "DNa02"
 WALKING_DRIVE_TYPE = "DNb05"
@@ -158,6 +160,14 @@ def _temporal_danger_levels(
         delta,
         intensity,
     )
+
+
+def _scaled_odor_current(base_current: float, level: float, gain: float) -> float:
+    """Scale sensory current while keeping channel priority explicit and testable."""
+    base = float(base_current)
+    normalized = max(0.0, min(1.0, float(level)))
+    multiplier = max(0.0, float(gain))
+    return base * normalized * multiplier
 
 
 def _walking_action(
@@ -353,6 +363,10 @@ class MaleCNSBrain:
                 **danger_side_report,
             },
             "max_external_current": self.odor_current,
+            "food_current_gain": FOOD_ODOR_CURRENT_GAIN,
+            "danger_current_gain": DANGER_ODOR_CURRENT_GAIN,
+            "food_max_external_current": self.odor_current * FOOD_ODOR_CURRENT_GAIN,
+            "danger_max_external_current": self.odor_current * DANGER_ODOR_CURRENT_GAIN,
             "food_temporal_encoding": {
                 "gain": FOOD_TEMPORAL_GAIN,
                 "max_offset": FOOD_TEMPORAL_MAX_OFFSET,
@@ -525,11 +539,27 @@ class MaleCNSBrain:
         for indices, level in (
             (self.food_orn_left, levels["food_left"]),
             (self.food_orn_right, levels["food_right"]),
+        ):
+            current = _scaled_odor_current(
+                self.odor_current,
+                level,
+                FOOD_ODOR_CURRENT_GAIN,
+            )
+            if current > 0.0:
+                pulses.append((indices, current))
+        for indices, level in (
             (self.danger_orn_left, levels["danger_left"]),
             (self.danger_orn_right, levels["danger_right"]),
         ):
-            if level > 0.0 and self.odor_current > 0.0:
-                pulses.append((indices, self.odor_current * level))
+            current = _scaled_odor_current(
+                self.odor_current,
+                level,
+                DANGER_ODOR_CURRENT_GAIN,
+            )
+            if current > 0.0:
+                pulses.append((indices, current))
+        levels["food_current_gain"] = FOOD_ODOR_CURRENT_GAIN
+        levels["danger_current_gain"] = DANGER_ODOR_CURRENT_GAIN
         return pulses, levels
 
     def _visual_input(
