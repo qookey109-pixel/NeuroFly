@@ -82,6 +82,10 @@ DANGER_TEMPORAL_GAIN = 2.0
 DANGER_TEMPORAL_MAX_OFFSET = 0.30
 FOOD_ODOR_CURRENT_GAIN = 1.0
 DANGER_ODOR_CURRENT_GAIN = 1.6
+FOOD_FRONT_GAIN = 0.30
+FOOD_BACK_ATTENUATION = 0.20
+DANGER_FRONT_GAIN = 0.45
+DANGER_BACK_ATTENUATION = 0.05
 WALKING_DECODER = "neurofly-walking-decoder-v3"
 WALKING_STEERING_TYPE = "DNa02"
 WALKING_DRIVE_TYPE = "DNb05"
@@ -168,6 +172,22 @@ def _scaled_odor_current(base_current: float, level: float, gain: float) -> floa
     normalized = max(0.0, min(1.0, float(level)))
     multiplier = max(0.0, float(gain))
     return base * normalized * multiplier
+
+
+def _longitudinal_odor_level(
+    lateral_level: float,
+    front: float,
+    back: float,
+    *,
+    front_gain: float,
+    back_attenuation: float,
+) -> float:
+    """Modulate bilateral ORN strength with egocentric front/back concentration."""
+    base = max(0.0, min(1.0, float(lateral_level)))
+    front_level = max(0.0, min(1.0, float(front)))
+    back_level = max(0.0, min(1.0, float(back)))
+    factor = 1.0 + float(front_gain) * front_level - float(back_attenuation) * back_level
+    return max(0.0, min(1.0, base * factor))
 
 
 def _walking_action(
@@ -367,6 +387,16 @@ class MaleCNSBrain:
             "danger_current_gain": DANGER_ODOR_CURRENT_GAIN,
             "food_max_external_current": self.odor_current * FOOD_ODOR_CURRENT_GAIN,
             "danger_max_external_current": self.odor_current * DANGER_ODOR_CURRENT_GAIN,
+            "directional_encoding": {
+                "coordinate_frame": "egocentric-four-axis",
+                "left_right": "bilateral ORN concentration contrast",
+                "front_back": "longitudinal concentration modulation on bilateral ORNs",
+                "food_front_gain": FOOD_FRONT_GAIN,
+                "food_back_attenuation": FOOD_BACK_ATTENUATION,
+                "danger_front_gain": DANGER_FRONT_GAIN,
+                "danger_back_attenuation": DANGER_BACK_ATTENUATION,
+                "direction_command": False,
+            },
             "food_temporal_encoding": {
                 "gain": FOOD_TEMPORAL_GAIN,
                 "max_offset": FOOD_TEMPORAL_MAX_OFFSET,
@@ -474,12 +504,18 @@ class MaleCNSBrain:
                 "food_right": 0.0,
                 "food_raw_left": 0.0,
                 "food_raw_right": 0.0,
+                "food_front": 0.0,
+                "food_back": 0.0,
+                "food_longitudinal_bias": 0.0,
                 "food_temporal_delta": 0.0,
                 "food_temporal_trend": "steady",
                 "danger_left": 0.0,
                 "danger_right": 0.0,
                 "danger_raw_left": 0.0,
                 "danger_raw_right": 0.0,
+                "danger_front": 0.0,
+                "danger_back": 0.0,
+                "danger_longitudinal_bias": 0.0,
                 "danger_temporal_delta": 0.0,
                 "danger_temporal_trend": "steady",
             }
@@ -491,10 +527,26 @@ class MaleCNSBrain:
         danger = olfaction.get("danger") or {}
         raw_food_left = self._odor_level(food, "left")
         raw_food_right = self._odor_level(food, "right")
+        raw_food_front = self._odor_level(food, "front")
+        raw_food_back = self._odor_level(food, "back")
         food_left, food_right, food_delta, food_intensity = _temporal_food_levels(
             raw_food_left,
             raw_food_right,
             self._last_food_intensity,
+        )
+        food_left = _longitudinal_odor_level(
+            food_left,
+            raw_food_front,
+            raw_food_back,
+            front_gain=FOOD_FRONT_GAIN,
+            back_attenuation=FOOD_BACK_ATTENUATION,
+        )
+        food_right = _longitudinal_odor_level(
+            food_right,
+            raw_food_front,
+            raw_food_back,
+            front_gain=FOOD_FRONT_GAIN,
+            back_attenuation=FOOD_BACK_ATTENUATION,
         )
         self._last_food_intensity = food_intensity
         if food_delta > 0.005:
@@ -506,10 +558,26 @@ class MaleCNSBrain:
 
         raw_danger_left = self._odor_level(danger, "left")
         raw_danger_right = self._odor_level(danger, "right")
+        raw_danger_front = self._odor_level(danger, "front")
+        raw_danger_back = self._odor_level(danger, "back")
         danger_left, danger_right, danger_delta, danger_intensity = _temporal_danger_levels(
             raw_danger_left,
             raw_danger_right,
             self._last_danger_intensity,
+        )
+        danger_left = _longitudinal_odor_level(
+            danger_left,
+            raw_danger_front,
+            raw_danger_back,
+            front_gain=DANGER_FRONT_GAIN,
+            back_attenuation=DANGER_BACK_ATTENUATION,
+        )
+        danger_right = _longitudinal_odor_level(
+            danger_right,
+            raw_danger_front,
+            raw_danger_back,
+            front_gain=DANGER_FRONT_GAIN,
+            back_attenuation=DANGER_BACK_ATTENUATION,
         )
         self._last_danger_intensity = danger_intensity
         if danger_delta > 0.005:
@@ -524,6 +592,9 @@ class MaleCNSBrain:
             "food_right": food_right,
             "food_raw_left": raw_food_left,
             "food_raw_right": raw_food_right,
+            "food_front": raw_food_front,
+            "food_back": raw_food_back,
+            "food_longitudinal_bias": raw_food_front - raw_food_back,
             "food_temporal_delta": food_delta,
             "food_temporal_trend": food_trend,
             "food_intensity": food_intensity,
@@ -531,6 +602,9 @@ class MaleCNSBrain:
             "danger_right": danger_right,
             "danger_raw_left": raw_danger_left,
             "danger_raw_right": raw_danger_right,
+            "danger_front": raw_danger_front,
+            "danger_back": raw_danger_back,
+            "danger_longitudinal_bias": raw_danger_front - raw_danger_back,
             "danger_temporal_delta": danger_delta,
             "danger_temporal_trend": danger_trend,
             "danger_intensity": danger_intensity,
