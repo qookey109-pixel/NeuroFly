@@ -361,3 +361,121 @@ body {
   }
 }
 
+/* Interface V2.2 — compact experiment summary and reduce secondary telemetry.
+   Public HUD keeps only the fields useful for watching the autonomous maze run. */
+.hud-overlay-top-left {
+  min-width: 0;
+  padding: 7px 10px;
+}
+
+.hud-system-row strong {
+  font-size: .72rem;
+  letter-spacing: .055em;
+}
+
+.arena-dock {
+  grid-template-columns: 1fr 1fr;
+}
+
+.dock-tech {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.world-detail-section {
+  padding: 13px 14px 14px;
+}
+
+.compact-rail-heading {
+  padding-bottom: 9px;
+}
+
+.world-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 14px;
+  margin-top: 7px;
+}
+
+.summary-stat {
+  min-width: 0;
+  padding: 8px 0 7px;
+  border-bottom: 1px solid rgba(143, 242, 183, .09);
+}
+
+.summary-stat span {
+  display: block;
+  color: var(--lab-muted);
+  font-size: .65rem;
+  font-weight: 800;
+  letter-spacing: .035em;
+}
+
+.summary-stat strong {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--lab-text);
+  font-size: .83rem;
+  font-weight: 900;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summary-stat-primary {
+  border-bottom-color: rgba(216, 255, 115, .22);
+}
+
+.summary-stat-primary strong {
+  color: var(--lab-lime);
+  font-size: 1rem;
+  letter-spacing: -.02em;
+}
+
+.summary-stat-wide {
+  grid-column: 1 / -1;
+}
+
+.summary-stat-wide strong {
+  color: var(--lab-lime);
+  font-size: .95rem;
+}
+
+@media (max-width: 1180px) and (min-width: 901px) {
+  .arena-dock {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .world-summary-grid {
+    gap: 0 10px;
+  }
+
+  .summary-stat strong {
+    font-size: .78rem;
+  }
+
+  .summary-stat-primary strong {
+    font-size: .92rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .arena-dock {
+    grid-template-columns: 1fr;
+  }
+
+  .world-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .world-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-stat-wide {
+    grid-column: auto;
+  }
+}
+
