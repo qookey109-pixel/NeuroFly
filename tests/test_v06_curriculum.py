@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from neurofly.brain_runtime import (
     WALKING_DECODER,
+    WALKING_DRIVE_TYPE,
     WALKING_FORWARD_TYPE,
+    WALKING_STEERING_THRESHOLD_HZ,
     WALKING_STEERING_TYPE,
     _distributed_pulse_windows,
     _temporal_food_levels,
@@ -118,47 +120,59 @@ def test_walking_decoder_holds_only_without_walking_dn_activity() -> None:
     assert _walking_action(
         steering_left_hz=0.0,
         steering_right_hz=0.0,
-        forward_hz=0.0,
-        walking_spikes=0,
-        steering_threshold_hz=2.0,
+        steering_spikes=0,
+        drive_spikes=0,
+        steering_threshold_hz=WALKING_STEERING_THRESHOLD_HZ,
     ) == "HOLD"
 
 
-def test_walking_decoder_uses_dna02_difference_for_turning() -> None:
+def test_walking_decoder_uses_dna02_difference_for_strong_turning() -> None:
     assert _walking_action(
-        steering_left_hz=1.0,
-        steering_right_hz=5.0,
-        forward_hz=0.0,
-        walking_spikes=1,
-        steering_threshold_hz=2.0,
+        steering_left_hz=0.0,
+        steering_right_hz=40.0,
+        steering_spikes=2,
+        drive_spikes=3,
+        steering_threshold_hz=WALKING_STEERING_THRESHOLD_HZ,
     ) == "TURN_RIGHT"
     assert _walking_action(
-        steering_left_hz=5.0,
-        steering_right_hz=1.0,
-        forward_hz=0.0,
-        walking_spikes=1,
-        steering_threshold_hz=2.0,
+        steering_left_hz=40.0,
+        steering_right_hz=0.0,
+        steering_spikes=2,
+        drive_spikes=3,
+        steering_threshold_hz=WALKING_STEERING_THRESHOLD_HZ,
     ) == "TURN_LEFT"
 
 
-def test_walking_decoder_uses_dnp09_or_bilateral_activity_for_forward() -> None:
+def test_walking_decoder_v3_ignores_one_spike_equivalent_steering_jitter() -> None:
+    assert _walking_action(
+        steering_left_hz=0.0,
+        steering_right_hz=20.0,
+        steering_spikes=1,
+        drive_spikes=3,
+        steering_threshold_hz=WALKING_STEERING_THRESHOLD_HZ,
+    ) == "FORWARD"
+
+
+def test_walking_decoder_v3_requires_neural_drive_for_forward() -> None:
     assert _walking_action(
         steering_left_hz=0.0,
         steering_right_hz=0.0,
-        forward_hz=8.0,
-        walking_spikes=1,
-        steering_threshold_hz=2.0,
+        steering_spikes=0,
+        drive_spikes=1,
+        steering_threshold_hz=WALKING_STEERING_THRESHOLD_HZ,
     ) == "FORWARD"
     assert _walking_action(
-        steering_left_hz=4.0,
-        steering_right_hz=4.5,
-        forward_hz=0.0,
-        walking_spikes=2,
-        steering_threshold_hz=2.0,
-    ) == "FORWARD"
-    assert WALKING_DECODER == "neurofly-walking-decoder-v2"
+        steering_left_hz=0.0,
+        steering_right_hz=20.0,
+        steering_spikes=1,
+        drive_spikes=0,
+        steering_threshold_hz=WALKING_STEERING_THRESHOLD_HZ,
+    ) == "HOLD"
+    assert WALKING_DECODER == "neurofly-walking-decoder-v3"
     assert WALKING_STEERING_TYPE == "DNa02"
-    assert WALKING_FORWARD_TYPE == "DNp09"
+    assert WALKING_DRIVE_TYPE == "DNb05"
+    assert WALKING_FORWARD_TYPE == WALKING_DRIVE_TYPE
+    assert WALKING_STEERING_THRESHOLD_HZ == 30.0
 
 
 def test_high_frequency_stall_train_preserves_total_stimulus_budget() -> None:
@@ -428,10 +442,16 @@ def test_public_goal_state_preserves_v4_action_autonomy_evidence() -> None:
             "total_spikes": 123,
             "motor_decoder": WALKING_DECODER,
             "steering_type": WALKING_STEERING_TYPE,
+            "walking_drive_type": WALKING_DRIVE_TYPE,
             "forward_type": WALKING_FORWARD_TYPE,
             "left_hz": 4.0,
             "right_hz": 5.0,
             "difference_hz": 1.0,
+            "walking_drive_hz": 8.0,
+            "walking_drive_left_hz": 7.0,
+            "walking_drive_right_hz": 9.0,
+            "walking_drive_spikes": 2,
+            "steering_threshold_hz": WALKING_STEERING_THRESHOLD_HZ,
             "forward_hz": 8.0,
             "forward_left_hz": 7.0,
             "forward_right_hz": 9.0,
@@ -457,7 +477,11 @@ def test_public_goal_state_preserves_v4_action_autonomy_evidence() -> None:
     telemetry = public["brain"]["telemetry"]
     assert telemetry["motor_decoder"] == WALKING_DECODER
     assert telemetry["steering_type"] == WALKING_STEERING_TYPE
+    assert telemetry["walking_drive_type"] == WALKING_DRIVE_TYPE
     assert telemetry["forward_type"] == WALKING_FORWARD_TYPE
+    assert telemetry["walking_drive_hz"] == 8.0
+    assert telemetry["walking_drive_spikes"] == 2
+    assert telemetry["steering_threshold_hz"] == WALKING_STEERING_THRESHOLD_HZ
     assert telemetry["walking_spikes"] == 5
     assert telemetry["steering_spikes"] == 3
     assert telemetry["forward_spikes"] == 2
