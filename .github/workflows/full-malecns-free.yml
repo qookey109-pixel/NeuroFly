@@ -118,21 +118,32 @@ jobs:
           assert state['goal'] == 'maze_cleared'
           assert state['curriculum'] is True
           assert state['curriculum_version'] == 'neurofly-curriculum-v4'
-          assert state['olfaction_model'] == 'neurofly-virtual-olfaction-v1'
+          assert state['olfaction_model'] == 'neurofly-virtual-olfaction-v2'
           assert int(state['world_states_seen']) > 0
           assert state['trajectory']
           assert all(s['brain']['backend'] == 'malecns' for s in state['trajectory'])
           assert all(int(s['brain']['telemetry']['total_spikes']) > 0 for s in state['trajectory'])
           assert all(
-              s['brain']['telemetry']['olfaction_model'] == 'neurofly-virtual-olfaction-v1'
+              s['brain']['telemetry']['olfaction_model'] == 'neurofly-virtual-olfaction-v2'
               for s in state['trajectory']
           )
           assert all(
-              s.get('olfaction', {}).get('model') == 'neurofly-virtual-olfaction-v1'
+              'food_temporal_delta' in s['brain']['telemetry'].get('olfaction', {})
+              and 'food_raw_left' in s['brain']['telemetry'].get('olfaction', {})
+              and 'food_raw_right' in s['brain']['telemetry'].get('olfaction', {})
+              for s in state['trajectory']
+          )
+          assert all(
+              'source' not in s.get('olfaction', {}).get('food', {})
+              and 'source' not in s.get('olfaction', {}).get('danger', {})
+              for s in state['trajectory']
+          )
+          assert all(
+              s.get('olfaction', {}).get('model') == 'neurofly-virtual-olfaction-v2'
               for s in state['trajectory']
           )
           odor_report = state['olfaction']
-          assert odor_report['model'] == 'neurofly-virtual-olfaction-v1'
+          assert odor_report['model'] == 'neurofly-virtual-olfaction-v2'
           assert odor_report['food']['orn_type'] == 'ORN_DM1'
           assert odor_report['danger']['orn_type'] == 'ORN_DA2'
           for channel in ('food', 'danger'):
@@ -157,7 +168,7 @@ jobs:
           assert final['curriculum_stage_name']
           assert final['curriculum_version'] == 'neurofly-curriculum-v4'
           assert int(final.get('total_world_ticks', 0)) > 0
-          assert final.get('olfaction', {}).get('model') == 'neurofly-virtual-olfaction-v1'
+          assert final.get('olfaction', {}).get('model') == 'neurofly-virtual-olfaction-v2'
           assert final.get('action_autonomy_policy') == 'neurofly-sensory-only-action-autonomy-v1'
           assert final.get('direct_action_override_enabled') is False
           assert final.get('stall_stimulus_policy') == 'neurofly-nondirectional-stall-aversive-hf-v3'

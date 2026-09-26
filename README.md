@@ -43,6 +43,16 @@ fly still decides whether to hold, move forward or turn. If behavior needs
 to change further, the experiment must do so through reviewed sensory or
 reinforcement stimuli rather than direct action overrides.
 
+### Olfaction v2
+
+Food odor is now a continuous bilateral concentration field built from all
+remaining food sources rather than a switch to one strongest pellet. The field
+uses bounded Lp aggregation, increases left/right contrast without encoding a
+turn command, and adds a one-step temporal cue that represents whether appetitive
+odor is getting stronger, weaker or staying stable. Exact food/enemy source
+coordinates are not part of the olfactory sensory contract. MaleCNS still
+receives only sensory stimulation and chooses its own action.
+
 ## V0.4 — Full MaleCNS Smoke + Zero-Cost Runner
 
 V0.4 adds the operational boundary between "the code is connected" and "the full connectome actually ran", while keeping the default execution path at **zero cloud cost**.

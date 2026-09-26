@@ -76,6 +76,8 @@ def _bilateral_type_indices(np: Any, annotations: Any, neuron_type: str) -> tupl
 
 
 STALL_HIGH_FREQUENCY_PATTERN = "neurofly-hf-stall-pulse-train-v1"
+FOOD_TEMPORAL_GAIN = 1.5
+FOOD_TEMPORAL_MAX_OFFSET = 0.20
 
 
 def _distributed_pulse_windows(
@@ -102,6 +104,28 @@ def _distributed_pulse_windows(
         if end > start:
             windows.append((start, end))
     return windows
+
+
+def _temporal_food_levels(
+    left: float,
+    right: float,
+    previous_intensity: float | None,
+) -> tuple[float, float, float, float]:
+    """Encode whether appetitive odor is getting stronger or weaker over time."""
+    raw_left = max(0.0, min(1.0, float(left)))
+    raw_right = max(0.0, min(1.0, float(right)))
+    intensity = (raw_left + raw_right) / 2.0
+    delta = 0.0 if previous_intensity is None else intensity - float(previous_intensity)
+    offset = max(
+        -FOOD_TEMPORAL_MAX_OFFSET,
+        min(FOOD_TEMPORAL_MAX_OFFSET, delta * FOOD_TEMPORAL_GAIN),
+    )
+    return (
+        max(0.0, min(1.0, raw_left + offset)),
+        max(0.0, min(1.0, raw_right + offset)),
+        delta,
+        intensity,
+    )
 
 
 class DemoBrain:
@@ -187,6 +211,7 @@ class MaleCNSBrain:
         self.brain = VisualMemoryBrain()
         self.brain.weights_frozen = not self.learning
         self._last_visual_rgb: Any | None = None
+        self._last_food_intensity: float | None = None
 
         a = annotations(self.brain.ids)
         types = a.type.fillna("")
@@ -238,6 +263,11 @@ class MaleCNSBrain:
                 **danger_side_report,
             },
             "max_external_current": self.odor_current,
+            "food_temporal_encoding": {
+                "gain": FOOD_TEMPORAL_GAIN,
+                "max_offset": FOOD_TEMPORAL_MAX_OFFSET,
+                "direction_command": False,
+            },
             "validated": False,
         }
         self.vision_report = {
@@ -294,9 +324,14 @@ class MaleCNSBrain:
     ) -> tuple[list[tuple[Any, float]], dict[str, Any]]:
         olfaction = {} if context is None else (context.get("olfaction") or {})
         if not olfaction:
+            self._last_food_intensity = None
             levels = {
                 "food_left": 0.0,
                 "food_right": 0.0,
+                "food_raw_left": 0.0,
+                "food_raw_right": 0.0,
+                "food_temporal_delta": 0.0,
+                "food_temporal_trend": "steady",
                 "danger_left": 0.0,
                 "danger_right": 0.0,
             }
@@ -306,9 +341,28 @@ class MaleCNSBrain:
 
         food = olfaction.get("food") or {}
         danger = olfaction.get("danger") or {}
+        raw_food_left = self._odor_level(food, "left")
+        raw_food_right = self._odor_level(food, "right")
+        food_left, food_right, food_delta, food_intensity = _temporal_food_levels(
+            raw_food_left,
+            raw_food_right,
+            self._last_food_intensity,
+        )
+        self._last_food_intensity = food_intensity
+        if food_delta > 0.005:
+            food_trend = "rising"
+        elif food_delta < -0.005:
+            food_trend = "falling"
+        else:
+            food_trend = "steady"
         levels = {
-            "food_left": self._odor_level(food, "left"),
-            "food_right": self._odor_level(food, "right"),
+            "food_left": food_left,
+            "food_right": food_right,
+            "food_raw_left": raw_food_left,
+            "food_raw_right": raw_food_right,
+            "food_temporal_delta": food_delta,
+            "food_temporal_trend": food_trend,
+            "food_intensity": food_intensity,
             "danger_left": self._odor_level(danger, "left"),
             "danger_right": self._odor_level(danger, "right"),
         }

@@ -18,6 +18,7 @@ from neurofly.environment_adapter import (
 )
 from neurofly.light_chase import LightChaseEnvironment
 from neurofly.maze_runtime import MazeEnvironment
+from neurofly.olfaction import OLFACTION_MODEL
 
 
 CONTRACT = Path("data/environment_adapter_contract_v01.json")
@@ -122,7 +123,7 @@ def test_maze_adapter_strips_world_truth_from_neural_context() -> None:
     assert context["environment_model"] == "neurofly-maze-chase-v0.1"
     assert context["vision"]["frame_is_egocentric"] is True
     assert context["vision"]["privileged_geometry_exposed"] is False
-    assert context["olfaction"]["model"] == "neurofly-virtual-olfaction-v1"
+    assert context["olfaction"]["model"] == OLFACTION_MODEL
 
     for forbidden in {
         "grid",
