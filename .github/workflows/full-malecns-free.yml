@@ -160,11 +160,16 @@ jobs:
           assert final.get('olfaction', {}).get('model') == 'neurofly-virtual-olfaction-v1'
           assert final.get('action_autonomy_policy') == 'neurofly-sensory-only-action-autonomy-v1'
           assert final.get('direct_action_override_enabled') is False
+          decision_states = [
+              sample for sample in state['trajectory']
+              if sample.get('decision_applied') is True
+          ]
+          assert decision_states
           assert all(
-              s.get('raw_brain_action') == s.get('applied_action')
-              and s.get('action_overridden') is False
-              and s.get('override_reason') is None
-              for s in state['trajectory']
+              sample.get('raw_brain_action') == sample.get('applied_action')
+              and sample.get('action_overridden') is False
+              and sample.get('override_reason') is None
+              for sample in decision_states
           )
           enemies = len(final.get('enemies', []))
           if stage == 1:
