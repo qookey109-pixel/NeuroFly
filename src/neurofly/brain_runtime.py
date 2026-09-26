@@ -78,9 +78,14 @@ def _bilateral_type_indices(np: Any, annotations: Any, neuron_type: str) -> tupl
 STALL_HIGH_FREQUENCY_PATTERN = "neurofly-hf-stall-pulse-train-v1"
 FOOD_TEMPORAL_GAIN = 1.5
 FOOD_TEMPORAL_MAX_OFFSET = 0.20
-WALKING_DECODER = "neurofly-walking-decoder-v2"
+WALKING_DECODER = "neurofly-walking-decoder-v3"
 WALKING_STEERING_TYPE = "DNa02"
-WALKING_FORWARD_TYPE = "DNp09"
+WALKING_DRIVE_TYPE = "DNb05"
+# Compatibility alias for downstream telemetry consumers. V3 treats this as
+# a locomotor-drive population proxy, not as a claim that DNb05 is a sole
+# forward command neuron.
+WALKING_FORWARD_TYPE = WALKING_DRIVE_TYPE
+WALKING_STEERING_THRESHOLD_HZ = 30.0
 
 
 def _distributed_pulse_windows(
@@ -135,19 +140,25 @@ def _walking_action(
     *,
     steering_left_hz: float,
     steering_right_hz: float,
-    forward_hz: float,
-    walking_spikes: int,
+    steering_spikes: int,
+    drive_spikes: int,
     steering_threshold_hz: float,
 ) -> str:
-    """Decode walking DNs without an unrelated binary hold gate."""
-    if int(walking_spikes) <= 0:
+    """Decode walking from neural activity only, without direct action forcing."""
+    if int(drive_spikes) <= 0 and int(steering_spikes) <= 0:
         return "HOLD"
+
     difference = float(steering_right_hz) - float(steering_left_hz)
-    if difference >= float(steering_threshold_hz):
+    if int(steering_spikes) > 0 and difference >= float(steering_threshold_hz):
         return "TURN_RIGHT"
-    if difference <= -float(steering_threshold_hz):
+    if int(steering_spikes) > 0 and difference <= -float(steering_threshold_hz):
         return "TURN_LEFT"
-    return "FORWARD"
+
+    # V3 requires a locomotor-drive population spike before emitting FORWARD.
+    # DNa02-only activity can steer, but it cannot manufacture forward motion.
+    if int(drive_spikes) > 0:
+        return "FORWARD"
+    return "HOLD"
 
 
 class DemoBrain:
@@ -205,7 +216,7 @@ class MaleCNSBrain:
         pulse_ms: float = 20.0,
         pulse_current: float = 20.0,
         odor_current: float = 12.0,
-        decoder_threshold_hz: float = 2.0,
+        decoder_threshold_hz: float = WALKING_STEERING_THRESHOLD_HZ,
         learning: bool = True,
         checkpoint: str | Path | None = None,
     ) -> None:
@@ -243,22 +254,22 @@ class MaleCNSBrain:
             steering_side_report,
         ) = _bilateral_type_indices(np, a, WALKING_STEERING_TYPE)
         (
-            self.forward_left,
-            self.forward_right,
-            forward_side_report,
-        ) = _bilateral_type_indices(np, a, WALKING_FORWARD_TYPE)
-        self.forward = np.unique(
-            np.concatenate((self.forward_left, self.forward_right))
+            self.walking_drive_left,
+            self.walking_drive_right,
+            walking_drive_side_report,
+        ) = _bilateral_type_indices(np, a, WALKING_DRIVE_TYPE)
+        self.walking_drive = np.unique(
+            np.concatenate((self.walking_drive_left, self.walking_drive_right))
         )
         if (
             not len(self.steering_left)
             or not len(self.steering_right)
-            or not len(self.forward)
+            or not len(self.walking_drive)
         ):
             raise RuntimeError(
                 "Required walking decoder annotations are missing: "
                 f"{WALKING_STEERING_TYPE}={steering_side_report}; "
-                f"{WALKING_FORWARD_TYPE}={forward_side_report}"
+                f"{WALKING_DRIVE_TYPE}={walking_drive_side_report}"
             )
 
         self.food_orn_left, self.food_orn_right, food_side_report = _bilateral_type_indices(
@@ -283,17 +294,23 @@ class MaleCNSBrain:
                 f"{FOOD_ORN_TYPE}={food_side_report}; {DANGER_ORN_TYPE}={danger_side_report}"
             )
 
+        walking_drive_ids = [str(self.brain.ids[i]) for i in self.walking_drive]
         self.identities = {
             "steering_left": [str(self.brain.ids[i]) for i in self.steering_left],
             "steering_right": [str(self.brain.ids[i]) for i in self.steering_right],
-            "forward": [str(self.brain.ids[i]) for i in self.forward],
+            "walking_drive": walking_drive_ids,
+            # Backward-compatible telemetry alias.
+            "forward": walking_drive_ids,
         }
         self.motor_report = {
             "decoder": WALKING_DECODER,
             "steering_type": WALKING_STEERING_TYPE,
+            "walking_drive_type": WALKING_DRIVE_TYPE,
             "forward_type": WALKING_FORWARD_TYPE,
             "steering": steering_side_report,
-            "forward": forward_side_report,
+            "walking_drive": walking_drive_side_report,
+            "forward": walking_drive_side_report,
+            "steering_threshold_hz": self.decoder_threshold_hz,
             "dnpe017_gate_used": False,
             "direct_action_command": False,
         }
@@ -341,43 +358,50 @@ class MaleCNSBrain:
         steering_right_hz = float(np.mean(counts[self.steering_right]) / seconds)
         steering_difference_hz = steering_right_hz - steering_left_hz
 
-        forward_left_hz = (
-            float(np.mean(counts[self.forward_left]) / seconds)
-            if len(self.forward_left)
+        walking_drive_left_hz = (
+            float(np.mean(counts[self.walking_drive_left]) / seconds)
+            if len(self.walking_drive_left)
             else 0.0
         )
-        forward_right_hz = (
-            float(np.mean(counts[self.forward_right]) / seconds)
-            if len(self.forward_right)
+        walking_drive_right_hz = (
+            float(np.mean(counts[self.walking_drive_right]) / seconds)
+            if len(self.walking_drive_right)
             else 0.0
         )
-        forward_hz = float(np.mean(counts[self.forward]) / seconds)
+        walking_drive_hz = float(np.mean(counts[self.walking_drive]) / seconds)
 
         steering_spikes = int(
             counts[self.steering_left].sum() + counts[self.steering_right].sum()
         )
-        forward_spikes = int(counts[self.forward].sum())
-        walking_spikes = steering_spikes + forward_spikes
+        walking_drive_spikes = int(counts[self.walking_drive].sum())
+        walking_spikes = steering_spikes + walking_drive_spikes
 
         action = _walking_action(
             steering_left_hz=steering_left_hz,
             steering_right_hz=steering_right_hz,
-            forward_hz=forward_hz,
-            walking_spikes=walking_spikes,
+            steering_spikes=steering_spikes,
+            drive_spikes=walking_drive_spikes,
             steering_threshold_hz=self.decoder_threshold_hz,
         )
         return action, {
             "motor_decoder": WALKING_DECODER,
             "steering_type": WALKING_STEERING_TYPE,
+            "walking_drive_type": WALKING_DRIVE_TYPE,
             "forward_type": WALKING_FORWARD_TYPE,
             "left_hz": steering_left_hz,
             "right_hz": steering_right_hz,
             "difference_hz": steering_difference_hz,
-            "forward_hz": forward_hz,
-            "forward_left_hz": forward_left_hz,
-            "forward_right_hz": forward_right_hz,
+            "walking_drive_hz": walking_drive_hz,
+            "walking_drive_left_hz": walking_drive_left_hz,
+            "walking_drive_right_hz": walking_drive_right_hz,
+            "walking_drive_spikes": walking_drive_spikes,
+            "steering_threshold_hz": self.decoder_threshold_hz,
+            # Backward-compatible aliases retained for site-state consumers.
+            "forward_hz": walking_drive_hz,
+            "forward_left_hz": walking_drive_left_hz,
+            "forward_right_hz": walking_drive_right_hz,
             "steering_spikes": steering_spikes,
-            "forward_spikes": forward_spikes,
+            "forward_spikes": walking_drive_spikes,
             "walking_spikes": walking_spikes,
             "dnpe017_gate_used": False,
             "cell_ids": self.identities,
