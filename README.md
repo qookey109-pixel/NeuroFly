@@ -33,9 +33,11 @@ The action mapping is an engineered NeuroFly interface, not a biological claim a
 The decoded MaleCNS locomotor action is authoritative. NeuroFly may change only the
 environmental sensory/reinforcement inputs presented to the agent; it must not
 replace a decoded `HOLD`, `FORWARD`, `TURN_LEFT` or `TURN_RIGHT` with a
-hand-authored movement. Stall detection is observation-only telemetry. If behavior
-needs to change, the experiment must do so through reviewed stimuli rather than
-direct action overrides.
+hand-authored movement. Stall detection never changes the decoded action. Under curriculum v4, sustained
+translational stalls may produce a bounded, non-directional aversive stimulus;
+the fly still decides whether to hold, move forward or turn. If behavior needs
+to change further, the experiment must do so through reviewed sensory or
+reinforcement stimuli rather than direct action overrides.
 
 ## V0.4 — Full MaleCNS Smoke + Zero-Cost Runner
 
