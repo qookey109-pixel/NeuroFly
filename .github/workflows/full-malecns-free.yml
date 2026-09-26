@@ -117,7 +117,7 @@ jobs:
           assert state['source_receipt_schema'] == 'neurofly-self-training-v3'
           assert state['goal'] == 'maze_cleared'
           assert state['curriculum'] is True
-          assert state['curriculum_version'] == 'neurofly-curriculum-v3'
+          assert state['curriculum_version'] == 'neurofly-curriculum-v4'
           assert state['olfaction_model'] == 'neurofly-virtual-olfaction-v1'
           assert int(state['world_states_seen']) > 0
           assert state['trajectory']
@@ -155,9 +155,17 @@ jobs:
           stage = int(final['curriculum_stage'])
           assert 1 <= stage <= 4
           assert final['curriculum_stage_name']
-          assert final['curriculum_version'] == 'neurofly-curriculum-v3'
+          assert final['curriculum_version'] == 'neurofly-curriculum-v4'
           assert int(final.get('total_world_ticks', 0)) > 0
           assert final.get('olfaction', {}).get('model') == 'neurofly-virtual-olfaction-v1'
+          assert final.get('action_autonomy_policy') == 'neurofly-sensory-only-action-autonomy-v1'
+          assert final.get('direct_action_override_enabled') is False
+          assert all(
+              s.get('raw_brain_action') == s.get('applied_action')
+              and s.get('action_overridden') is False
+              and s.get('override_reason') is None
+              for s in state['trajectory']
+          )
           enemies = len(final.get('enemies', []))
           if stage == 1:
               assert final['curriculum_stage_name'] == 'full-maze-foraging'
@@ -165,7 +173,7 @@ jobs:
           else:
               assert enemies >= 1
           print(
-              'CURRICULUM_V3_OLFACTION_GATE_PASS',
+              'CURRICULUM_V4_SENSORY_ONLY_GATE_PASS',
               state['source_receipt_sha256'],
               'stage=', stage,
               'stage_name=', final['curriculum_stage_name'],
