@@ -426,6 +426,20 @@ def test_public_goal_state_preserves_v4_action_autonomy_evidence() -> None:
         "telemetry": {
             "brain_ms": 500.0,
             "total_spikes": 123,
+            "motor_decoder": WALKING_DECODER,
+            "steering_type": WALKING_STEERING_TYPE,
+            "forward_type": WALKING_FORWARD_TYPE,
+            "left_hz": 4.0,
+            "right_hz": 5.0,
+            "difference_hz": 1.0,
+            "forward_hz": 8.0,
+            "forward_left_hz": 7.0,
+            "forward_right_hz": 9.0,
+            "steering_spikes": 3,
+            "forward_spikes": 2,
+            "walking_spikes": 5,
+            "dnpe017_gate_used": False,
+            "cell_ids": {"steering_left": ["1"], "steering_right": ["2"], "forward": ["3"]},
         },
     }
 
@@ -440,6 +454,14 @@ def test_public_goal_state_preserves_v4_action_autonomy_evidence() -> None:
     assert public["raw_brain_action"] == public["applied_action"]
     assert public["action_overridden"] is False
     assert public["override_reason"] is None
+    telemetry = public["brain"]["telemetry"]
+    assert telemetry["motor_decoder"] == WALKING_DECODER
+    assert telemetry["steering_type"] == WALKING_STEERING_TYPE
+    assert telemetry["forward_type"] == WALKING_FORWARD_TYPE
+    assert telemetry["walking_spikes"] == 5
+    assert telemetry["steering_spikes"] == 3
+    assert telemetry["forward_spikes"] == 2
+    assert telemetry["dnpe017_gate_used"] is False
 
 
 def test_v3_curriculum_receipt_is_verified_for_site_state() -> None:
