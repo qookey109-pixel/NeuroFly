@@ -32,7 +32,7 @@ def main() -> None:
     rows = {}
     for neuron_type in CANDIDATES:
         mask = types.eq(neuron_type)
-        indices = [int(i) for i in table.index[mask].tolist()]
+        indices = [int(i) for i in __import__("numpy").flatnonzero(mask.to_numpy()).tolist()]
         cells = []
         for i in indices:
             cells.append(
