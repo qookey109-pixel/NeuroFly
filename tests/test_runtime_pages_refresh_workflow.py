@@ -79,6 +79,9 @@ def test_runtime_v4_gate_accepts_predator_free_stage_one_and_sensory_only_action
     assert "forward_type') == 'DNb05'" in build_block
     assert "steering_threshold_hz', -1.0)) == 30.0" in build_block
     assert "walking_drive_spikes" in build_block
+    assert "danger_temporal_delta" in build_block
+    assert "danger_raw_left" in build_block
+    assert "danger_raw_right" in build_block
     assert "neurofly-walking-decoder-v2" not in build_block
     assert "forward_type') == 'DNp09'" not in build_block
 
