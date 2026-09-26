@@ -78,6 +78,8 @@ def _bilateral_type_indices(np: Any, annotations: Any, neuron_type: str) -> tupl
 STALL_HIGH_FREQUENCY_PATTERN = "neurofly-hf-stall-pulse-train-v1"
 FOOD_TEMPORAL_GAIN = 1.5
 FOOD_TEMPORAL_MAX_OFFSET = 0.20
+DANGER_TEMPORAL_GAIN = 2.0
+DANGER_TEMPORAL_MAX_OFFSET = 0.30
 WALKING_DECODER = "neurofly-walking-decoder-v3"
 WALKING_STEERING_TYPE = "DNa02"
 WALKING_DRIVE_TYPE = "DNb05"
@@ -127,6 +129,28 @@ def _temporal_food_levels(
     offset = max(
         -FOOD_TEMPORAL_MAX_OFFSET,
         min(FOOD_TEMPORAL_MAX_OFFSET, delta * FOOD_TEMPORAL_GAIN),
+    )
+    return (
+        max(0.0, min(1.0, raw_left + offset)),
+        max(0.0, min(1.0, raw_right + offset)),
+        delta,
+        intensity,
+    )
+
+
+def _temporal_danger_levels(
+    left: float,
+    right: float,
+    previous_intensity: float | None,
+) -> tuple[float, float, float, float]:
+    """Encode whether aversive odor is getting stronger or weaker over time."""
+    raw_left = max(0.0, min(1.0, float(left)))
+    raw_right = max(0.0, min(1.0, float(right)))
+    intensity = (raw_left + raw_right) / 2.0
+    delta = 0.0 if previous_intensity is None else intensity - float(previous_intensity)
+    offset = max(
+        -DANGER_TEMPORAL_MAX_OFFSET,
+        min(DANGER_TEMPORAL_MAX_OFFSET, delta * DANGER_TEMPORAL_GAIN),
     )
     return (
         max(0.0, min(1.0, raw_left + offset)),
@@ -245,6 +269,7 @@ class MaleCNSBrain:
         self.brain.weights_frozen = not self.learning
         self._last_visual_rgb: Any | None = None
         self._last_food_intensity: float | None = None
+        self._last_danger_intensity: float | None = None
 
         a = annotations(self.brain.ids)
         types = a.type.fillna("").astype(str)
@@ -331,6 +356,11 @@ class MaleCNSBrain:
             "food_temporal_encoding": {
                 "gain": FOOD_TEMPORAL_GAIN,
                 "max_offset": FOOD_TEMPORAL_MAX_OFFSET,
+                "direction_command": False,
+            },
+            "danger_temporal_encoding": {
+                "gain": DANGER_TEMPORAL_GAIN,
+                "max_offset": DANGER_TEMPORAL_MAX_OFFSET,
                 "direction_command": False,
             },
             "validated": False,
@@ -424,6 +454,7 @@ class MaleCNSBrain:
         olfaction = {} if context is None else (context.get("olfaction") or {})
         if not olfaction:
             self._last_food_intensity = None
+            self._last_danger_intensity = None
             levels = {
                 "food_left": 0.0,
                 "food_right": 0.0,
@@ -433,6 +464,10 @@ class MaleCNSBrain:
                 "food_temporal_trend": "steady",
                 "danger_left": 0.0,
                 "danger_right": 0.0,
+                "danger_raw_left": 0.0,
+                "danger_raw_right": 0.0,
+                "danger_temporal_delta": 0.0,
+                "danger_temporal_trend": "steady",
             }
             return [], levels
         if olfaction.get("model") != OLFACTION_MODEL:
@@ -454,6 +489,22 @@ class MaleCNSBrain:
             food_trend = "falling"
         else:
             food_trend = "steady"
+
+        raw_danger_left = self._odor_level(danger, "left")
+        raw_danger_right = self._odor_level(danger, "right")
+        danger_left, danger_right, danger_delta, danger_intensity = _temporal_danger_levels(
+            raw_danger_left,
+            raw_danger_right,
+            self._last_danger_intensity,
+        )
+        self._last_danger_intensity = danger_intensity
+        if danger_delta > 0.005:
+            danger_trend = "rising"
+        elif danger_delta < -0.005:
+            danger_trend = "falling"
+        else:
+            danger_trend = "steady"
+
         levels = {
             "food_left": food_left,
             "food_right": food_right,
@@ -462,8 +513,13 @@ class MaleCNSBrain:
             "food_temporal_delta": food_delta,
             "food_temporal_trend": food_trend,
             "food_intensity": food_intensity,
-            "danger_left": self._odor_level(danger, "left"),
-            "danger_right": self._odor_level(danger, "right"),
+            "danger_left": danger_left,
+            "danger_right": danger_right,
+            "danger_raw_left": raw_danger_left,
+            "danger_raw_right": raw_danger_right,
+            "danger_temporal_delta": danger_delta,
+            "danger_temporal_trend": danger_trend,
+            "danger_intensity": danger_intensity,
         }
         pulses: list[tuple[Any, float]] = []
         for indices, level in (
