@@ -1,0 +1,182 @@
+{
+  "schema": "neurofly-confirmatory-sensory-learning-v0.1",
+  "status": "EXECUTION_REQUIRED",
+  "scope": "fixed-malecns-maze-task-confirmatory-learning",
+  "study_version": "v0.1",
+  "baseline_policy": {
+    "same_source_checkpoint_for_all_replicates": true,
+    "source_checkpoint_read_only": true
+  },
+  "arms": [
+    {
+      "name": "learning_true",
+      "learning": true,
+      "sensory_mode": "normal",
+      "reinforcement_mode": "true"
+    },
+    {
+      "name": "frozen_true",
+      "learning": false,
+      "sensory_mode": "normal",
+      "reinforcement_mode": "true"
+    },
+    {
+      "name": "learning_scrambled",
+      "learning": true,
+      "sensory_mode": "normal",
+      "reinforcement_mode": "scrambled"
+    },
+    {
+      "name": "learning_sensory_off",
+      "learning": true,
+      "sensory_mode": "off",
+      "reinforcement_mode": "true"
+    }
+  ],
+  "execution": {
+    "orchestration": "EnvironmentSession",
+    "adapter": "MazeChaseAdapter",
+    "environment": "GoalMazeEnvironment",
+    "synchronous_enemy_motion_per_action": true,
+    "sensory_only_context_required": true,
+    "training_steps": 60,
+    "evaluation_steps_per_seed": 40,
+    "replicate_count": 10
+  },
+  "replicates": [
+    {
+      "replicate": 1,
+      "training_seed": 211,
+      "evaluation_seeds": [
+        811,
+        821
+      ]
+    },
+    {
+      "replicate": 2,
+      "training_seed": 223,
+      "evaluation_seeds": [
+        823,
+        827
+      ]
+    },
+    {
+      "replicate": 3,
+      "training_seed": 227,
+      "evaluation_seeds": [
+        829,
+        839
+      ]
+    },
+    {
+      "replicate": 4,
+      "training_seed": 229,
+      "evaluation_seeds": [
+        853,
+        857
+      ]
+    },
+    {
+      "replicate": 5,
+      "training_seed": 233,
+      "evaluation_seeds": [
+        859,
+        863
+      ]
+    },
+    {
+      "replicate": 6,
+      "training_seed": 239,
+      "evaluation_seeds": [
+        877,
+        881
+      ]
+    },
+    {
+      "replicate": 7,
+      "training_seed": 241,
+      "evaluation_seeds": [
+        883,
+        887
+      ]
+    },
+    {
+      "replicate": 8,
+      "training_seed": 251,
+      "evaluation_seeds": [
+        907,
+        911
+      ]
+    },
+    {
+      "replicate": 9,
+      "training_seed": 257,
+      "evaluation_seeds": [
+        919,
+        929
+      ]
+    },
+    {
+      "replicate": 10,
+      "training_seed": 263,
+      "evaluation_seeds": [
+        937,
+        941
+      ]
+    }
+  ],
+  "primary_endpoint": "mean_total_reward",
+  "secondary_descriptive_metrics": [
+    "mean_total_food",
+    "mean_total_clears",
+    "mean_total_deaths",
+    "mean_hold_fraction"
+  ],
+  "confirmatory_rule": {
+    "comparisons": [
+      "learning_true_minus_frozen_true",
+      "learning_true_minus_learning_scrambled",
+      "learning_true_minus_learning_sensory_off"
+    ],
+    "positive_replicates_required": 9,
+    "replicate_count_fixed": 10,
+    "zero_difference_counts_as_positive": false,
+    "median_reward_difference_minimum": 1,
+    "sign_test": "exact_one_sided_binomial_p_ge_observed_positives_under_p_0.5",
+    "familywise_correction": "holm_bonferroni",
+    "familywise_alpha": 0.05,
+    "no_optional_stopping": true,
+    "no_data_dependent_replicate_extension": true
+  },
+  "evaluation": {
+    "learning": false,
+    "reinforcement_mode": "none",
+    "sensory_mode": "normal",
+    "fresh_environment_per_seed": true,
+    "fresh_brain_restore_per_seed": true
+  },
+  "required_evidence": {
+    "source_checkpoint_unchanged": true,
+    "all_replicates_executed": true,
+    "all_four_arms_per_replicate": true,
+    "all_training_real_malecns_verified": true,
+    "all_evaluation_real_malecns_verified": true,
+    "all_normal_sensory_contexts_unprivileged": true,
+    "all_sensory_off_contexts_empty": true,
+    "synchronous_seeded_enemy_dynamics_used": true,
+    "evaluation_learning_disabled": true,
+    "evaluation_reinforcement_disabled": true,
+    "evaluation_normal_sensory_restored": true,
+    "arm_checkpoints_isolated": true,
+    "exact_preregistered_seeds_used": true,
+    "exact_fixed_sample_size_used": true
+  },
+  "claim_policy": {
+    "learning_validation_scope": "this_fixed_malecns_checkpoint_on_goal_maze_under_preregistered_environment_randomization",
+    "learning_validated_from_confirmatory_rule": true,
+    "causal_learning_claim_authorized": false,
+    "generalization_validated": false,
+    "behavioral_promotion_authorized": false,
+    "production_checkpoint_mutated": false
+  }
+}
