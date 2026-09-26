@@ -71,6 +71,23 @@ ODOR_TELEMETRY_FIELDS = (
     "olfaction_report",
 )
 
+MOTOR_TELEMETRY_FIELDS = (
+    "motor_decoder",
+    "steering_type",
+    "forward_type",
+    "left_hz",
+    "right_hz",
+    "difference_hz",
+    "forward_hz",
+    "forward_left_hz",
+    "forward_right_hz",
+    "steering_spikes",
+    "forward_spikes",
+    "walking_spikes",
+    "dnpe017_gate_used",
+    "cell_ids",
+)
+
 
 def _public_goal_state(state: dict[str, Any]) -> dict[str, Any]:
     public = _public_maze_state(state)
@@ -80,7 +97,7 @@ def _public_goal_state(state: dict[str, Any]) -> dict[str, Any]:
 
     source_telemetry = ((state.get("brain") or {}).get("telemetry") or {})
     public_telemetry = ((public.get("brain") or {}).get("telemetry") or {})
-    for key in ODOR_TELEMETRY_FIELDS:
+    for key in (*ODOR_TELEMETRY_FIELDS, *MOTOR_TELEMETRY_FIELDS):
         if key in source_telemetry:
             public_telemetry[key] = source_telemetry.get(key)
     return public
@@ -249,6 +266,16 @@ def run_self_training(
                     "brain_ms": telemetry.get("brain_ms"),
                     "compute_seconds": telemetry.get("compute_seconds"),
                     "total_spikes": telemetry.get("total_spikes"),
+                    "motor_decoder": telemetry.get("motor_decoder"),
+                    "steering_type": telemetry.get("steering_type"),
+                    "forward_type": telemetry.get("forward_type"),
+                    "left_hz": telemetry.get("left_hz"),
+                    "right_hz": telemetry.get("right_hz"),
+                    "forward_hz": telemetry.get("forward_hz"),
+                    "steering_spikes": telemetry.get("steering_spikes"),
+                    "forward_spikes": telemetry.get("forward_spikes"),
+                    "walking_spikes": telemetry.get("walking_spikes"),
+                    "dnpe017_gate_used": telemetry.get("dnpe017_gate_used"),
                     "memory_sha256": (telemetry.get("memory") or {}).get("sha256"),
                 }
             )
