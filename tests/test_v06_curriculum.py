@@ -77,7 +77,7 @@ def test_sensory_only_autonomy_never_overrides_repeated_hold() -> None:
         assert state["applied_action"] == "HOLD"
         assert state["last_action"] == "HOLD"
         assert state["action_overridden"] is False
-    assert state["direct_action_override_enabled"] is False
+        assert state["direct_action_override_enabled"] is False
         assert state["override_reason"] is None
         assert state["anti_stall_force_forward_next"] is False
 
