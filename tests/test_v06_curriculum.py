@@ -5,6 +5,9 @@ from neurofly.curriculum import (
     ANTI_STALL_POLICY,
     ANTI_STALL_STATIONARY_LIMIT,
     CURRICULUM_VERSION,
+    STALL_STIMULUS_AFTER,
+    STALL_STIMULUS_INTERVAL,
+    STALL_STIMULUS_POLICY,
     CurriculumMazeEnvironment,
 )
 from neurofly.goal_training import GoalMazeEnvironment
@@ -80,6 +83,30 @@ def test_sensory_only_autonomy_never_overrides_repeated_hold() -> None:
 
     assert env.fly == start
     assert env.snapshot()["anti_stall_stationary_steps"] == ANTI_STALL_STATIONARY_LIMIT + 4
+
+
+def test_repeated_stall_uses_nondirectional_stimulus_without_steering() -> None:
+    env = CurriculumMazeEnvironment(seed=109)
+    start = dict(env.fly)
+
+    for step in range(1, STALL_STIMULUS_AFTER + 1):
+        env.agent_step("HOLD", move_enemies=False)
+        expected = "aversive" if step == STALL_STIMULUS_AFTER else "none"
+        assert env.reinforcement() == expected
+
+    state = env.snapshot()
+    assert env.fly == start
+    assert state["raw_brain_action"] == "HOLD"
+    assert state["applied_action"] == "HOLD"
+    assert state["action_overridden"] is False
+    assert state["override_reason"] is None
+    assert state["stall_stimulus_policy"] == STALL_STIMULUS_POLICY
+    assert state["stall_stimulus_after"] == STALL_STIMULUS_AFTER
+    assert state["stall_stimulus_interval"] == STALL_STIMULUS_INTERVAL
+
+    env.agent_step("TURN_LEFT", move_enemies=False)
+    assert env.reinforcement() == "none"
+    assert env.snapshot()["anti_stall_stationary_steps"] == 0
 
 
 def test_sensory_only_autonomy_applies_every_decoded_action_verbatim() -> None:
