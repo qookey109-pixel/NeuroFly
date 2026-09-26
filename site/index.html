@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="glance.css?v=hud-console-1" />
   <link rel="stylesheet" href="hud.css?v=hud-console-1" />
   <link rel="stylesheet" href="hud-safe.css?v=hud-safe-1" />
-  <link rel="stylesheet" href="interface-v2.css?v=interface-v2-2" />
+  <link rel="stylesheet" href="interface-v2.css?v=interface-v2-3" />
 </head>
 <body>
   <main class="stage hud-stage">
@@ -39,10 +39,6 @@
             <div class="hud-system-row">
               <span class="live-dot" aria-hidden="true"></span>
               <strong id="brainBadge">MALECNS · 驗證中</strong>
-            </div>
-            <div class="hud-session-row">
-              <div><span>局數</span><strong id="episodeNumber">—</strong></div>
-              <div><span>存活</span><strong id="survivalTime">—</strong></div>
             </div>
           </div>
 
@@ -79,14 +75,6 @@
             <div class="hud-tech-item">
               <span>本次運算</span>
               <strong id="computeSeconds">—</strong>
-            </div>
-            <div class="hud-tech-item">
-              <span>左輸出</span>
-              <strong id="leftHz">—</strong>
-            </div>
-            <div class="hud-tech-item">
-              <span>右輸出</span>
-              <strong id="rightHz">—</strong>
             </div>
           </div>
         </section>
@@ -166,24 +154,50 @@
 
         <section class="rail-section world-detail-section">
           <div class="rail-heading compact-rail-heading">
-            <div><span>WORLD / RUN</span><h2>實驗摘要</h2></div>
-          </div>
-          <div class="world-lines">
-            <div><span>本局食物</span><strong id="episodeFood">—</strong></div>
-            <div><span>累積食物</span><strong id="totalFood">—</strong></div>
-            <div><span>被敵人抓到</span><strong id="totalDeaths">—</strong></div>
-            <div><span>決策步數</span><strong id="decisionTicks">—</strong></div>
-            <div><span>世界步數</span><strong id="worldTicks">—</strong></div>
-            <div><span>能量狀態</span><strong id="powerState">—</strong></div>
+            <div><span>RUN SNAPSHOT</span><h2>實驗摘要</h2></div>
           </div>
 
-          <div class="run-records">
-            <div class="record-primary"><span>總活動時間</span><strong id="totalTime">—</strong></div>
-            <div><span>破關</span><strong id="clearCount">0</strong></div>
-            <div><span>最佳</span><strong id="bestClear">—</strong></div>
+          <div class="world-summary-grid">
+            <div class="summary-stat summary-stat-primary">
+              <span>局數</span>
+              <strong id="episodeNumber">—</strong>
+            </div>
+            <div class="summary-stat summary-stat-primary">
+              <span>存活</span>
+              <strong id="survivalTime">—</strong>
+            </div>
+            <div class="summary-stat">
+              <span>本局食物</span>
+              <strong id="episodeFood">—</strong>
+            </div>
+            <div class="summary-stat">
+              <span>被敵人抓到</span>
+              <strong id="totalDeaths">—</strong>
+            </div>
+            <div class="summary-stat">
+              <span>世界步數</span>
+              <strong id="worldTicks">—</strong>
+            </div>
+            <div class="summary-stat summary-stat-wide">
+              <span>總活動時間</span>
+              <strong id="totalTime">—</strong>
+            </div>
+            <div class="summary-stat">
+              <span>破關</span>
+              <strong id="clearCount">0</strong>
+            </div>
+            <div class="summary-stat">
+              <span>最佳</span>
+              <strong id="bestClear">—</strong>
+            </div>
           </div>
 
-          <div class="hidden-detail-records" aria-label="完整破關紀錄">
+          <div class="hidden-detail-records" aria-label="隱藏執行資料">
+            <span>累積食物</span><strong id="totalFood">—</strong>
+            <span>決策步數</span><strong id="decisionTicks">—</strong>
+            <span>能量狀態</span><strong id="powerState">—</strong>
+            <span>左輸出</span><strong id="leftHz">—</strong>
+            <span>右輸出</span><strong id="rightHz">—</strong>
             <span>首次破關</span><span id="firstClear">—</span>
             <span>最近破關</span><span id="latestClear">—</span>
             <span>最近破關紀錄</span><div id="clearHistory">尚未破關</div>
