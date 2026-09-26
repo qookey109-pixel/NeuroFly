@@ -75,6 +75,35 @@ def _bilateral_type_indices(np: Any, annotations: Any, neuron_type: str) -> tupl
     return left, right, report
 
 
+STALL_HIGH_FREQUENCY_PATTERN = "neurofly-hf-stall-pulse-train-v1"
+
+
+def _distributed_pulse_windows(
+    total_steps: int,
+    pulse_budget_steps: int,
+    pulse_count: int,
+) -> list[tuple[int, int]]:
+    """Spread a fixed stimulation budget across evenly spaced short pulses."""
+    total_steps = max(0, int(total_steps))
+    pulse_budget_steps = max(0, min(total_steps, int(pulse_budget_steps)))
+    pulse_count = max(0, min(int(pulse_count), total_steps))
+    if total_steps == 0 or pulse_budget_steps == 0 or pulse_count == 0:
+        return []
+
+    starts = [(index * total_steps) // pulse_count for index in range(pulse_count)]
+    base, extra = divmod(pulse_budget_steps, pulse_count)
+    windows: list[tuple[int, int]] = []
+    for index, start in enumerate(starts):
+        width = base + (1 if index < extra else 0)
+        if width <= 0:
+            continue
+        next_start = starts[index + 1] if index + 1 < len(starts) else total_steps
+        end = min(total_steps, start + width, next_start)
+        if end > start:
+            windows.append((start, end))
+    return windows
+
+
 class DemoBrain:
     """Small deterministic baseline used by CI and UI smoke tests."""
 
@@ -351,16 +380,47 @@ class MaleCNSBrain:
         odor_pulses, odor_levels = self._olfactory_stimulation(context)
         counts = np.zeros(b.n, dtype=np.int32)
         compute_seconds = 0.0
-        remaining = round(self.neural_ms / b.dt)
-        pulse = round(self.pulse_ms / b.dt) if reinforcement != "none" else 0
+        total_steps = round(self.neural_ms / b.dt)
+        remaining = total_steps
+        pulse_budget_steps = round(self.pulse_ms / b.dt) if reinforcement != "none" else 0
+        context_data = context or {}
+        high_frequency_stall = (
+            reinforcement == "aversive"
+            and context_data.get("_reinforcement_source") == "environment"
+            and context_data.get("stall_stimulus_policy")
+            == "neurofly-nondirectional-stall-aversive-hf-v3"
+        )
+        requested_pulses = (
+            max(1, int(context_data.get("stall_stimulus_pulses_per_decision", 1)))
+            if high_frequency_stall
+            else (1 if reinforcement != "none" else 0)
+        )
+        pulse_windows = _distributed_pulse_windows(
+            total_steps,
+            pulse_budget_steps,
+            requested_pulses,
+        )
         delivered = 0
+        cursor = 0
+        pulse_index = 0
 
         while remaining:
-            n = min(remaining, round(self.neural_bin_ms / b.dt))
-            if pulse:
-                n = min(n, pulse)
+            while pulse_index < len(pulse_windows) and cursor >= pulse_windows[pulse_index][1]:
+                pulse_index += 1
+            active = (
+                pulse_index < len(pulse_windows)
+                and pulse_windows[pulse_index][0] <= cursor < pulse_windows[pulse_index][1]
+            )
+            boundaries = [remaining, round(self.neural_bin_ms / b.dt)]
+            if pulse_index < len(pulse_windows):
+                start, end = pulse_windows[pulse_index]
+                boundary = end if active else start
+                if boundary > cursor:
+                    boundaries.append(boundary - cursor)
+            n = max(1, min(boundaries))
+
             stimulation = list(odor_pulses)
-            if pulse:
+            if active:
                 stimulation.append((b.circuit[reinforcement], self.pulse_current))
             current, elapsed = b.rgb_step(
                 rgb,
@@ -371,9 +431,9 @@ class MaleCNSBrain:
             counts += current
             compute_seconds += elapsed
             remaining -= n
-            if pulse:
+            cursor += n
+            if active:
                 delivered += n
-                pulse -= n
 
         b.counts[:] = counts
         action, decoder = self._decode(counts)
@@ -383,7 +443,17 @@ class MaleCNSBrain:
             "brain_ms": float(b.sim_ms),
             "compute_seconds": compute_seconds,
             "reinforcement": reinforcement,
+            "reinforcement_source": context_data.get("_reinforcement_source", "none"),
+            "reinforcement_pattern": (
+                STALL_HIGH_FREQUENCY_PATTERN if high_frequency_stall else "single-pulse"
+            ),
             "stimulus_ms": delivered * b.dt,
+            "stimulus_pulse_count": len(pulse_windows),
+            "stimulus_frequency_hz": (
+                float(context_data.get("stall_stimulus_frequency_hz", 0.0))
+                if high_frequency_stall
+                else 0.0
+            ),
             "reward_spikes": int(counts[b.circuit["reward"]].sum()),
             "aversive_spikes": int(counts[b.circuit["aversive"]].sum()),
             "kc_spikes": int(counts[b.circuit["kc"]].sum()),
