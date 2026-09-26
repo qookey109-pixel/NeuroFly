@@ -11,9 +11,11 @@ CURRICULUM_VERSION = "neurofly-curriculum-v4"
 ACTION_AUTONOMY_POLICY = "neurofly-sensory-only-action-autonomy-v1"
 ANTI_STALL_POLICY = "neurofly-stall-observation-only-v2"
 ANTI_STALL_STATIONARY_LIMIT = 2
-STALL_STIMULUS_POLICY = "neurofly-nondirectional-stall-aversive-v2"
+STALL_STIMULUS_POLICY = "neurofly-nondirectional-stall-aversive-hf-v3"
 STALL_STIMULUS_AFTER = 4
 STALL_STIMULUS_INTERVAL = 1
+STALL_STIMULUS_FREQUENCY_HZ = 100.0
+STALL_STIMULUS_PULSES_PER_DECISION = 5
 
 
 @dataclass(frozen=True)
@@ -267,6 +269,8 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
                 "stall_stimulus_policy": STALL_STIMULUS_POLICY,
                 "stall_stimulus_after": STALL_STIMULUS_AFTER,
                 "stall_stimulus_interval": STALL_STIMULUS_INTERVAL,
+                "stall_stimulus_frequency_hz": STALL_STIMULUS_FREQUENCY_HZ,
+                "stall_stimulus_pulses_per_decision": STALL_STIMULUS_PULSES_PER_DECISION,
                 "anti_stall_policy": ANTI_STALL_POLICY,
                 "anti_stall_stationary_steps": self._stationary_agent_steps,
                 "anti_stall_force_forward_next": self._force_forward_next,
@@ -297,6 +301,8 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
                 "stall_stimulus_policy": STALL_STIMULUS_POLICY,
                 "stall_stimulus_after": STALL_STIMULUS_AFTER,
                 "stall_stimulus_interval": STALL_STIMULUS_INTERVAL,
+                "stall_stimulus_frequency_hz": STALL_STIMULUS_FREQUENCY_HZ,
+                "stall_stimulus_pulses_per_decision": STALL_STIMULUS_PULSES_PER_DECISION,
                 "anti_stall_policy": ANTI_STALL_POLICY,
                 "anti_stall_stationary_steps": self._stationary_agent_steps,
                 "anti_stall_force_forward_next": self._force_forward_next,

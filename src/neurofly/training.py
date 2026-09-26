@@ -35,6 +35,8 @@ GOAL_FIELDS = (
     "stall_stimulus_policy",
     "stall_stimulus_after",
     "stall_stimulus_interval",
+    "stall_stimulus_frequency_hz",
+    "stall_stimulus_pulses_per_decision",
     "anti_stall_policy",
     "anti_stall_stationary_steps",
     "anti_stall_force_forward_next",
