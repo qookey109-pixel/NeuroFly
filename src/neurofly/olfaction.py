@@ -8,9 +8,11 @@ OLFACTION_MODEL = "neurofly-virtual-olfaction-v2"
 FOOD_ORN_TYPE = "ORN_DM1"
 DANGER_ORN_TYPE = "ORN_DA2"
 FOOD_BILATERAL_CONTRAST_GAIN = 0.75
-DANGER_BILATERAL_CONTRAST_GAIN = 0.45
+DANGER_BILATERAL_CONTRAST_GAIN = 0.65
 FOOD_FIELD_POWER = 4.0
 FOOD_DECAY_CELLS = 5.0
+DANGER_FIELD_POWER = 4.0
+DANGER_DECAY_CELLS = 4.5
 
 _DIR_VECTORS = {
     "UP": (0.0, -1.0),
@@ -183,10 +185,13 @@ def virtual_olfaction(
         "danger": {
             "orn_type": DANGER_ORN_TYPE,
             "receptor_proxy": "Or56a/geosmin-like",
-            **_strongest_source(
+            "contrast_gain": DANGER_BILATERAL_CONTRAST_GAIN,
+            **_aggregate_sources(
                 fly=fly,
                 sources=danger_sources,
-                decay_cells=3.0,
+                decay_cells=DANGER_DECAY_CELLS,
+                lateral_gain=DANGER_BILATERAL_CONTRAST_GAIN,
+                power=DANGER_FIELD_POWER,
             ),
         },
     }

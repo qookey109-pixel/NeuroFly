@@ -147,6 +147,9 @@ jobs:
               'food_temporal_delta' in s['brain']['telemetry'].get('olfaction', {})
               and 'food_raw_left' in s['brain']['telemetry'].get('olfaction', {})
               and 'food_raw_right' in s['brain']['telemetry'].get('olfaction', {})
+              and 'danger_temporal_delta' in s['brain']['telemetry'].get('olfaction', {})
+              and 'danger_raw_left' in s['brain']['telemetry'].get('olfaction', {})
+              and 'danger_raw_right' in s['brain']['telemetry'].get('olfaction', {})
               for s in state['trajectory']
           )
           assert all(

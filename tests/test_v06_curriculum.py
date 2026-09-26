@@ -7,6 +7,7 @@ from neurofly.brain_runtime import (
     WALKING_STEERING_THRESHOLD_HZ,
     WALKING_STEERING_TYPE,
     _distributed_pulse_windows,
+    _temporal_danger_levels,
     _temporal_food_levels,
     _walking_action,
 )
@@ -110,6 +111,58 @@ def test_temporal_food_gradient_strengthens_rising_and_weakens_falling_odor() ->
 
     falling_left, falling_right, falling_delta, _ = _temporal_food_levels(
         0.20, 0.40, 0.40
+    )
+    assert falling_delta < 0
+    assert falling_left < 0.20
+    assert falling_right < 0.40
+
+
+def test_danger_odor_aggregates_multiple_enemies_without_direct_escape_command() -> None:
+    grid = [[" " for _ in range(9)] for _ in range(9)]
+    fly = {"x": 4, "y": 4, "dir": "UP"}
+
+    single = virtual_olfaction(
+        grid=grid,
+        fly=fly,
+        enemies=[{"x": 6, "y": 4}],
+    )["danger"]
+    multi = virtual_olfaction(
+        grid=grid,
+        fly=fly,
+        enemies=[{"x": 6, "y": 4}, {"x": 7, "y": 4}],
+    )["danger"]
+
+    assert single["source_count"] == 1
+    assert multi["source_count"] == 2
+    assert multi["aggregation"] == "lp4-all-sources"
+    assert multi["intensity"] > single["intensity"]
+    assert multi["right"] > multi["left"]
+    assert "source" not in multi
+
+
+def test_danger_odor_keeps_useful_signal_at_four_cells() -> None:
+    grid = [[" " for _ in range(9)] for _ in range(9)]
+    fly = {"x": 4, "y": 4, "dir": "UP"}
+    danger = virtual_olfaction(
+        grid=grid,
+        fly=fly,
+        enemies=[{"x": 4, "y": 0}],
+    )["danger"]
+
+    assert danger["intensity"] > 0.35
+
+
+def test_temporal_danger_gradient_amplifies_approach_and_relaxes_retreat() -> None:
+    rising_left, rising_right, rising_delta, rising_mean = _temporal_danger_levels(
+        0.20, 0.40, 0.20
+    )
+    assert rising_delta > 0
+    assert abs(rising_mean - 0.30) < 1e-12
+    assert rising_left > 0.20
+    assert rising_right > 0.40
+
+    falling_left, falling_right, falling_delta, _ = _temporal_danger_levels(
+        0.20, 0.40, 0.50
     )
     assert falling_delta < 0
     assert falling_left < 0.20
