@@ -7,8 +7,9 @@ from .goal_training import GoalMazeEnvironment
 from .olfaction import virtual_olfaction
 
 
-CURRICULUM_VERSION = "neurofly-curriculum-v3"
-ANTI_STALL_POLICY = "neurofly-curriculum-anti-stall-v1"
+CURRICULUM_VERSION = "neurofly-curriculum-v4"
+ACTION_AUTONOMY_POLICY = "neurofly-sensory-only-action-autonomy-v1"
+ANTI_STALL_POLICY = "neurofly-stall-observation-only-v2"
 ANTI_STALL_STATIONARY_LIMIT = 2
 
 
@@ -37,10 +38,10 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
     authoritative world-clock speed. Stage progression depends only on verified
     maze clears, never wall-clock runtime or hand-authored action labels.
 
-    A small, versioned anti-stall controller sits outside the MaleCNS decoder.
-    It never chooses a path or reads a target route. It only prevents indefinite
-    zero-displacement loops while preserving the raw MaleCNS action separately
-    from the action actually applied to the environment.
+    MaleCNS owns every locomotor action. The environment may observe stalls and
+    provide sensory/reinforcement inputs, but it must never replace a decoded
+    HOLD/FORWARD/TURN action with a hand-authored movement. Raw and applied
+    actions therefore remain identical by construction.
     """
 
     def __init__(self, *, seed: int = 109) -> None:
@@ -126,54 +127,22 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
             self._apply_stage_layout()
 
     def agent_step(self, action: str, *, move_enemies: bool):
-        """Apply a raw MaleCNS action with a blind, transparent anti-stall floor."""
+        """Apply the decoded MaleCNS action verbatim and observe stalls only."""
         raw_action = action
-        applied_action = raw_action
-        override_reason: str | None = None
-
-        if self._force_forward_next:
-            applied_action = "FORWARD"
-            override_reason = "anti_stall_followup_forward"
-            self._force_forward_next = False
-        elif self._stationary_agent_steps >= ANTI_STALL_STATIONARY_LIMIT:
-            if raw_action == "HOLD":
-                # First try a forward locomotion pulse. If the previous forced
-                # forward was blocked, rotate blindly once and move next step.
-                if self.last_action_overridden and self.last_applied_action == "FORWARD":
-                    applied_action = "TURN_RIGHT"
-                    override_reason = "anti_stall_blocked_forward_turn"
-                    self._force_forward_next = True
-                else:
-                    applied_action = "FORWARD"
-                    override_reason = "anti_stall_hold_forward"
-            elif raw_action == "FORWARD":
-                # Repeated forward with no displacement means a wall is likely.
-                # Rotate without consulting maze topology, then move next step.
-                applied_action = "TURN_RIGHT"
-                override_reason = "anti_stall_blocked_forward_turn"
-                self._force_forward_next = True
-            else:
-                # Preserve the MaleCNS turn, but guarantee one forward attempt
-                # immediately after it if the fly is still stationary.
-                self._force_forward_next = True
-
         before = (int(self.fly["x"]), int(self.fly["y"]))
-        result = super().agent_step(applied_action, move_enemies=move_enemies)
+        result = super().agent_step(raw_action, move_enemies=move_enemies)
         after = (int(self.fly["x"]), int(self.fly["y"]))
 
         self.last_raw_action = raw_action
-        self.last_applied_action = applied_action
-        self.last_action_overridden = applied_action != raw_action
-        self.last_override_reason = override_reason
+        self.last_applied_action = raw_action
+        self.last_action_overridden = False
+        self.last_override_reason = None
+        self._force_forward_next = False
 
-        if result.terminal:
+        if result.terminal or after != before:
             self._stationary_agent_steps = 0
-            self._force_forward_next = False
-        elif after == before:
-            self._stationary_agent_steps += 1
         else:
-            self._stationary_agent_steps = 0
-            self._force_forward_next = False
+            self._stationary_agent_steps += 1
 
         return result
 
@@ -209,7 +178,12 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
         raise ValueError("Enemy-free curriculum checkpoint has no spare open cell")
 
     def restore(self, payload: dict[str, Any]) -> None:
-        same_curriculum = payload.get("curriculum_version") == CURRICULUM_VERSION
+        source_curriculum = payload.get("curriculum_version")
+        same_curriculum = source_curriculum == CURRICULUM_VERSION
+        sensory_only_compatible = source_curriculum in {
+            CURRICULUM_VERSION,
+            "neurofly-curriculum-v3",
+        }
         empty_enemies = payload.get("enemies") == []
         if empty_enemies:
             # The generic V0.5 persistence validator requires at least one enemy.
@@ -222,7 +196,7 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
         else:
             super().restore(payload)
 
-        if same_curriculum:
+        if sensory_only_compatible:
             stage = int(payload.get("curriculum_stage", 1))
             self.curriculum_stage = min(len(STAGES), max(1, stage))
             counts = payload.get("stage_clear_counts") or {}
@@ -238,26 +212,25 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
             self._stationary_agent_steps = max(
                 0, int(payload.get("anti_stall_stationary_steps", 0))
             )
-            self._force_forward_next = bool(payload.get("anti_stall_force_forward_next", False))
+            self._force_forward_next = False
             self.last_raw_action = str(payload.get("raw_brain_action", self.last_action))
-            self.last_applied_action = str(payload.get("applied_action", self.last_action))
-            self.last_action_overridden = bool(payload.get("action_overridden", False))
-            reason = payload.get("override_reason")
-            self.last_override_reason = None if reason is None else str(reason)
+            self.last_applied_action = self.last_raw_action
+            self.last_action_overridden = False
+            self.last_override_reason = None
             self._ensure_stage_enemies()
             # The superclass already restored exact grid/fly/RNG state. Only the
             # predator floor is repaired when an older checkpoint had no enemy.
             return
 
-        # Migration from V0.5 or curriculum v1: retain the trained brain and
-        # global behavior counters, but begin curriculum v2 on the full canonical
+        # Migration from older pre-v3 curricula: retain the trained brain and
+        # global behavior counters, but begin curriculum v4 on the full canonical
         # maze instead of carrying forward a simplified training layout.
         self.curriculum_stage = 1
         self.stage_clear_counts = {str(stage.number): 0 for stage in STAGES}
         self.stage_history = []
         self._advance_on_reset = False
         self._reset_anti_stall()
-        GoalMazeEnvironment.reset(self, "curriculum_v2_migration")
+        GoalMazeEnvironment.reset(self, "curriculum_v4_migration")
         self._apply_stage_layout()
 
     def snapshot(self, *, include_grid: bool = True) -> dict[str, Any]:
@@ -274,6 +247,8 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
                 "curriculum_world_tick_seconds": stage.world_tick_seconds,
                 "curriculum_stage_history": [dict(item) for item in self.stage_history],
                 "curriculum_complete": stage.number == len(STAGES),
+                "action_autonomy_policy": ACTION_AUTONOMY_POLICY,
+                "direct_action_override_enabled": False,
                 "anti_stall_policy": ANTI_STALL_POLICY,
                 "anti_stall_stationary_steps": self._stationary_agent_steps,
                 "anti_stall_force_forward_next": self._force_forward_next,
@@ -299,6 +274,8 @@ class CurriculumMazeEnvironment(GoalMazeEnvironment):
                 "stage_clear_counts": dict(self.stage_clear_counts),
                 "stage_history": [dict(item) for item in self.stage_history],
                 "advance_on_reset": self._advance_on_reset,
+                "action_autonomy_policy": ACTION_AUTONOMY_POLICY,
+                "direct_action_override_enabled": False,
                 "anti_stall_policy": ANTI_STALL_POLICY,
                 "anti_stall_stationary_steps": self._stationary_agent_steps,
                 "anti_stall_force_forward_next": self._force_forward_next,
