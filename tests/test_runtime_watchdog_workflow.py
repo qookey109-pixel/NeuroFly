@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TRAINING = ROOT / ".github" / "workflows" / "full-malecns-free.yml"
 WATCHDOG = ROOT / ".github" / "workflows" / "runtime-watchdog.yml"
+RUNTIME_POLICY = ROOT / "config" / "neurofly_continuous_runtime.json"
 
 
 def test_training_handoff_is_retryable_and_nonfatal_after_checkpoint():
@@ -54,3 +55,16 @@ def test_watchdog_dispatch_retries_and_targets_main_authority():
     assert "-f ref=main" in text
     assert "WATCHDOG_RECOVERY_DISPATCH_OK" in text
     assert "The next scheduled watchdog run will retry" in text
+
+
+def test_continuous_runtime_uses_long_bounded_batches():
+    import json
+
+    policy = json.loads(RUNTIME_POLICY.read_text())
+    training = TRAINING.read_text()
+
+    assert policy["steps_per_run"] == 5000
+    assert 'default: "5000"' in training
+    assert "inputs.steps || '5000'" in training
+    assert "assert 1 <= steps <= 5000" in training
+    assert "timeout-minutes: 330" in training
