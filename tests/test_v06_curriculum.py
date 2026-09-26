@@ -24,24 +24,24 @@ def _make_next_forward_clear(env: CurriculumMazeEnvironment) -> None:
     env.grid[target_y][target_x] = "."
 
 
-def test_curriculum_starts_on_full_canonical_maze_with_predator() -> None:
+def test_curriculum_starts_on_full_canonical_maze_without_predator() -> None:
     env = CurriculumMazeEnvironment(seed=109)
     canonical = GoalMazeEnvironment(seed=109)
     state = env.snapshot()
 
     assert state["curriculum_version"] == CURRICULUM_VERSION
     assert state["curriculum_stage"] == 1
-    assert state["curriculum_stage_name"] == "full-maze-intro-predator"
-    assert state["curriculum_enemy_count"] == 1
+    assert state["curriculum_stage_name"] == "full-maze-foraging"
+    assert state["curriculum_enemy_count"] == 0
     assert state["curriculum_clears_to_advance"] == 2
-    assert len(env.enemies) == 1
+    assert len(env.enemies) == 0
     assert env.grid == canonical.grid
     assert env.fly == canonical.fly
     assert env.food_left() == canonical.food_left()
-    assert env.effective_world_tick_seconds(0.5) == 1.0
+    assert env.effective_world_tick_seconds(0.5) == 2.0
     assert state["olfaction"]["model"] == OLFACTION_MODEL
     assert state["olfaction"]["food"]["intensity"] > 0
-    assert state["olfaction"]["danger"]["intensity"] > 0
+    assert state["olfaction"]["danger"]["intensity"] == 0
     assert state["anti_stall_policy"] == ANTI_STALL_POLICY
 
 
@@ -172,10 +172,10 @@ def test_curriculum_checkpoint_preserves_eaten_food() -> None:
     assert restored.curriculum_stage == 1
     assert restored.grid[y][x] == " "
     assert restored.food_left() == baseline_food - 1
-    assert len(restored.enemies) == 1
+    assert len(restored.enemies) == 0
 
 
-def test_current_enemy_free_checkpoint_is_repaired_without_resetting_progress() -> None:
+def test_current_enemy_free_checkpoint_remains_valid_without_resetting_progress() -> None:
     source = CurriculumMazeEnvironment(seed=109)
     source.total_ticks = 77
     source.total_world_ticks = 123
@@ -186,7 +186,7 @@ def test_current_enemy_free_checkpoint_is_repaired_without_resetting_progress() 
     restored.restore(payload)
 
     assert restored.curriculum_stage == 1
-    assert len(restored.enemies) == 1
+    assert len(restored.enemies) == 0
     assert restored.total_ticks == 77
     assert restored.total_world_ticks == 123
 
@@ -202,8 +202,8 @@ def test_v05_state_migrates_to_full_maze_stage_one_without_erasing_global_totals
     migrated.restore(payload)
 
     assert migrated.curriculum_stage == 1
-    assert migrated.stage.name == "full-maze-intro-predator"
-    assert len(migrated.enemies) == 1
+    assert migrated.stage.name == "full-maze-foraging"
+    assert len(migrated.enemies) == 0
     assert migrated.grid == old.grid
     assert migrated.food_left() == old.food_left()
     assert migrated.total_ticks == 17
@@ -211,7 +211,7 @@ def test_v05_state_migrates_to_full_maze_stage_one_without_erasing_global_totals
     assert migrated.total_food == 3
 
 
-def test_v1_enemy_free_checkpoint_migrates_safely_to_v2_full_maze() -> None:
+def test_v1_enemy_free_checkpoint_migrates_safely_to_v3_full_maze() -> None:
     source = CurriculumMazeEnvironment(seed=109)
     payload = source.persistence_snapshot()
     payload["curriculum_version"] = "neurofly-curriculum-v1"
@@ -222,8 +222,8 @@ def test_v1_enemy_free_checkpoint_migrates_safely_to_v2_full_maze() -> None:
     canonical = GoalMazeEnvironment(seed=109)
 
     assert restored.curriculum_stage == 1
-    assert restored.stage.name == "full-maze-intro-predator"
-    assert len(restored.enemies) == 1
+    assert restored.stage.name == "full-maze-foraging"
+    assert len(restored.enemies) == 0
     assert restored.grid == canonical.grid
 
 

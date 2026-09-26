@@ -7,9 +7,9 @@ from .goal_training import GoalMazeEnvironment
 from .olfaction import virtual_olfaction
 
 
-CURRICULUM_VERSION = "neurofly-curriculum-v2"
+CURRICULUM_VERSION = "neurofly-curriculum-v3"
 ANTI_STALL_POLICY = "neurofly-curriculum-anti-stall-v1"
-ANTI_STALL_STATIONARY_LIMIT = 4
+ANTI_STALL_STATIONARY_LIMIT = 2
 
 
 @dataclass(frozen=True)
@@ -22,7 +22,7 @@ class CurriculumStage:
 
 
 STAGES: tuple[CurriculumStage, ...] = (
-    CurriculumStage(1, "full-maze-intro-predator", 2, 1.0, 1),
+    CurriculumStage(1, "full-maze-foraging", 2, 2.0, 0),
     CurriculumStage(2, "full-maze-slow-predator", 2, 2.0, 1),
     CurriculumStage(3, "full-maze-predator", 3, 1.0, 1),
     CurriculumStage(4, "full-live-maze", None, 0.5, 2),
