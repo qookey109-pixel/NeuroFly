@@ -95,7 +95,7 @@ def test_temporal_food_gradient_strengthens_rising_and_weakens_falling_odor() ->
         0.20, 0.40, 0.20
     )
     assert rising_delta > 0
-    assert rising_mean == 0.30
+    assert abs(rising_mean - 0.30) < 1e-12
     assert rising_left > 0.20
     assert rising_right > 0.40
 
