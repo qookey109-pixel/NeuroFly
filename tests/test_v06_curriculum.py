@@ -9,6 +9,7 @@ from neurofly.brain_runtime import (
     WALKING_STEERING_THRESHOLD_HZ,
     WALKING_STEERING_TYPE,
     _distributed_pulse_windows,
+    _longitudinal_odor_level,
     _scaled_odor_current,
     _temporal_danger_levels,
     _temporal_food_levels,
@@ -90,6 +91,45 @@ def test_virtual_odor_field_is_bilateral_and_directional() -> None:
     assert odor["danger"]["right"] > odor["danger"]["left"]
     assert odor["food"]["orn_type"] == FOOD_ORN_TYPE
     assert odor["danger"]["orn_type"] == DANGER_ORN_TYPE
+
+
+def test_food_and_danger_odor_distinguish_front_from_back() -> None:
+    grid = [[" " for _ in range(9)] for _ in range(9)]
+    grid[2][4] = "."
+    front_fly = {"x": 4, "y": 4, "dir": "UP"}
+    back_fly = {"x": 4, "y": 4, "dir": "DOWN"}
+    enemy = [{"x": 4, "y": 2}]
+
+    front = virtual_olfaction(grid=grid, fly=front_fly, enemies=enemy)
+    back = virtual_olfaction(grid=grid, fly=back_fly, enemies=enemy)
+
+    assert front["food"]["front"] > front["food"]["back"]
+    assert back["food"]["back"] > back["food"]["front"]
+    assert front["danger"]["front"] > front["danger"]["back"]
+    assert back["danger"]["back"] > back["danger"]["front"]
+    assert front["food"]["coordinate_frame"] == "egocentric-four-axis"
+    assert front["danger"]["coordinate_frame"] == "egocentric-four-axis"
+
+
+def test_longitudinal_odor_modulation_changes_neural_input_even_when_left_right_match() -> None:
+    front = _longitudinal_odor_level(
+        0.5,
+        0.7,
+        0.0,
+        front_gain=0.30,
+        back_attenuation=0.20,
+    )
+    back = _longitudinal_odor_level(
+        0.5,
+        0.0,
+        0.7,
+        front_gain=0.30,
+        back_attenuation=0.20,
+    )
+
+    assert front > 0.5
+    assert back < 0.5
+    assert front > back
 
 
 def test_food_odor_field_aggregates_multiple_sources_without_target_action() -> None:
