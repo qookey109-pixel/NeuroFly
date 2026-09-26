@@ -5,6 +5,9 @@ on:
     branches: ["main"]
     paths:
       - ".github/workflows/full-malecns-free.yml"
+      - "src/neurofly/**"
+      - "config/neurofly_continuous_runtime.json"
+      - "pyproject.toml"
   workflow_dispatch:
     inputs:
       steps:
