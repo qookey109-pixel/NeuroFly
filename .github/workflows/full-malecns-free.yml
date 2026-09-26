@@ -245,9 +245,24 @@ jobs:
           fi
           git checkout -B "$AUTHORITY_BRANCH" "origin/$AUTHORITY_BRANCH"
           cp /tmp/neurofly-malecns-state.json site/malecns-state.json
-          git add site/malecns-state.json
+          python -m neurofly.clear_history \
+            --state site/malecns-state.json \
+            --history site/clear-history.json \
+            --run-id "$GITHUB_RUN_ID" \
+            --run-attempt "$GITHUB_RUN_ATTEMPT"
+          python - <<'PY'
+          import json
+          history = json.load(open('site/clear-history.json'))
+          assert history['schema'] == 'neurofly-clear-history-v1'
+          records = history['records']
+          assert history['total_records'] == len(records)
+          assert len({record['event_id'] for record in records}) == len(records)
+          assert [record['history_index'] for record in records] == list(range(1, len(records) + 1))
+          print('PERMANENT_CLEAR_HISTORY_GATE_PASS', 'records=', len(records))
+          PY
+          git add site/malecns-state.json site/clear-history.json
           if git diff --cached --quiet; then
-            echo "Verified curriculum state is unchanged."
+            echo "Verified curriculum state and permanent clear history are unchanged."
           else
             git commit -m "state: publish verified MaleCNS curriculum trajectory"
             git push origin "HEAD:${AUTHORITY_BRANCH}"
@@ -320,6 +335,7 @@ jobs:
             runs/free-malecns/preflight.json
             runs/free-malecns/self-training-receipt.json
             site/malecns-state.json
+            site/clear-history.json
           if-no-files-found: warn
           retention-days: 1
 
