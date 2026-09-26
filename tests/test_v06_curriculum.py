@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+from neurofly.brain_runtime import _distributed_pulse_windows
 from neurofly.curriculum import (
     ACTION_AUTONOMY_POLICY,
     ANTI_STALL_POLICY,
     ANTI_STALL_STATIONARY_LIMIT,
     CURRICULUM_VERSION,
     STALL_STIMULUS_AFTER,
+    STALL_STIMULUS_FREQUENCY_HZ,
     STALL_STIMULUS_INTERVAL,
     STALL_STIMULUS_POLICY,
+    STALL_STIMULUS_PULSES_PER_DECISION,
     CurriculumMazeEnvironment,
 )
 from neurofly.goal_training import GoalMazeEnvironment
@@ -50,6 +53,8 @@ def test_curriculum_starts_on_full_canonical_maze_without_predator() -> None:
     assert state["anti_stall_policy"] == ANTI_STALL_POLICY
     assert state["action_autonomy_policy"] == ACTION_AUTONOMY_POLICY
     assert state["direct_action_override_enabled"] is False
+    assert state["stall_stimulus_frequency_hz"] == STALL_STIMULUS_FREQUENCY_HZ
+    assert state["stall_stimulus_pulses_per_decision"] == STALL_STIMULUS_PULSES_PER_DECISION
 
 
 def test_virtual_odor_field_is_bilateral_and_directional() -> None:
@@ -65,6 +70,18 @@ def test_virtual_odor_field_is_bilateral_and_directional() -> None:
     assert odor["danger"]["right"] > odor["danger"]["left"]
     assert odor["food"]["orn_type"] == FOOD_ORN_TYPE
     assert odor["danger"]["orn_type"] == DANGER_ORN_TYPE
+
+
+def test_high_frequency_stall_train_preserves_total_stimulus_budget() -> None:
+    windows = _distributed_pulse_windows(
+        total_steps=50,
+        pulse_budget_steps=20,
+        pulse_count=5,
+    )
+
+    assert windows == [(0, 4), (10, 14), (20, 24), (30, 34), (40, 44)]
+    assert len(windows) == 5
+    assert sum(end - start for start, end in windows) == 20
 
 
 def test_sensory_only_autonomy_never_overrides_repeated_hold() -> None:
