@@ -82,6 +82,15 @@ def test_runtime_v4_gate_accepts_predator_free_stage_one_and_sensory_only_action
     assert "danger_temporal_delta" in build_block
     assert "danger_raw_left" in build_block
     assert "danger_raw_right" in build_block
+    assert "food_front" in build_block
+    assert "food_back" in build_block
+    assert "danger_front" in build_block
+    assert "danger_back" in build_block
+    assert "food_longitudinal_bias" in build_block
+    assert "danger_longitudinal_bias" in build_block
+    assert "egocentric-four-axis" in build_block
+    assert "neurofly-virtual-olfaction-v3" in build_block
+    assert "neurofly-virtual-olfaction-v2" not in build_block
     assert "food_current_gain']) == 1.0" in build_block
     assert "danger_current_gain']) == 1.6" in build_block
     assert "danger_max_external_current" in build_block
