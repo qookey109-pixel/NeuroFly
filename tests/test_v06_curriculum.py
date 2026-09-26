@@ -637,6 +637,10 @@ def test_public_goal_state_preserves_v4_action_autonomy_evidence() -> None:
     assert public["curriculum_version"] == CURRICULUM_VERSION
     assert public["action_autonomy_policy"] == ACTION_AUTONOMY_POLICY
     assert public["direct_action_override_enabled"] is False
+    assert public["enemy_navigation_policy"] == "maze-intercept-pursuit-v3"
+    assert public["enemy_pursuit_probability"] == 0.97
+    assert public["enemy_intercept_weight"] == 0.45
+    assert public["enemy_secondary_intercept_weight"] == 0.75
     assert public["stall_stimulus_policy"] == STALL_STIMULUS_POLICY
     assert public["stall_stimulus_after"] == STALL_STIMULUS_AFTER
     assert public["stall_stimulus_interval"] == STALL_STIMULUS_INTERVAL

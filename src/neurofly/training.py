@@ -61,6 +61,10 @@ GOAL_FIELDS = (
     "curriculum_stage_history",
     "curriculum_complete",
     "olfaction",
+    "enemy_navigation_policy",
+    "enemy_pursuit_probability",
+    "enemy_intercept_weight",
+    "enemy_secondary_intercept_weight",
 )
 
 ODOR_TELEMETRY_FIELDS = (
