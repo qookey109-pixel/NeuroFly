@@ -4,7 +4,7 @@ import math
 from typing import Any
 
 
-OLFACTION_MODEL = "neurofly-virtual-olfaction-v2"
+OLFACTION_MODEL = "neurofly-virtual-olfaction-v3"
 FOOD_ORN_TYPE = "ORN_DM1"
 DANGER_ORN_TYPE = "ORN_DA2"
 FOOD_BILATERAL_CONTRAST_GAIN = 0.75
@@ -26,7 +26,7 @@ def _bounded(value: float) -> float:
     return max(0.0, min(1.0, float(value)))
 
 
-def _bilateral_signal(
+def _directional_signal(
     *,
     fly: dict[str, Any],
     source_x: int,
@@ -34,25 +34,31 @@ def _bilateral_signal(
     decay_cells: float,
     strength: float,
     lateral_gain: float = 0.45,
-) -> tuple[float, float, float]:
+) -> tuple[float, float, float, float, float]:
+    """Project one odor source into an egocentric four-axis concentration cue."""
     dx = float(source_x) - float(fly["x"])
     dy = float(source_y) - float(fly["y"])
     distance = math.hypot(dx, dy)
     base = _bounded(float(strength) * math.exp(-distance / float(decay_cells)))
     if distance <= 1e-9:
-        return base, base, 0.0
+        return base, base, base, 0.0, 0.0
 
     heading_x, heading_y = _DIR_VECTORS[str(fly["dir"])]
     right_x, right_y = -heading_y, heading_x
     lateral = (dx * right_x + dy * right_y) / distance
+    longitudinal = (dx * heading_x + dy * heading_y) / distance
     lateral = max(-1.0, min(1.0, lateral))
+    longitudinal = max(-1.0, min(1.0, longitudinal))
 
-    # Bilateral difference is intentionally bounded. It provides a directional
-    # sensory cue without encoding a target action or a path solution.
+    # Left/right remains a bounded bilateral antennal proxy. Front/back is a
+    # separate egocentric concentration projection, not a claim that flies have
+    # literal front and rear olfactory organs.
     gain = max(0.0, min(0.95, float(lateral_gain)))
     left = _bounded(base * (1.0 - gain * lateral))
     right = _bounded(base * (1.0 + gain * lateral))
-    return left, right, distance
+    front = _bounded(base * max(0.0, longitudinal))
+    back = _bounded(base * max(0.0, -longitudinal))
+    return left, right, front, back, distance
 
 
 def _strongest_source(
@@ -73,7 +79,7 @@ def _strongest_source(
     best: dict[str, Any] | None = None
     best_intensity = -1.0
     for x, y, strength in sources:
-        left, right, distance = _bilateral_signal(
+        left, right, _, _, distance = _directional_signal(
             fly=fly,
             source_x=x,
             source_y=y,
@@ -108,16 +114,21 @@ def _aggregate_sources(
         return {
             "left": 0.0,
             "right": 0.0,
+            "front": 0.0,
+            "back": 0.0,
             "intensity": 0.0,
             "source_count": 0,
             "aggregation": f"lp{power:g}-all-sources",
+            "coordinate_frame": "egocentric-four-axis",
         }
 
     p = max(1.0, float(power))
     left_power = 0.0
     right_power = 0.0
+    front_power = 0.0
+    back_power = 0.0
     for x, y, strength in sources:
-        left, right, _ = _bilateral_signal(
+        left, right, front, back, _ = _directional_signal(
             fly=fly,
             source_x=x,
             source_y=y,
@@ -127,15 +138,22 @@ def _aggregate_sources(
         )
         left_power += left**p
         right_power += right**p
+        front_power += front**p
+        back_power += back**p
 
     left = _bounded(left_power ** (1.0 / p))
     right = _bounded(right_power ** (1.0 / p))
+    front = _bounded(front_power ** (1.0 / p))
+    back = _bounded(back_power ** (1.0 / p))
     return {
         "left": round(left, 6),
         "right": round(right, 6),
+        "front": round(front, 6),
+        "back": round(back, 6),
         "intensity": round((left + right) / 2.0, 6),
         "source_count": len(sources),
         "aggregation": f"lp{p:g}-all-sources",
+        "coordinate_frame": "egocentric-four-axis",
     }
 
 
