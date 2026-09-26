@@ -27,7 +27,7 @@
     brainMs: byId('brainMs'),
     computeSeconds: byId('computeSeconds'),
     totalSpikes: byId('totalSpikes'),
-    gateSpikes: byId('gateSpikes'),
+    walkingSpikes: byId('walkingSpikes'),
     leftHz: byId('leftHz'),
     rightHz: byId('rightHz'),
     foodOdorSpikes: byId('foodOdorSpikes'),
@@ -383,7 +383,7 @@
     ui.brainMs.textContent = formatNeuralDurationMs(telemetry.brain_ms);
     ui.computeSeconds.textContent = formatComputeSeconds(telemetry.compute_seconds);
     ui.totalSpikes.textContent = formatCount(telemetry.total_spikes);
-    ui.gateSpikes.textContent = formatCount(telemetry.gate_spikes);
+    ui.walkingSpikes.textContent = formatCount(telemetry.walking_spikes);
     ui.leftHz.textContent = formatHz(telemetry.left_hz);
     ui.rightHz.textContent = formatHz(telemetry.right_hz);
     ui.foodOdorSpikes.textContent = formatCount(telemetry.food_odor_spikes);

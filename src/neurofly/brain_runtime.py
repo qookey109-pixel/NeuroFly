@@ -78,6 +78,9 @@ def _bilateral_type_indices(np: Any, annotations: Any, neuron_type: str) -> tupl
 STALL_HIGH_FREQUENCY_PATTERN = "neurofly-hf-stall-pulse-train-v1"
 FOOD_TEMPORAL_GAIN = 1.5
 FOOD_TEMPORAL_MAX_OFFSET = 0.20
+WALKING_DECODER = "neurofly-walking-decoder-v2"
+WALKING_STEERING_TYPE = "DNa02"
+WALKING_FORWARD_TYPE = "DNp09"
 
 
 def _distributed_pulse_windows(
@@ -126,6 +129,25 @@ def _temporal_food_levels(
         delta,
         intensity,
     )
+
+
+def _walking_action(
+    *,
+    steering_left_hz: float,
+    steering_right_hz: float,
+    forward_hz: float,
+    walking_spikes: int,
+    steering_threshold_hz: float,
+) -> str:
+    """Decode walking DNs without an unrelated binary hold gate."""
+    if int(walking_spikes) <= 0:
+        return "HOLD"
+    difference = float(steering_right_hz) - float(steering_left_hz)
+    if difference >= float(steering_threshold_hz):
+        return "TURN_RIGHT"
+    if difference <= -float(steering_threshold_hz):
+        return "TURN_LEFT"
+    return "FORWARD"
 
 
 class DemoBrain:
@@ -214,13 +236,30 @@ class MaleCNSBrain:
         self._last_food_intensity: float | None = None
 
         a = annotations(self.brain.ids)
-        types = a.type.fillna("")
-        sides = a.somaSide.fillna("")
-        self.left = np.flatnonzero(types.eq("DNp20") & sides.eq("L"))
-        self.right = np.flatnonzero(types.eq("DNp20") & sides.eq("R"))
-        self.gate = np.flatnonzero(types.eq("DNpe017"))
-        if not len(self.left) or not len(self.right) or not len(self.gate):
-            raise RuntimeError("Required DNp20/DNpe017 readout annotations are missing")
+        types = a.type.fillna("").astype(str)
+        (
+            self.steering_left,
+            self.steering_right,
+            steering_side_report,
+        ) = _bilateral_type_indices(np, a, WALKING_STEERING_TYPE)
+        (
+            self.forward_left,
+            self.forward_right,
+            forward_side_report,
+        ) = _bilateral_type_indices(np, a, WALKING_FORWARD_TYPE)
+        self.forward = np.unique(
+            np.concatenate((self.forward_left, self.forward_right))
+        )
+        if (
+            not len(self.steering_left)
+            or not len(self.steering_right)
+            or not len(self.forward)
+        ):
+            raise RuntimeError(
+                "Required walking decoder annotations are missing: "
+                f"{WALKING_STEERING_TYPE}={steering_side_report}; "
+                f"{WALKING_FORWARD_TYPE}={forward_side_report}"
+            )
 
         self.food_orn_left, self.food_orn_right, food_side_report = _bilateral_type_indices(
             np, a, FOOD_ORN_TYPE
@@ -245,9 +284,18 @@ class MaleCNSBrain:
             )
 
         self.identities = {
-            "left": [str(self.brain.ids[i]) for i in self.left],
-            "right": [str(self.brain.ids[i]) for i in self.right],
-            "gate": [str(self.brain.ids[i]) for i in self.gate],
+            "steering_left": [str(self.brain.ids[i]) for i in self.steering_left],
+            "steering_right": [str(self.brain.ids[i]) for i in self.steering_right],
+            "forward": [str(self.brain.ids[i]) for i in self.forward],
+        }
+        self.motor_report = {
+            "decoder": WALKING_DECODER,
+            "steering_type": WALKING_STEERING_TYPE,
+            "forward_type": WALKING_FORWARD_TYPE,
+            "steering": steering_side_report,
+            "forward": forward_side_report,
+            "dnpe017_gate_used": False,
+            "direct_action_command": False,
         }
         self.olfaction_report = {
             "model": OLFACTION_MODEL,
@@ -288,23 +336,50 @@ class MaleCNSBrain:
     def _decode(self, counts: Any) -> tuple[str, dict[str, Any]]:
         np = self.np
         seconds = self.neural_ms / 1000.0
-        left_hz = float(np.mean(counts[self.left]) / seconds)
-        right_hz = float(np.mean(counts[self.right]) / seconds)
-        difference = right_hz - left_hz
-        gate_spikes = int(counts[self.gate].sum())
-        if not gate_spikes:
-            action = "HOLD"
-        elif difference >= self.decoder_threshold_hz:
-            action = "TURN_RIGHT"
-        elif difference <= -self.decoder_threshold_hz:
-            action = "TURN_LEFT"
-        else:
-            action = "FORWARD"
+
+        steering_left_hz = float(np.mean(counts[self.steering_left]) / seconds)
+        steering_right_hz = float(np.mean(counts[self.steering_right]) / seconds)
+        steering_difference_hz = steering_right_hz - steering_left_hz
+
+        forward_left_hz = (
+            float(np.mean(counts[self.forward_left]) / seconds)
+            if len(self.forward_left)
+            else 0.0
+        )
+        forward_right_hz = (
+            float(np.mean(counts[self.forward_right]) / seconds)
+            if len(self.forward_right)
+            else 0.0
+        )
+        forward_hz = float(np.mean(counts[self.forward]) / seconds)
+
+        steering_spikes = int(
+            counts[self.steering_left].sum() + counts[self.steering_right].sum()
+        )
+        forward_spikes = int(counts[self.forward].sum())
+        walking_spikes = steering_spikes + forward_spikes
+
+        action = _walking_action(
+            steering_left_hz=steering_left_hz,
+            steering_right_hz=steering_right_hz,
+            forward_hz=forward_hz,
+            walking_spikes=walking_spikes,
+            steering_threshold_hz=self.decoder_threshold_hz,
+        )
         return action, {
-            "left_hz": left_hz,
-            "right_hz": right_hz,
-            "difference_hz": difference,
-            "gate_spikes": gate_spikes,
+            "motor_decoder": WALKING_DECODER,
+            "steering_type": WALKING_STEERING_TYPE,
+            "forward_type": WALKING_FORWARD_TYPE,
+            "left_hz": steering_left_hz,
+            "right_hz": steering_right_hz,
+            "difference_hz": steering_difference_hz,
+            "forward_hz": forward_hz,
+            "forward_left_hz": forward_left_hz,
+            "forward_right_hz": forward_right_hz,
+            "steering_spikes": steering_spikes,
+            "forward_spikes": forward_spikes,
+            "walking_spikes": walking_spikes,
+            "dnpe017_gate_used": False,
             "cell_ids": self.identities,
         }
 

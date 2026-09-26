@@ -1,6 +1,13 @@
 from __future__ import annotations
 
-from neurofly.brain_runtime import _distributed_pulse_windows, _temporal_food_levels
+from neurofly.brain_runtime import (
+    WALKING_DECODER,
+    WALKING_FORWARD_TYPE,
+    WALKING_STEERING_TYPE,
+    _distributed_pulse_windows,
+    _temporal_food_levels,
+    _walking_action,
+)
 from neurofly.curriculum import (
     ACTION_AUTONOMY_POLICY,
     ANTI_STALL_POLICY,
@@ -105,6 +112,53 @@ def test_temporal_food_gradient_strengthens_rising_and_weakens_falling_odor() ->
     assert falling_delta < 0
     assert falling_left < 0.20
     assert falling_right < 0.40
+
+
+def test_walking_decoder_holds_only_without_walking_dn_activity() -> None:
+    assert _walking_action(
+        steering_left_hz=0.0,
+        steering_right_hz=0.0,
+        forward_hz=0.0,
+        walking_spikes=0,
+        steering_threshold_hz=2.0,
+    ) == "HOLD"
+
+
+def test_walking_decoder_uses_dna02_difference_for_turning() -> None:
+    assert _walking_action(
+        steering_left_hz=1.0,
+        steering_right_hz=5.0,
+        forward_hz=0.0,
+        walking_spikes=1,
+        steering_threshold_hz=2.0,
+    ) == "TURN_RIGHT"
+    assert _walking_action(
+        steering_left_hz=5.0,
+        steering_right_hz=1.0,
+        forward_hz=0.0,
+        walking_spikes=1,
+        steering_threshold_hz=2.0,
+    ) == "TURN_LEFT"
+
+
+def test_walking_decoder_uses_dnp09_or_bilateral_activity_for_forward() -> None:
+    assert _walking_action(
+        steering_left_hz=0.0,
+        steering_right_hz=0.0,
+        forward_hz=8.0,
+        walking_spikes=1,
+        steering_threshold_hz=2.0,
+    ) == "FORWARD"
+    assert _walking_action(
+        steering_left_hz=4.0,
+        steering_right_hz=4.5,
+        forward_hz=0.0,
+        walking_spikes=2,
+        steering_threshold_hz=2.0,
+    ) == "FORWARD"
+    assert WALKING_DECODER == "neurofly-walking-decoder-v2"
+    assert WALKING_STEERING_TYPE == "DNa02"
+    assert WALKING_FORWARD_TYPE == "DNp09"
 
 
 def test_high_frequency_stall_train_preserves_total_stimulus_budget() -> None:

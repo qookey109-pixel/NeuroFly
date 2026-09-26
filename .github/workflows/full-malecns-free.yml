@@ -128,6 +128,14 @@ jobs:
               for s in state['trajectory']
           )
           assert all(
+              s['brain']['telemetry'].get('motor_decoder') == 'neurofly-walking-decoder-v2'
+              and s['brain']['telemetry'].get('steering_type') == 'DNa02'
+              and s['brain']['telemetry'].get('forward_type') == 'DNp09'
+              and s['brain']['telemetry'].get('dnpe017_gate_used') is False
+              and int(s['brain']['telemetry'].get('walking_spikes', -1)) >= 0
+              for s in state['trajectory']
+          )
+          assert all(
               'food_temporal_delta' in s['brain']['telemetry'].get('olfaction', {})
               and 'food_raw_left' in s['brain']['telemetry'].get('olfaction', {})
               and 'food_raw_right' in s['brain']['telemetry'].get('olfaction', {})
