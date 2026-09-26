@@ -161,8 +161,8 @@ jobs:
           assert final.get('action_autonomy_policy') == 'neurofly-sensory-only-action-autonomy-v1'
           assert final.get('direct_action_override_enabled') is False
           assert final.get('stall_stimulus_policy') == 'neurofly-nondirectional-stall-aversive-hf-v3'
-          assert float(final.get('stall_stimulus_frequency_hz', 0.0)) == 100.0
-          assert int(final.get('stall_stimulus_pulses_per_decision', 0)) == 5
+          assert float(final.get('stall_stimulus_frequency_hz', 0.0)) == 160.0
+          assert int(final.get('stall_stimulus_pulses_per_decision', 0)) == 8
           decision_states = [
               sample for sample in state['trajectory']
               if sample.get('decision_applied') is True

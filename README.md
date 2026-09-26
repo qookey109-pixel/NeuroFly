@@ -37,8 +37,8 @@ hand-authored movement. Stall detection never changes the decoded action. Under 
 translational stalls trigger a high-frequency, non-directional aversive pulse
 train after four stalled decisions and on each subsequent stalled decision until
 the fly autonomously turns or moves. The default stall train distributes the
-existing 20 ms stimulation budget into five short pulses across the 50 ms neural
-decision window (about 100 Hz) while keeping the same 20-current amplitude. The
+existing 20 ms stimulation budget into eight short pulses across the 50 ms neural
+decision window (about 160 Hz) while keeping the same 20-current amplitude. The
 fly still decides whether to hold, move forward or turn. If behavior needs
 to change further, the experiment must do so through reviewed sensory or
 reinforcement stimuli rather than direct action overrides.
