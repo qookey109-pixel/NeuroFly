@@ -397,8 +397,13 @@ class GoalMazeSession:
             context = self.environment.snapshot(include_grid=False)
             frame = self.environment.render_rgb()
             reinforcement = self._take_reinforcement()
+            reinforcement_source = "event_train" if reinforcement != "none" else "none"
             if reinforcement == "none":
                 reinforcement = self.environment.reinforcement()
+                if reinforcement != "none":
+                    reinforcement_source = "environment"
+            context = dict(context)
+            context["_reinforcement_source"] = reinforcement_source
 
         stop_event = threading.Event()
         world_thread: threading.Thread | None = None
