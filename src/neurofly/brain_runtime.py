@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import math
 from dataclasses import dataclass
 from pathlib import Path
@@ -86,14 +87,16 @@ FOOD_FRONT_GAIN = 0.30
 FOOD_BACK_ATTENUATION = 0.20
 DANGER_FRONT_GAIN = 0.45
 DANGER_BACK_ATTENUATION = 0.05
-WALKING_DECODER = "neurofly-walking-decoder-v3"
+WALKING_DECODER = "neurofly-walking-decoder-v4"
 WALKING_STEERING_TYPE = "DNa02"
 WALKING_DRIVE_TYPE = "DNb05"
-# Compatibility alias for downstream telemetry consumers. V3 treats this as
+# Compatibility alias for downstream telemetry consumers. V4 treats this as
 # a locomotor-drive population proxy, not as a claim that DNb05 is a sole
 # forward command neuron.
 WALKING_FORWARD_TYPE = WALKING_DRIVE_TYPE
 WALKING_STEERING_THRESHOLD_HZ = 30.0
+WALKING_STEERING_BASELINE_ALPHA = 0.02
+WALKING_STEERING_BASELINE_POLICY = "bilateral-ewma-baseline-centered-v1"
 
 
 def _distributed_pulse_windows(
@@ -190,6 +193,41 @@ def _longitudinal_odor_level(
     return max(0.0, min(1.0, base * factor))
 
 
+def _baseline_centered_steering_difference(
+    *,
+    steering_left_hz: float,
+    steering_right_hz: float,
+    left_baseline_hz: float | None,
+    right_baseline_hz: float | None,
+    alpha: float = WALKING_STEERING_BASELINE_ALPHA,
+) -> tuple[float, float, float, float, float]:
+    """Remove slow bilateral DNa02 rate offsets while preserving transient asymmetry.
+
+    DNa02 steering is decoded from the interhemispheric activity difference.
+    The retained MaleCNS graph can develop a persistent side-specific rate offset,
+    so a raw difference can become a chronic turning command. Each hemisphere
+    therefore carries its own slow EWMA baseline. Only the instantaneous residual
+    difference drives steering; no maze coordinate, target, route, reward, or
+    hand-authored action enters this calibration.
+    """
+
+    rate = float(alpha)
+    if not math.isfinite(rate) or not 0.0 < rate <= 1.0:
+        raise ValueError("steering baseline alpha must be within (0, 1]")
+
+    left = float(steering_left_hz)
+    right = float(steering_right_hz)
+    if not math.isfinite(left) or not math.isfinite(right):
+        raise ValueError("steering rates must be finite")
+
+    used_left = left if left_baseline_hz is None else float(left_baseline_hz)
+    used_right = right if right_baseline_hz is None else float(right_baseline_hz)
+    difference = (right - used_right) - (left - used_left)
+    next_left = (1.0 - rate) * used_left + rate * left
+    next_right = (1.0 - rate) * used_right + rate * right
+    return difference, used_left, used_right, next_left, next_right
+
+
 def _walking_action(
     *,
     steering_left_hz: float,
@@ -197,12 +235,17 @@ def _walking_action(
     steering_spikes: int,
     drive_spikes: int,
     steering_threshold_hz: float,
+    steering_difference_hz: float | None = None,
 ) -> str:
     """Decode walking from neural activity only, without direct action forcing."""
     if int(drive_spikes) <= 0 and int(steering_spikes) <= 0:
         return "HOLD"
 
-    difference = float(steering_right_hz) - float(steering_left_hz)
+    difference = (
+        float(steering_right_hz) - float(steering_left_hz)
+        if steering_difference_hz is None
+        else float(steering_difference_hz)
+    )
     if int(steering_spikes) > 0 and difference >= float(steering_threshold_hz):
         return "TURN_RIGHT"
     if int(steering_spikes) > 0 and difference <= -float(steering_threshold_hz):
@@ -300,6 +343,8 @@ class MaleCNSBrain:
         self._last_visual_rgb: Any | None = None
         self._last_food_intensity: float | None = None
         self._last_danger_intensity: float | None = None
+        self._steering_left_baseline_hz: float | None = None
+        self._steering_right_baseline_hz: float | None = None
 
         a = annotations(self.brain.ids)
         types = a.type.fillna("").astype(str)
@@ -366,6 +411,8 @@ class MaleCNSBrain:
             "walking_drive": walking_drive_side_report,
             "forward": walking_drive_side_report,
             "steering_threshold_hz": self.decoder_threshold_hz,
+            "steering_baseline_policy": WALKING_STEERING_BASELINE_POLICY,
+            "steering_baseline_alpha": WALKING_STEERING_BASELINE_ALPHA,
             "dnpe017_gate_used": False,
             "direct_action_command": False,
         }
@@ -423,6 +470,21 @@ class MaleCNSBrain:
         self.checkpoint_path = Path(checkpoint) if checkpoint else None
         if self.checkpoint_path and self.checkpoint_path.exists():
             self.brain.restore(self.checkpoint_path)
+            decoder_state_path = self.checkpoint_path.with_suffix(".decoder.json")
+            if decoder_state_path.exists():
+                try:
+                    decoder_state = json.loads(decoder_state_path.read_text())
+                    if decoder_state.get("decoder") == WALKING_DECODER:
+                        left_baseline = decoder_state.get("steering_left_baseline_hz")
+                        right_baseline = decoder_state.get("steering_right_baseline_hz")
+                        if left_baseline is not None and right_baseline is not None:
+                            self._steering_left_baseline_hz = float(left_baseline)
+                            self._steering_right_baseline_hz = float(right_baseline)
+                except (OSError, ValueError, TypeError, json.JSONDecodeError):
+                    # Decoder calibration is non-authoritative. A missing/corrupt
+                    # sidecar must never prevent restoration of the trained brain.
+                    self._steering_left_baseline_hz = None
+                    self._steering_right_baseline_hz = None
 
     def _decode(self, counts: Any) -> tuple[str, dict[str, Any]]:
         np = self.np
@@ -430,7 +492,21 @@ class MaleCNSBrain:
 
         steering_left_hz = float(np.mean(counts[self.steering_left]) / seconds)
         steering_right_hz = float(np.mean(counts[self.steering_right]) / seconds)
-        steering_difference_hz = steering_right_hz - steering_left_hz
+        raw_steering_difference_hz = steering_right_hz - steering_left_hz
+        (
+            decoder_steering_difference_hz,
+            used_left_baseline_hz,
+            used_right_baseline_hz,
+            next_left_baseline_hz,
+            next_right_baseline_hz,
+        ) = _baseline_centered_steering_difference(
+            steering_left_hz=steering_left_hz,
+            steering_right_hz=steering_right_hz,
+            left_baseline_hz=self._steering_left_baseline_hz,
+            right_baseline_hz=self._steering_right_baseline_hz,
+        )
+        self._steering_left_baseline_hz = next_left_baseline_hz
+        self._steering_right_baseline_hz = next_right_baseline_hz
 
         walking_drive_left_hz = (
             float(np.mean(counts[self.walking_drive_left]) / seconds)
@@ -456,6 +532,7 @@ class MaleCNSBrain:
             steering_spikes=steering_spikes,
             drive_spikes=walking_drive_spikes,
             steering_threshold_hz=self.decoder_threshold_hz,
+            steering_difference_hz=decoder_steering_difference_hz,
         )
         return action, {
             "motor_decoder": WALKING_DECODER,
@@ -464,7 +541,14 @@ class MaleCNSBrain:
             "forward_type": WALKING_FORWARD_TYPE,
             "left_hz": steering_left_hz,
             "right_hz": steering_right_hz,
-            "difference_hz": steering_difference_hz,
+            # Backward-compatible raw interhemispheric difference.
+            "difference_hz": raw_steering_difference_hz,
+            "raw_difference_hz": raw_steering_difference_hz,
+            "decoder_difference_hz": decoder_steering_difference_hz,
+            "steering_left_baseline_hz": used_left_baseline_hz,
+            "steering_right_baseline_hz": used_right_baseline_hz,
+            "steering_baseline_policy": WALKING_STEERING_BASELINE_POLICY,
+            "steering_baseline_alpha": WALKING_STEERING_BASELINE_ALPHA,
             "walking_drive_hz": walking_drive_hz,
             "walking_drive_left_hz": walking_drive_left_hz,
             "walking_drive_right_hz": walking_drive_right_hz,
@@ -791,7 +875,23 @@ class MaleCNSBrain:
         return BrainDecision(action=action, backend=self.name, telemetry=telemetry)
 
     def save(self, path: str | Path) -> None:
-        self.brain.checkpoint(Path(path))
+        checkpoint = Path(path)
+        self.brain.checkpoint(checkpoint)
+        decoder_state_path = checkpoint.with_suffix(".decoder.json")
+        decoder_state_path.write_text(
+            json.dumps(
+                {
+                    "decoder": WALKING_DECODER,
+                    "steering_baseline_policy": WALKING_STEERING_BASELINE_POLICY,
+                    "steering_baseline_alpha": WALKING_STEERING_BASELINE_ALPHA,
+                    "steering_left_baseline_hz": self._steering_left_baseline_hz,
+                    "steering_right_baseline_hz": self._steering_right_baseline_hz,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n"
+        )
 
 
 def brain_status() -> dict[str, Any]:
