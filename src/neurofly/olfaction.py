@@ -153,11 +153,24 @@ def _aggregate_sources(
     raw_right = right_power ** (1.0 / p)
     raw_front = front_power ** (1.0 / p)
     raw_back = back_power ** (1.0 / p)
-    shared_peak = max(1.0, raw_left, raw_right, raw_front, raw_back)
-    left = _bounded(raw_left / shared_peak)
-    right = _bounded(raw_right / shared_peak)
-    front = _bounded(raw_front / shared_peak)
-    back = _bounded(raw_back / shared_peak)
+
+    # Preserve the legacy monotonic multi-source strength while at least one
+    # opposing channel still has headroom. Shared rescaling is needed only once
+    # independent clipping would saturate both sides of an axis and erase the
+    # directional difference we are trying to retain.
+    bilateral_saturated = raw_left > 1.0 and raw_right > 1.0
+    longitudinal_saturated = raw_front > 1.0 and raw_back > 1.0
+    if bilateral_saturated or longitudinal_saturated:
+        shared_peak = max(1.0, raw_left, raw_right, raw_front, raw_back)
+        left = _bounded(raw_left / shared_peak)
+        right = _bounded(raw_right / shared_peak)
+        front = _bounded(raw_front / shared_peak)
+        back = _bounded(raw_back / shared_peak)
+    else:
+        left = _bounded(raw_left)
+        right = _bounded(raw_right)
+        front = _bounded(raw_front)
+        back = _bounded(raw_back)
     return {
         "left": round(left, 6),
         "right": round(right, 6),
