@@ -133,11 +133,17 @@ jobs:
               for s in state['trajectory']
           )
           assert all(
-              s['brain']['telemetry'].get('motor_decoder') == 'neurofly-walking-decoder-v3'
+              s['brain']['telemetry'].get('motor_decoder') == 'neurofly-walking-decoder-v4'
               and s['brain']['telemetry'].get('steering_type') == 'DNa02'
               and s['brain']['telemetry'].get('walking_drive_type') == 'DNb05'
               and s['brain']['telemetry'].get('forward_type') == 'DNb05'
               and float(s['brain']['telemetry'].get('steering_threshold_hz', -1.0)) == 30.0
+              and s['brain']['telemetry'].get('steering_baseline_policy') == 'bilateral-ewma-baseline-centered-v1'
+              and float(s['brain']['telemetry'].get('steering_baseline_alpha', -1.0)) == 0.02
+              and 'raw_difference_hz' in s['brain']['telemetry']
+              and 'decoder_difference_hz' in s['brain']['telemetry']
+              and 'steering_left_baseline_hz' in s['brain']['telemetry']
+              and 'steering_right_baseline_hz' in s['brain']['telemetry']
               and s['brain']['telemetry'].get('dnpe017_gate_used') is False
               and int(s['brain']['telemetry'].get('walking_drive_spikes', -1)) >= 0
               and int(s['brain']['telemetry'].get('walking_spikes', -1)) >= 0
