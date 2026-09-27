@@ -90,7 +90,7 @@ def test_dna02_baseline_updates_slowly_without_using_environment_state() -> None
     assert signal == -10.0
     assert used_left == 60.0
     assert used_right == 10.0
-    assert next_left == 60.4
-    assert next_right == 10.2
+    assert abs(next_left - 60.4) < 1e-12
+    assert abs(next_right - 10.2) < 1e-12
     assert WALKING_STEERING_BASELINE_ALPHA == 0.02
     assert WALKING_STEERING_BASELINE_POLICY == "bilateral-ewma-baseline-centered-v1"
