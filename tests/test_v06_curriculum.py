@@ -312,7 +312,7 @@ def test_walking_decoder_uses_dna02_difference_for_strong_turning() -> None:
     ) == "TURN_LEFT"
 
 
-def test_walking_decoder_v3_ignores_one_spike_equivalent_steering_jitter() -> None:
+def test_walking_decoder_v4_ignores_one_spike_equivalent_steering_jitter() -> None:
     assert _walking_action(
         steering_left_hz=0.0,
         steering_right_hz=20.0,
@@ -322,7 +322,7 @@ def test_walking_decoder_v3_ignores_one_spike_equivalent_steering_jitter() -> No
     ) == "FORWARD"
 
 
-def test_walking_decoder_v3_requires_neural_drive_for_forward() -> None:
+def test_walking_decoder_v4_requires_neural_drive_for_forward() -> None:
     assert _walking_action(
         steering_left_hz=0.0,
         steering_right_hz=0.0,
@@ -337,7 +337,7 @@ def test_walking_decoder_v3_requires_neural_drive_for_forward() -> None:
         drive_spikes=0,
         steering_threshold_hz=WALKING_STEERING_THRESHOLD_HZ,
     ) == "HOLD"
-    assert WALKING_DECODER == "neurofly-walking-decoder-v3"
+    assert WALKING_DECODER == "neurofly-walking-decoder-v4"
     assert WALKING_STEERING_TYPE == "DNa02"
     assert WALKING_DRIVE_TYPE == "DNb05"
     assert WALKING_FORWARD_TYPE == WALKING_DRIVE_TYPE
