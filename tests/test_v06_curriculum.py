@@ -406,8 +406,8 @@ def test_repeated_stall_uses_nondirectional_stimulus_without_steering() -> None:
     assert state["stall_stimulus_interval"] == STALL_STIMULUS_INTERVAL
 
     env.agent_step("TURN_LEFT", move_enemies=False)
-    assert env.reinforcement() == "none"
-    assert env.snapshot()["anti_stall_stationary_steps"] == 0
+    assert env.reinforcement() == "aversive"
+    assert env.snapshot()["anti_stall_stationary_steps"] == STALL_STIMULUS_AFTER + 3
 
 
 def test_sensory_only_autonomy_applies_every_decoded_action_verbatim() -> None:

@@ -32,6 +32,14 @@ The game computes a bounded virtual odor field from authoritative environment st
 
 The selected current is applied to the matching left/right ORN groups during every MaleCNS neural bin. Visual R8 stimulation remains active in the same `rgb_step` call.
 
+## Dense-field directional normalization
+
+The current runtime uses `neurofly-virtual-olfaction-v4`. Multi-source food fields are still aggregated with the existing LP4 rule. While at least one opposing channel still has headroom, the legacy bounded aggregation is preserved. When independent clipping would saturate both sides of a lateral or longitudinal axis, all four egocentric axes are normalized by one shared peak (`shared-peak-preserve-contrast-v1`) so directional contrast is not erased.
+
+This matters in the full maze because many remaining food cells can contribute simultaneously. Independent clipping can drive both left and right channels to 1.0 and erase the bilateral difference even though the overall odor is strong. Shared-peak normalization keeps every channel within `[0, 1]` while preserving the relative left/right/front/back concentration pattern.
+
+This is a sensory encoding change only. It does not expose food coordinates, choose a route, recommend an action, or alter reward.
+
 ## Reinforcement stays separate
 
 A food odor is not a reward. An enemy odor is not an aversive event.

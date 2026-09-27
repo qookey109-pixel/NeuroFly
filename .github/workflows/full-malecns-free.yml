@@ -123,13 +123,13 @@ jobs:
           assert state['goal'] == 'maze_cleared'
           assert state['curriculum'] is True
           assert state['curriculum_version'] == 'neurofly-curriculum-v4'
-          assert state['olfaction_model'] == 'neurofly-virtual-olfaction-v3'
+          assert state['olfaction_model'] == 'neurofly-virtual-olfaction-v4'
           assert int(state['world_states_seen']) > 0
           assert state['trajectory']
           assert all(s['brain']['backend'] == 'malecns' for s in state['trajectory'])
           assert all(int(s['brain']['telemetry']['total_spikes']) > 0 for s in state['trajectory'])
           assert all(
-              s['brain']['telemetry']['olfaction_model'] == 'neurofly-virtual-olfaction-v3'
+              s['brain']['telemetry']['olfaction_model'] == 'neurofly-virtual-olfaction-v4'
               for s in state['trajectory']
           )
           assert all(
@@ -167,14 +167,16 @@ jobs:
               and 'back' in s.get('olfaction', {}).get('food', {})
               and 'front' in s.get('olfaction', {}).get('danger', {})
               and 'back' in s.get('olfaction', {}).get('danger', {})
+              and s.get('olfaction', {}).get('food', {}).get('normalization') == 'shared-peak-preserve-contrast-v1'
+              and s.get('olfaction', {}).get('danger', {}).get('normalization') == 'shared-peak-preserve-contrast-v1'
               for s in state['trajectory']
           )
           assert all(
-              s.get('olfaction', {}).get('model') == 'neurofly-virtual-olfaction-v3'
+              s.get('olfaction', {}).get('model') == 'neurofly-virtual-olfaction-v4'
               for s in state['trajectory']
           )
           odor_report = state['olfaction']
-          assert odor_report['model'] == 'neurofly-virtual-olfaction-v3'
+          assert odor_report['model'] == 'neurofly-virtual-olfaction-v4'
           assert odor_report['food']['orn_type'] == 'ORN_DM1'
           assert odor_report['danger']['orn_type'] == 'ORN_DA2'
           assert float(odor_report['max_external_current']) == 12.0
@@ -210,7 +212,7 @@ jobs:
           assert final['curriculum_stage_name']
           assert final['curriculum_version'] == 'neurofly-curriculum-v4'
           assert int(final.get('total_world_ticks', 0)) > 0
-          assert final.get('olfaction', {}).get('model') == 'neurofly-virtual-olfaction-v3'
+          assert final.get('olfaction', {}).get('model') == 'neurofly-virtual-olfaction-v4'
           assert final.get('action_autonomy_policy') == 'neurofly-sensory-only-action-autonomy-v1'
           assert final.get('direct_action_override_enabled') is False
           assert final.get('enemy_navigation_policy') == 'maze-intercept-pursuit-v3'
