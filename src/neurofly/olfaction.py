@@ -4,7 +4,7 @@ import math
 from typing import Any
 
 
-OLFACTION_MODEL = "neurofly-virtual-olfaction-v3"
+OLFACTION_MODEL = "neurofly-virtual-olfaction-v4"\nOLFACTION_FIELD_NORMALIZATION = "shared-peak-preserve-contrast-v1"
 FOOD_ORN_TYPE = "ORN_DM1"
 DANGER_ORN_TYPE = "ORN_DA2"
 FOOD_BILATERAL_CONTRAST_GAIN = 0.75
@@ -119,6 +119,7 @@ def _aggregate_sources(
             "intensity": 0.0,
             "source_count": 0,
             "aggregation": f"lp{power:g}-all-sources",
+            "normalization": OLFACTION_FIELD_NORMALIZATION,
             "coordinate_frame": "egocentric-four-axis",
         }
 
@@ -141,10 +142,21 @@ def _aggregate_sources(
         front_power += front**p
         back_power += back**p
 
-    left = _bounded(left_power ** (1.0 / p))
-    right = _bounded(right_power ** (1.0 / p))
-    front = _bounded(front_power ** (1.0 / p))
-    back = _bounded(back_power ** (1.0 / p))
+    # Dense multi-source fields can push every independent LP channel above 1.
+    # Clipping each channel separately destroys the directional contrast exactly
+    # when the maze contains many food sources. Normalize all four axes by one
+    # shared peak instead: the signal stays bounded while relative concentration
+    # differences survive. This changes sensory encoding only; it never emits an
+    # action, route, target coordinate, or reward.
+    raw_left = left_power ** (1.0 / p)
+    raw_right = right_power ** (1.0 / p)
+    raw_front = front_power ** (1.0 / p)
+    raw_back = back_power ** (1.0 / p)
+    shared_peak = max(1.0, raw_left, raw_right, raw_front, raw_back)
+    left = _bounded(raw_left / shared_peak)
+    right = _bounded(raw_right / shared_peak)
+    front = _bounded(raw_front / shared_peak)
+    back = _bounded(raw_back / shared_peak)
     return {
         "left": round(left, 6),
         "right": round(right, 6),
@@ -153,6 +165,7 @@ def _aggregate_sources(
         "intensity": round((left + right) / 2.0, 6),
         "source_count": len(sources),
         "aggregation": f"lp{p:g}-all-sources",
+        "normalization": OLFACTION_FIELD_NORMALIZATION,
         "coordinate_frame": "egocentric-four-axis",
     }
 
