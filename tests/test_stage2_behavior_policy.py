@@ -12,14 +12,18 @@ from neurofly.olfaction import (
 
 
 def test_dense_food_field_preserves_directional_contrast_without_action_hint() -> None:
-    grid = [[" " for _ in range(9)] for _ in range(9)]
-    for y in range(1, 8):
-        for x in range(5, 9):
-            grid[y][x] = "."
+    # Dense food surrounds the fly, but removing two far-left columns leaves a
+    # modest rightward bias. Under independent clipping both bilateral LP4
+    # channels exceed 1 and collapse to exactly 1.0, erasing that bias.
+    grid = [["." for _ in range(9)] for _ in range(9)]
+    for y in range(9):
+        grid[y][0] = " "
+        grid[y][1] = " "
+    grid[4][4] = " "
 
     odor = virtual_olfaction(
         grid=grid,
-        fly={"x": 2, "y": 4, "dir": "UP"},
+        fly={"x": 4, "y": 4, "dir": "UP"},
         enemies=[],
     )
     food = odor["food"]
@@ -28,9 +32,9 @@ def test_dense_food_field_preserves_directional_contrast_without_action_hint() -
     assert OLFACTION_MODEL == "neurofly-virtual-olfaction-v4"
     assert food["normalization"] == OLFACTION_FIELD_NORMALIZATION
     assert OLFACTION_FIELD_NORMALIZATION == "shared-peak-preserve-contrast-v1"
-    assert food["source_count"] == 28
+    assert food["source_count"] == 62
     assert 0.0 <= food["left"] < food["right"] <= 1.0
-    assert food["right"] - food["left"] > 0.50
+    assert food["right"] - food["left"] > 0.08
     assert max(food["left"], food["right"], food["front"], food["back"]) == 1.0
     assert "source" not in food
 
