@@ -4,7 +4,8 @@ import math
 from typing import Any
 
 
-OLFACTION_MODEL = "neurofly-virtual-olfaction-v4"\nOLFACTION_FIELD_NORMALIZATION = "shared-peak-preserve-contrast-v1"
+OLFACTION_MODEL = "neurofly-virtual-olfaction-v4"
+OLFACTION_FIELD_NORMALIZATION = "shared-peak-preserve-contrast-v1"
 FOOD_ORN_TYPE = "ORN_DM1"
 DANGER_ORN_TYPE = "ORN_DA2"
 FOOD_BILATERAL_CONTRAST_GAIN = 0.75
