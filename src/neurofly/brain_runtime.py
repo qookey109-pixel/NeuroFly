@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
@@ -97,6 +98,13 @@ WALKING_FORWARD_TYPE = WALKING_DRIVE_TYPE
 WALKING_STEERING_THRESHOLD_HZ = 30.0
 WALKING_STEERING_BASELINE_ALPHA = 0.02
 WALKING_STEERING_BASELINE_POLICY = "bilateral-ewma-baseline-centered-v1"
+SENSORY_LOOP_POLICY = "egocentric-sensory-familiarity-aversive-v1"
+SENSORY_LOOP_WINDOW = 64
+SENSORY_LOOP_REPEAT_THRESHOLD = 4
+SENSORY_LOOP_COOLDOWN = 12
+SENSORY_LOOP_PULSES_PER_DECISION = 10
+SENSORY_LOOP_FREQUENCY_HZ = 200.0
+SENSORY_LOOP_PATTERN = "neurofly-sensory-familiarity-hf-v1"
 
 
 def _distributed_pulse_windows(
@@ -228,6 +236,48 @@ def _baseline_centered_steering_difference(
     return difference, used_left, used_right, next_left, next_right
 
 
+def _quantize(value: Any, step: float) -> int:
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError, OverflowError):
+        numeric = 0.0
+    if not math.isfinite(numeric):
+        numeric = 0.0
+    return int(round(numeric / float(step)))
+
+
+def _sensory_familiarity_signature(
+    vision: dict[str, Any],
+    odor_levels: dict[str, Any],
+) -> tuple[int, ...]:
+    """Build a compact loop fingerprint from egocentric sensory channels only.
+
+    No maze coordinates, route state, target direction, or action label is used.
+    The signature intentionally coarsens retinal geometry and olfactory levels so
+    small visual noise does not hide repeated local sensory states.
+    """
+
+    wall = vision.get("wall_distance_cells") or {}
+    enemy = vision.get("nearest_enemy") or {}
+    return (
+        _quantize(wall.get("left"), 0.5),
+        _quantize(wall.get("front"), 0.5),
+        _quantize(wall.get("right"), 0.5),
+        int(vision.get("visible_food", 0) or 0) // 3,
+        int(vision.get("visible_enemies", 0) or 0),
+        _quantize(enemy.get("bearing_degrees"), 30.0),
+        _quantize(enemy.get("distance_cells"), 1.0),
+        _quantize(odor_levels.get("food_left"), 0.1),
+        _quantize(odor_levels.get("food_right"), 0.1),
+        _quantize(odor_levels.get("food_front"), 0.1),
+        _quantize(odor_levels.get("food_back"), 0.1),
+        _quantize(odor_levels.get("danger_left"), 0.1),
+        _quantize(odor_levels.get("danger_right"), 0.1),
+        _quantize(odor_levels.get("danger_front"), 0.1),
+        _quantize(odor_levels.get("danger_back"), 0.1),
+    )
+
+
 def _walking_action(
     *,
     steering_left_hz: float,
@@ -345,6 +395,9 @@ class MaleCNSBrain:
         self._last_danger_intensity: float | None = None
         self._steering_left_baseline_hz: float | None = None
         self._steering_right_baseline_hz: float | None = None
+        self._sensory_loop_episode: int | None = None
+        self._sensory_loop_history: deque[tuple[int, ...]] = deque(maxlen=SENSORY_LOOP_WINDOW)
+        self._sensory_loop_cooldown = 0
 
         a = annotations(self.brain.ids)
         types = a.type.fillna("").astype(str)
@@ -775,14 +828,45 @@ class MaleCNSBrain:
 
         b = self.brain
         odor_pulses, odor_levels = self._olfactory_stimulation(context)
+        context_data = context or {}
+
+        episode_value = context_data.get("episode")
+        try:
+            episode = int(episode_value) if episode_value is not None else None
+        except (TypeError, ValueError):
+            episode = None
+        if episode != self._sensory_loop_episode:
+            self._sensory_loop_episode = episode
+            self._sensory_loop_history.clear()
+            self._sensory_loop_cooldown = 0
+
+        loop_signature = _sensory_familiarity_signature(vision, odor_levels)
+        loop_repeat_count = sum(
+            1 for prior in self._sensory_loop_history if prior == loop_signature
+        )
+        if self._sensory_loop_cooldown > 0:
+            self._sensory_loop_cooldown -= 1
+        loop_stage_enabled = int(context_data.get("curriculum_stage", 1) or 1) >= 2
+        sensory_loop_triggered = (
+            loop_stage_enabled
+            and reinforcement == "none"
+            and self._sensory_loop_cooldown == 0
+            and loop_repeat_count >= SENSORY_LOOP_REPEAT_THRESHOLD - 1
+        )
+        self._sensory_loop_history.append(loop_signature)
+        if sensory_loop_triggered:
+            self._sensory_loop_cooldown = SENSORY_LOOP_COOLDOWN
+
+        effective_reinforcement = "aversive" if sensory_loop_triggered else reinforcement
         counts = np.zeros(b.n, dtype=np.int32)
         compute_seconds = 0.0
         total_steps = round(self.neural_ms / b.dt)
         remaining = total_steps
-        pulse_budget_steps = round(self.pulse_ms / b.dt) if reinforcement != "none" else 0
-        context_data = context or {}
+        pulse_budget_steps = (
+            round(self.pulse_ms / b.dt) if effective_reinforcement != "none" else 0
+        )
         high_frequency_stall = (
-            reinforcement == "aversive"
+            effective_reinforcement == "aversive"
             and context_data.get("_reinforcement_source") == "environment"
             and context_data.get("stall_stimulus_policy")
             == "neurofly-nondirectional-stall-aversive-hf-v3"
@@ -790,7 +874,11 @@ class MaleCNSBrain:
         requested_pulses = (
             max(1, int(context_data.get("stall_stimulus_pulses_per_decision", 1)))
             if high_frequency_stall
-            else (1 if reinforcement != "none" else 0)
+            else (
+                SENSORY_LOOP_PULSES_PER_DECISION
+                if sensory_loop_triggered
+                else (1 if effective_reinforcement != "none" else 0)
+            )
         )
         pulse_windows = _distributed_pulse_windows(
             total_steps,
@@ -818,7 +906,7 @@ class MaleCNSBrain:
 
             stimulation = list(odor_pulses)
             if active:
-                stimulation.append((b.circuit[reinforcement], self.pulse_current))
+                stimulation.append((b.circuit[effective_reinforcement], self.pulse_current))
             current, elapsed = b.rgb_step(
                 rgb,
                 n * b.dt,
@@ -839,18 +927,36 @@ class MaleCNSBrain:
             "backend": self.name,
             "brain_ms": float(b.sim_ms),
             "compute_seconds": compute_seconds,
-            "reinforcement": reinforcement,
-            "reinforcement_source": context_data.get("_reinforcement_source", "none"),
+            "reinforcement": effective_reinforcement,
+            "external_reinforcement": reinforcement,
+            "reinforcement_source": (
+                "sensory_familiarity"
+                if sensory_loop_triggered
+                else context_data.get("_reinforcement_source", "none")
+            ),
             "reinforcement_pattern": (
-                STALL_HIGH_FREQUENCY_PATTERN if high_frequency_stall else "single-pulse"
+                SENSORY_LOOP_PATTERN
+                if sensory_loop_triggered
+                else (STALL_HIGH_FREQUENCY_PATTERN if high_frequency_stall else "single-pulse")
             ),
             "stimulus_ms": delivered * b.dt,
             "stimulus_pulse_count": len(pulse_windows),
             "stimulus_frequency_hz": (
-                float(context_data.get("stall_stimulus_frequency_hz", 0.0))
-                if high_frequency_stall
-                else 0.0
+                SENSORY_LOOP_FREQUENCY_HZ
+                if sensory_loop_triggered
+                else (
+                    float(context_data.get("stall_stimulus_frequency_hz", 0.0))
+                    if high_frequency_stall
+                    else 0.0
+                )
             ),
+            "sensory_loop_policy": SENSORY_LOOP_POLICY,
+            "sensory_loop_triggered": sensory_loop_triggered,
+            "sensory_loop_repeat_count": loop_repeat_count,
+            "sensory_loop_window": SENSORY_LOOP_WINDOW,
+            "sensory_loop_repeat_threshold": SENSORY_LOOP_REPEAT_THRESHOLD,
+            "sensory_loop_cooldown_remaining": self._sensory_loop_cooldown,
+            "sensory_loop_direction_command": False,
             "reward_spikes": int(counts[b.circuit["reward"]].sum()),
             "aversive_spikes": int(counts[b.circuit["aversive"]].sum()),
             "kc_spikes": int(counts[b.circuit["kc"]].sum()),
