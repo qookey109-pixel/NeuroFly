@@ -82,6 +82,10 @@ def test_runtime_v4_gate_accepts_predator_free_stage_one_and_sensory_only_action
     assert "steering_baseline_alpha', -1.0)) == 0.02" in build_block
     assert "raw_difference_hz" in build_block
     assert "decoder_difference_hz" in build_block
+    assert "egocentric-sensory-familiarity-aversive-v1" in build_block
+    assert "sensory_loop_window" in build_block
+    assert "sensory_loop_repeat_threshold" in build_block
+    assert "sensory_loop_direction_command" in build_block
     assert "walking_drive_spikes" in build_block
     assert "danger_temporal_delta" in build_block
     assert "danger_raw_left" in build_block
