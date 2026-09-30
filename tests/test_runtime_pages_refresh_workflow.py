@@ -136,3 +136,14 @@ def test_runtime_cancels_stale_code_runs_but_preserves_continuous_handoffs():
     assert '"src/neurofly/**"' in text
     assert '"config/neurofly_continuous_runtime.json"' in text
     assert '"pyproject.toml"' in text
+
+
+def test_runtime_publishes_nonblocking_behavior_summary_v2() -> None:
+    workflow = RUNTIME.read_text()
+
+    assert "name: Summarize Stage 2 behavior" in workflow
+    assert "python -m neurofly.behavior_diagnostics" in workflow
+    assert '--receipt "$RECEIPT"' in workflow
+    assert '--output "$NEUROFLY_STATE/behavior-summary.json"' in workflow
+    assert "continue-on-error: true" in workflow
+    assert "runs/free-malecns/behavior-summary.json" in workflow
