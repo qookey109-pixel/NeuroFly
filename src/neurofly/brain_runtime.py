@@ -278,6 +278,23 @@ def _sensory_familiarity_signature(
     )
 
 
+def _sensory_loop_should_trigger(
+    *,
+    repeat_count: int,
+    cooldown: int,
+    curriculum_stage: int,
+    reinforcement: str,
+) -> bool:
+    """Gate non-directional familiarity aversion without choosing an action."""
+
+    return (
+        int(curriculum_stage) >= 2
+        and reinforcement == "none"
+        and int(cooldown) <= 0
+        and int(repeat_count) >= SENSORY_LOOP_REPEAT_THRESHOLD - 1
+    )
+
+
 def _walking_action(
     *,
     steering_left_hz: float,
@@ -846,12 +863,11 @@ class MaleCNSBrain:
         )
         if self._sensory_loop_cooldown > 0:
             self._sensory_loop_cooldown -= 1
-        loop_stage_enabled = int(context_data.get("curriculum_stage", 1) or 1) >= 2
-        sensory_loop_triggered = (
-            loop_stage_enabled
-            and reinforcement == "none"
-            and self._sensory_loop_cooldown == 0
-            and loop_repeat_count >= SENSORY_LOOP_REPEAT_THRESHOLD - 1
+        sensory_loop_triggered = _sensory_loop_should_trigger(
+            repeat_count=loop_repeat_count,
+            cooldown=self._sensory_loop_cooldown,
+            curriculum_stage=int(context_data.get("curriculum_stage", 1) or 1),
+            reinforcement=reinforcement,
         )
         self._sensory_loop_history.append(loop_signature)
         if sensory_loop_triggered:
