@@ -144,6 +144,10 @@ jobs:
               and 'decoder_difference_hz' in s['brain']['telemetry']
               and 'steering_left_baseline_hz' in s['brain']['telemetry']
               and 'steering_right_baseline_hz' in s['brain']['telemetry']
+              and s['brain']['telemetry'].get('sensory_loop_policy') == 'egocentric-sensory-familiarity-aversive-v1'
+              and int(s['brain']['telemetry'].get('sensory_loop_window', -1)) == 64
+              and int(s['brain']['telemetry'].get('sensory_loop_repeat_threshold', -1)) == 4
+              and s['brain']['telemetry'].get('sensory_loop_direction_command') is False
               and s['brain']['telemetry'].get('dnpe017_gate_used') is False
               and int(s['brain']['telemetry'].get('walking_drive_spikes', -1)) >= 0
               and int(s['brain']['telemetry'].get('walking_spikes', -1)) >= 0
