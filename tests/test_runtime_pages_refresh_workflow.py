@@ -85,6 +85,7 @@ def test_runtime_v4_gate_accepts_predator_free_stage_one_and_sensory_only_action
     assert "egocentric-sensory-familiarity-aversive-v1" in build_block
     assert "sensory_loop_window" in build_block
     assert "sensory_loop_repeat_threshold" in build_block
+    assert "== 3" in build_block
     assert "sensory_loop_direction_command" in build_block
     assert "walking_drive_spikes" in build_block
     assert "danger_temporal_delta" in build_block
@@ -136,3 +137,14 @@ def test_runtime_cancels_stale_code_runs_but_preserves_continuous_handoffs():
     assert '"src/neurofly/**"' in text
     assert '"config/neurofly_continuous_runtime.json"' in text
     assert '"pyproject.toml"' in text
+
+
+def test_runtime_publishes_nonblocking_behavior_summary_v2() -> None:
+    workflow = RUNTIME.read_text()
+
+    assert "name: Summarize Stage 2 behavior" in workflow
+    assert "python -m neurofly.behavior_diagnostics" in workflow
+    assert '--receipt "$RECEIPT"' in workflow
+    assert '--output "$NEUROFLY_STATE/behavior-summary.json"' in workflow
+    assert "continue-on-error: true" in workflow
+    assert "runs/free-malecns/behavior-summary.json" in workflow

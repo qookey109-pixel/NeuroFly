@@ -312,6 +312,12 @@ def run_self_training(
                     "sensory_loop_triggered": telemetry.get("sensory_loop_triggered", False),
                     "sensory_loop_repeat_count": telemetry.get("sensory_loop_repeat_count", 0),
                     "sensory_loop_cooldown_remaining": telemetry.get("sensory_loop_cooldown_remaining", 0),
+                    "reinforcement": telemetry.get("reinforcement"),
+                    "external_reinforcement": telemetry.get("external_reinforcement"),
+                    "reinforcement_source": telemetry.get("reinforcement_source"),
+                    "reinforcement_pattern": telemetry.get("reinforcement_pattern"),
+                    "stimulus_pulse_count": telemetry.get("stimulus_pulse_count"),
+                    "stimulus_frequency_hz": telemetry.get("stimulus_frequency_hz"),
                     "memory_sha256": (telemetry.get("memory") or {}).get("sha256"),
                 }
             )
