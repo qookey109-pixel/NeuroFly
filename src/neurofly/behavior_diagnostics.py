@@ -7,13 +7,27 @@ from pathlib import Path
 from typing import Any
 
 
-SCHEMA = "neurofly-behavior-summary-v3"
+SCHEMA = "neurofly-behavior-summary-v4"
 
 
 def _fraction(numerator: int | float, denominator: int) -> float | None:
     if denominator <= 0:
         return None
     return float(numerator) / float(denominator)
+
+
+def _pearson(left: list[float], right: list[float]) -> float | None:
+    if len(left) != len(right) or len(left) < 3:
+        return None
+    mean_left = sum(left) / len(left)
+    mean_right = sum(right) / len(right)
+    dl = [value - mean_left for value in left]
+    dr = [value - mean_right for value in right]
+    denom_left = sum(value * value for value in dl) ** 0.5
+    denom_right = sum(value * value for value in dr) ** 0.5
+    if denom_left <= 0.0 or denom_right <= 0.0:
+        return None
+    return sum(a * b for a, b in zip(dl, dr)) / (denom_left * denom_right)
 
 
 def summarize_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
@@ -75,6 +89,11 @@ def summarize_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
     max_stationary_steps = 0
     playback_forward_decisions = 0
     playback_blocked_forward = 0
+    near_wall_action_counts: Counter[str] = Counter()
+    near_wall_lateral_differences: list[float] = []
+    near_wall_decoder_differences: list[float] = []
+    near_wall_visual_change_differences: list[float] = []
+    near_wall_ambiguous_lateral = 0
     previous_sample: dict[str, Any] | None = None
     for sample in trajectory:
         if not isinstance(sample, dict):
@@ -88,6 +107,35 @@ def summarize_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
             max_stationary_steps,
             int(sample.get("anti_stall_stationary_steps", 0) or 0),
         )
+
+        telemetry = ((sample.get("brain") or {}).get("telemetry") or {})
+        vision = telemetry.get("vision") or {}
+        walls = vision.get("wall_distance_cells") or {}
+        try:
+            front_distance = float(walls.get("front"))
+            wall_threshold = float(telemetry.get("frontal_wall_distance_threshold", 0.75) or 0.75)
+        except (TypeError, ValueError):
+            front_distance = float("inf")
+            wall_threshold = 0.75
+        if front_distance <= wall_threshold:
+            action = str(sample.get("applied_action") or sample.get("last_action") or "UNKNOWN")
+            near_wall_action_counts[action] += 1
+            try:
+                lateral_difference = float(walls.get("right", 0.0) or 0.0) - float(
+                    walls.get("left", 0.0) or 0.0
+                )
+                decoder_difference = float(telemetry.get("decoder_difference_hz", 0.0) or 0.0)
+                visual_change_difference = float(telemetry.get("visual_right_change", 0.0) or 0.0) - float(
+                    telemetry.get("visual_left_change", 0.0) or 0.0
+                )
+            except (TypeError, ValueError):
+                pass
+            else:
+                near_wall_lateral_differences.append(lateral_difference)
+                near_wall_decoder_differences.append(decoder_difference)
+                near_wall_visual_change_differences.append(visual_change_difference)
+                if abs(lateral_difference) <= 0.5:
+                    near_wall_ambiguous_lateral += 1
 
         if previous_sample is not None and sample.get("episode") == previous_sample.get("episode"):
             action = str(sample.get("applied_action") or sample.get("last_action") or "")
@@ -156,6 +204,24 @@ def summarize_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
         "playback_blocked_forward_fraction": _fraction(
             playback_blocked_forward, playback_forward_decisions
         ),
+        "playback_near_wall_samples": sum(near_wall_action_counts.values()),
+        "playback_near_wall_action_counts": dict(sorted(near_wall_action_counts.items())),
+        "playback_near_wall_forward_fraction": _fraction(
+            near_wall_action_counts["FORWARD"], sum(near_wall_action_counts.values())
+        ),
+        "playback_near_wall_turn_fraction": _fraction(
+            near_wall_action_counts["TURN_LEFT"] + near_wall_action_counts["TURN_RIGHT"],
+            sum(near_wall_action_counts.values()),
+        ),
+        "playback_near_wall_lateral_ambiguity_fraction": _fraction(
+            near_wall_ambiguous_lateral, len(near_wall_lateral_differences)
+        ),
+        "playback_near_wall_opening_to_decoder_correlation": _pearson(
+            near_wall_lateral_differences, near_wall_decoder_differences
+        ),
+        "playback_near_wall_visual_change_to_decoder_correlation": _pearson(
+            near_wall_visual_change_differences, near_wall_decoder_differences
+        ),
     }
 
 
@@ -174,7 +240,7 @@ def main() -> int:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
     print(
-        "BEHAVIOR_SUMMARY_V3",
+        "BEHAVIOR_SUMMARY_V4",
         "stage=", summary["curriculum_stage"],
         "deaths_per_1000=", summary["deaths_per_1000_decisions"],
         "food_events=", summary["food_events"],
@@ -182,6 +248,8 @@ def main() -> int:
         "loop_triggers=", summary["sensory_loop_trigger_count"],
         "wall_triggers=", summary["frontal_wall_trigger_count"],
         "blocked_forward=", summary["playback_blocked_forward_fraction"],
+        "near_wall_forward=", summary["playback_near_wall_forward_fraction"],
+        "near_wall_opening_corr=", summary["playback_near_wall_opening_to_decoder_correlation"],
         "revisit_mean=", summary["playback_revisit_fraction_mean"],
         "turn_lr_ratio=", summary["turn_left_to_right_ratio"],
     )
