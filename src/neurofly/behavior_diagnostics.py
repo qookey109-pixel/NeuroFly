@@ -93,6 +93,7 @@ def summarize_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
     near_wall_lateral_differences: list[float] = []
     near_wall_decoder_differences: list[float] = []
     near_wall_visual_change_differences: list[float] = []
+    near_wall_retinal_luminance_asymmetries: list[float] = []
     near_wall_ambiguous_lateral = 0
     previous_sample: dict[str, Any] | None = None
     for sample in trajectory:
@@ -128,12 +129,16 @@ def summarize_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
                 visual_change_difference = float(telemetry.get("visual_right_change", 0.0) or 0.0) - float(
                     telemetry.get("visual_left_change", 0.0) or 0.0
                 )
+                retinal_luminance_asymmetry = float(
+                    telemetry.get("retinal_luminance_asymmetry", 0.0) or 0.0
+                )
             except (TypeError, ValueError):
                 pass
             else:
                 near_wall_lateral_differences.append(lateral_difference)
                 near_wall_decoder_differences.append(decoder_difference)
                 near_wall_visual_change_differences.append(visual_change_difference)
+                near_wall_retinal_luminance_asymmetries.append(retinal_luminance_asymmetry)
                 if abs(lateral_difference) <= 0.5:
                     near_wall_ambiguous_lateral += 1
 
@@ -222,6 +227,9 @@ def summarize_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
         "playback_near_wall_visual_change_to_decoder_correlation": _pearson(
             near_wall_visual_change_differences, near_wall_decoder_differences
         ),
+        "playback_near_wall_retinal_luminance_to_decoder_correlation": _pearson(
+            near_wall_retinal_luminance_asymmetries, near_wall_decoder_differences
+        ),
     }
 
 
@@ -250,6 +258,7 @@ def main() -> int:
         "blocked_forward=", summary["playback_blocked_forward_fraction"],
         "near_wall_forward=", summary["playback_near_wall_forward_fraction"],
         "near_wall_opening_corr=", summary["playback_near_wall_opening_to_decoder_correlation"],
+        "retinal_luminance_corr=", summary["playback_near_wall_retinal_luminance_to_decoder_correlation"],
         "revisit_mean=", summary["playback_revisit_fraction_mean"],
         "turn_lr_ratio=", summary["turn_left_to_right_ratio"],
     )
