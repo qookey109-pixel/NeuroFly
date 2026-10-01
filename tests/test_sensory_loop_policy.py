@@ -81,7 +81,7 @@ def test_sensory_loop_gate_requires_repeated_stage2_state_and_no_event_train() -
 def test_frontal_wall_gate_uses_only_egocentric_front_distance() -> None:
     assert FRONTAL_WALL_SALIENCE_POLICY == "egocentric-frontal-wall-proximity-aversive-v1"
     assert FRONTAL_WALL_DISTANCE_THRESHOLD == 0.75
-    assert FRONTAL_WALL_PULSES_PER_DECISION == 6
+    assert FRONTAL_WALL_PULSES_PER_DECISION == 10
 
     triggered, distance = _frontal_wall_should_trigger(
         vision={"wall_distance_cells": {"front": 0.6}},
