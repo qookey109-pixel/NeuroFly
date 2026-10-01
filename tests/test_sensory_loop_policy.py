@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 from neurofly.brain_runtime import (
+    FRONTAL_WALL_DISTANCE_THRESHOLD,
+    FRONTAL_WALL_PULSES_PER_DECISION,
+    FRONTAL_WALL_SALIENCE_POLICY,
     SENSORY_LOOP_COOLDOWN,
     SENSORY_LOOP_POLICY,
     SENSORY_LOOP_REPEAT_THRESHOLD,
     SENSORY_LOOP_WINDOW,
+    _frontal_wall_should_trigger,
     _sensory_familiarity_signature,
     _sensory_loop_should_trigger,
 )
@@ -73,6 +77,41 @@ def test_sensory_loop_gate_requires_repeated_stage2_state_and_no_event_train() -
     )
 
 
+
+def test_frontal_wall_gate_uses_only_egocentric_front_distance() -> None:
+    assert FRONTAL_WALL_SALIENCE_POLICY == "egocentric-frontal-wall-proximity-aversive-v1"
+    assert FRONTAL_WALL_DISTANCE_THRESHOLD == 0.75
+    assert FRONTAL_WALL_PULSES_PER_DECISION == 6
+
+    triggered, distance = _frontal_wall_should_trigger(
+        vision={"wall_distance_cells": {"front": 0.6}},
+        curriculum_stage=2,
+        reinforcement="none",
+    )
+    assert triggered is True
+    assert distance == 0.6
+
+    triggered, _ = _frontal_wall_should_trigger(
+        vision={"wall_distance_cells": {"front": 1.08}},
+        curriculum_stage=2,
+        reinforcement="none",
+    )
+    assert triggered is False
+
+    triggered, _ = _frontal_wall_should_trigger(
+        vision={"wall_distance_cells": {"front": 0.6}},
+        curriculum_stage=1,
+        reinforcement="none",
+    )
+    assert triggered is False
+
+    triggered, _ = _frontal_wall_should_trigger(
+        vision={"wall_distance_cells": {"front": 0.6}},
+        curriculum_stage=2,
+        reinforcement="reward",
+    )
+    assert triggered is False
+
 def test_public_receipt_preserves_v4_baseline_and_sensory_loop_evidence() -> None:
     state = {
         "episode": 9,
@@ -130,6 +169,12 @@ def test_public_receipt_preserves_v4_baseline_and_sensory_loop_evidence() -> Non
                 "sensory_loop_repeat_threshold": SENSORY_LOOP_REPEAT_THRESHOLD,
                 "sensory_loop_cooldown_remaining": SENSORY_LOOP_COOLDOWN,
                 "sensory_loop_direction_command": False,
+                "frontal_wall_salience_policy": FRONTAL_WALL_SALIENCE_POLICY,
+                "frontal_wall_triggered": True,
+                "frontal_wall_distance_cells": 0.6,
+                "frontal_wall_distance_threshold": FRONTAL_WALL_DISTANCE_THRESHOLD,
+                "frontal_wall_pulses_per_decision": FRONTAL_WALL_PULSES_PER_DECISION,
+                "frontal_wall_direction_command": False,
             },
         },
     }
@@ -144,3 +189,7 @@ def test_public_receipt_preserves_v4_baseline_and_sensory_loop_evidence() -> Non
     assert telemetry["sensory_loop_policy"] == SENSORY_LOOP_POLICY
     assert telemetry["sensory_loop_triggered"] is True
     assert telemetry["sensory_loop_direction_command"] is False
+    assert telemetry["frontal_wall_salience_policy"] == FRONTAL_WALL_SALIENCE_POLICY
+    assert telemetry["frontal_wall_triggered"] is True
+    assert telemetry["frontal_wall_distance_cells"] == 0.6
+    assert telemetry["frontal_wall_direction_command"] is False

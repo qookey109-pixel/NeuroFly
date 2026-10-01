@@ -162,6 +162,10 @@ jobs:
               and int(s['brain']['telemetry'].get('sensory_loop_repeat_threshold', -1)) == 3
               and int(s['brain']['telemetry'].get('sensory_loop_cooldown_remaining', -1)) >= 0
               and s['brain']['telemetry'].get('sensory_loop_direction_command') is False
+              and s['brain']['telemetry'].get('frontal_wall_salience_policy') == 'egocentric-frontal-wall-proximity-aversive-v1'
+              and float(s['brain']['telemetry'].get('frontal_wall_distance_threshold', -1.0)) == 0.75
+              and int(s['brain']['telemetry'].get('frontal_wall_pulses_per_decision', -1)) == 6
+              and s['brain']['telemetry'].get('frontal_wall_direction_command') is False
               and s['brain']['telemetry'].get('dnpe017_gate_used') is False
               and int(s['brain']['telemetry'].get('walking_drive_spikes', -1)) >= 0
               and int(s['brain']['telemetry'].get('walking_spikes', -1)) >= 0

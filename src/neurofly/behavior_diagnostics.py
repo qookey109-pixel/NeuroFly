@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 
-SCHEMA = "neurofly-behavior-summary-v2"
+SCHEMA = "neurofly-behavior-summary-v3"
 
 
 def _fraction(numerator: int | float, denominator: int) -> float | None:
@@ -28,6 +28,7 @@ def summarize_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
     event_counts: Counter[str] = Counter()
     food_saturation = 0
     loop_triggers = 0
+    frontal_wall_triggers = 0
     food_contrasts: list[float] = []
     danger_contrasts: list[float] = []
     episodes: dict[int, dict[str, int | None]] = defaultdict(
@@ -42,6 +43,8 @@ def summarize_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
         event_counts[str(row.get("event") or "none")] += 1
         if bool(row.get("sensory_loop_triggered", False)):
             loop_triggers += 1
+        if bool(row.get("frontal_wall_triggered", False)):
+            frontal_wall_triggers += 1
 
         food_left_odor = float(row.get("food_odor_left", 0.0) or 0.0)
         food_right_odor = float(row.get("food_odor_right", 0.0) or 0.0)
@@ -70,6 +73,9 @@ def summarize_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
 
     positions_by_episode: dict[int, list[tuple[int, int]]] = defaultdict(list)
     max_stationary_steps = 0
+    playback_forward_decisions = 0
+    playback_blocked_forward = 0
+    previous_sample: dict[str, Any] | None = None
     for sample in trajectory:
         if not isinstance(sample, dict):
             continue
@@ -82,6 +88,24 @@ def summarize_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
             max_stationary_steps,
             int(sample.get("anti_stall_stationary_steps", 0) or 0),
         )
+
+        if previous_sample is not None and sample.get("episode") == previous_sample.get("episode"):
+            action = str(sample.get("applied_action") or sample.get("last_action") or "")
+            if action == "FORWARD":
+                playback_forward_decisions += 1
+                previous_fly = previous_sample.get("fly") or {}
+                if (
+                    isinstance(previous_fly, dict)
+                    and isinstance(fly, dict)
+                    and "x" in previous_fly
+                    and "y" in previous_fly
+                    and "x" in fly
+                    and "y" in fly
+                    and (int(previous_fly["x"]), int(previous_fly["y"]))
+                    == (int(fly["x"]), int(fly["y"]))
+                ):
+                    playback_blocked_forward += 1
+        previous_sample = sample
 
     revisit_fractions = [
         1.0 - len(set(positions)) / len(positions)
@@ -117,6 +141,8 @@ def summarize_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
         "clear_delta": clear_delta,
         "sensory_loop_trigger_count": loop_triggers,
         "sensory_loop_trigger_fraction": _fraction(loop_triggers, steps),
+        "frontal_wall_trigger_count": frontal_wall_triggers,
+        "frontal_wall_trigger_fraction": _fraction(frontal_wall_triggers, steps),
         "food_bilateral_saturation_fraction": _fraction(food_saturation, steps),
         "food_abs_contrast_mean": None if not food_contrasts else sum(food_contrasts) / len(food_contrasts),
         "danger_abs_contrast_mean": None if not danger_contrasts else sum(danger_contrasts) / len(danger_contrasts),
@@ -125,6 +151,11 @@ def summarize_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
         "playback_revisit_fraction_mean": None if not revisit_fractions else sum(revisit_fractions) / len(revisit_fractions),
         "playback_revisit_fraction_max": None if not revisit_fractions else max(revisit_fractions),
         "playback_max_stationary_steps": max_stationary_steps,
+        "playback_forward_decisions": playback_forward_decisions,
+        "playback_blocked_forward_count": playback_blocked_forward,
+        "playback_blocked_forward_fraction": _fraction(
+            playback_blocked_forward, playback_forward_decisions
+        ),
     }
 
 
@@ -143,12 +174,14 @@ def main() -> int:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
     print(
-        "BEHAVIOR_SUMMARY_V2",
+        "BEHAVIOR_SUMMARY_V3",
         "stage=", summary["curriculum_stage"],
         "deaths_per_1000=", summary["deaths_per_1000_decisions"],
         "food_events=", summary["food_events"],
         "clear_delta=", summary["clear_delta"],
         "loop_triggers=", summary["sensory_loop_trigger_count"],
+        "wall_triggers=", summary["frontal_wall_trigger_count"],
+        "blocked_forward=", summary["playback_blocked_forward_fraction"],
         "revisit_mean=", summary["playback_revisit_fraction_mean"],
         "turn_lr_ratio=", summary["turn_left_to_right_ratio"],
     )
