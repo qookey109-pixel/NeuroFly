@@ -8,6 +8,7 @@ from neurofly.brain_runtime import (
     SENSORY_LOOP_POLICY,
     SENSORY_LOOP_REPEAT_THRESHOLD,
     SENSORY_LOOP_WINDOW,
+    _distributed_pulse_windows,
     _frontal_wall_should_trigger,
     _sensory_familiarity_signature,
     _sensory_loop_should_trigger,
@@ -76,6 +77,17 @@ def test_sensory_loop_gate_requires_repeated_stage2_state_and_no_event_train() -
         reinforcement="none",
     )
 
+
+
+def test_true_200hz_frontal_wall_train_uses_5ms_spacing() -> None:
+    windows = _distributed_pulse_windows(
+        total_steps=500,      # 50 ms at 0.1 ms neural dt
+        pulse_budget_steps=200,
+        pulse_count=10,
+    )
+    assert len(windows) == 10
+    starts = [start for start, _ in windows]
+    assert starts == list(range(0, 500, 50))
 
 
 def test_frontal_wall_gate_uses_only_egocentric_front_distance() -> None:
