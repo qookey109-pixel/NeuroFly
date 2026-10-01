@@ -105,6 +105,11 @@ SENSORY_LOOP_COOLDOWN = 6
 SENSORY_LOOP_PULSES_PER_DECISION = 10
 SENSORY_LOOP_FREQUENCY_HZ = 200.0
 SENSORY_LOOP_PATTERN = "neurofly-sensory-familiarity-hf-v1"
+FRONTAL_WALL_SALIENCE_POLICY = "egocentric-frontal-wall-proximity-aversive-v1"
+FRONTAL_WALL_DISTANCE_THRESHOLD = 0.75
+FRONTAL_WALL_PULSES_PER_DECISION = 6
+FRONTAL_WALL_FREQUENCY_HZ = 200.0
+FRONTAL_WALL_PATTERN = "neurofly-frontal-wall-proximity-hf-v1"
 
 
 def _distributed_pulse_windows(
@@ -293,6 +298,34 @@ def _sensory_loop_should_trigger(
         and int(cooldown) <= 0
         and int(repeat_count) >= SENSORY_LOOP_REPEAT_THRESHOLD - 1
     )
+
+
+def _frontal_wall_should_trigger(
+    *,
+    vision: dict[str, Any],
+    curriculum_stage: int,
+    reinforcement: str,
+) -> tuple[bool, float | None]:
+    """Detect an immediately near frontal wall from egocentric visual geometry only.
+
+    This is a sensory salience gate, not an action command. It never inspects maze
+    coordinates, route state, target direction, or a decoded locomotor action.
+    """
+
+    wall = vision.get("wall_distance_cells") or {}
+    raw_front = wall.get("front")
+    try:
+        front = float(raw_front)
+    except (TypeError, ValueError, OverflowError):
+        return False, None
+    if not math.isfinite(front):
+        return False, None
+    triggered = (
+        int(curriculum_stage) >= 2
+        and reinforcement == "none"
+        and front <= FRONTAL_WALL_DISTANCE_THRESHOLD
+    )
+    return triggered, front
 
 
 def _walking_action(
@@ -863,17 +896,30 @@ class MaleCNSBrain:
         )
         if self._sensory_loop_cooldown > 0:
             self._sensory_loop_cooldown -= 1
-        sensory_loop_triggered = _sensory_loop_should_trigger(
-            repeat_count=loop_repeat_count,
-            cooldown=self._sensory_loop_cooldown,
-            curriculum_stage=int(context_data.get("curriculum_stage", 1) or 1),
+        curriculum_stage = int(context_data.get("curriculum_stage", 1) or 1)
+        frontal_wall_triggered, frontal_wall_distance = _frontal_wall_should_trigger(
+            vision=vision,
+            curriculum_stage=curriculum_stage,
             reinforcement=reinforcement,
+        )
+        sensory_loop_triggered = (
+            not frontal_wall_triggered
+            and _sensory_loop_should_trigger(
+                repeat_count=loop_repeat_count,
+                cooldown=self._sensory_loop_cooldown,
+                curriculum_stage=curriculum_stage,
+                reinforcement=reinforcement,
+            )
         )
         self._sensory_loop_history.append(loop_signature)
         if sensory_loop_triggered:
             self._sensory_loop_cooldown = SENSORY_LOOP_COOLDOWN
 
-        effective_reinforcement = "aversive" if sensory_loop_triggered else reinforcement
+        effective_reinforcement = (
+            "aversive"
+            if frontal_wall_triggered or sensory_loop_triggered
+            else reinforcement
+        )
         counts = np.zeros(b.n, dtype=np.int32)
         compute_seconds = 0.0
         total_steps = round(self.neural_ms / b.dt)
@@ -891,9 +937,13 @@ class MaleCNSBrain:
             max(1, int(context_data.get("stall_stimulus_pulses_per_decision", 1)))
             if high_frequency_stall
             else (
-                SENSORY_LOOP_PULSES_PER_DECISION
-                if sensory_loop_triggered
-                else (1 if effective_reinforcement != "none" else 0)
+                FRONTAL_WALL_PULSES_PER_DECISION
+                if frontal_wall_triggered
+                else (
+                    SENSORY_LOOP_PULSES_PER_DECISION
+                    if sensory_loop_triggered
+                    else (1 if effective_reinforcement != "none" else 0)
+                )
             )
         )
         pulse_windows = _distributed_pulse_windows(
@@ -946,26 +996,44 @@ class MaleCNSBrain:
             "reinforcement": effective_reinforcement,
             "external_reinforcement": reinforcement,
             "reinforcement_source": (
-                "sensory_familiarity"
-                if sensory_loop_triggered
-                else context_data.get("_reinforcement_source", "none")
+                "frontal_wall_proximity"
+                if frontal_wall_triggered
+                else (
+                    "sensory_familiarity"
+                    if sensory_loop_triggered
+                    else context_data.get("_reinforcement_source", "none")
+                )
             ),
             "reinforcement_pattern": (
-                SENSORY_LOOP_PATTERN
-                if sensory_loop_triggered
-                else (STALL_HIGH_FREQUENCY_PATTERN if high_frequency_stall else "single-pulse")
+                FRONTAL_WALL_PATTERN
+                if frontal_wall_triggered
+                else (
+                    SENSORY_LOOP_PATTERN
+                    if sensory_loop_triggered
+                    else (STALL_HIGH_FREQUENCY_PATTERN if high_frequency_stall else "single-pulse")
+                )
             ),
             "stimulus_ms": delivered * b.dt,
             "stimulus_pulse_count": len(pulse_windows),
             "stimulus_frequency_hz": (
-                SENSORY_LOOP_FREQUENCY_HZ
-                if sensory_loop_triggered
+                FRONTAL_WALL_FREQUENCY_HZ
+                if frontal_wall_triggered
                 else (
-                    float(context_data.get("stall_stimulus_frequency_hz", 0.0))
-                    if high_frequency_stall
-                    else 0.0
+                    SENSORY_LOOP_FREQUENCY_HZ
+                    if sensory_loop_triggered
+                    else (
+                        float(context_data.get("stall_stimulus_frequency_hz", 0.0))
+                        if high_frequency_stall
+                        else 0.0
+                    )
                 )
             ),
+            "frontal_wall_salience_policy": FRONTAL_WALL_SALIENCE_POLICY,
+            "frontal_wall_triggered": frontal_wall_triggered,
+            "frontal_wall_distance_cells": frontal_wall_distance,
+            "frontal_wall_distance_threshold": FRONTAL_WALL_DISTANCE_THRESHOLD,
+            "frontal_wall_pulses_per_decision": FRONTAL_WALL_PULSES_PER_DECISION,
+            "frontal_wall_direction_command": False,
             "sensory_loop_policy": SENSORY_LOOP_POLICY,
             "sensory_loop_triggered": sensory_loop_triggered,
             "sensory_loop_repeat_count": loop_repeat_count,
