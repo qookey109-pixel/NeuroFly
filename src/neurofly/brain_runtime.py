@@ -844,6 +844,16 @@ class MaleCNSBrain:
         visual_change = 0.0
         visual_left_change = 0.0
         visual_right_change = 0.0
+
+        display_luminance = (
+            0.2126 * rgb[:, :, 0].astype(np.float32)
+            + 0.7152 * rgb[:, :, 1].astype(np.float32)
+            + 0.0722 * rgb[:, :, 2].astype(np.float32)
+        ) / 255.0
+        retinal_half = max(1, display_luminance.shape[1] // 2)
+        retinal_left_luminance = float(display_luminance[:, :retinal_half].mean())
+        retinal_right_luminance = float(display_luminance[:, retinal_half:].mean())
+        retinal_luminance_asymmetry = retinal_right_luminance - retinal_left_luminance
         if self._last_visual_rgb is not None and self._last_visual_rgb.shape == rgb.shape:
             delta = np.abs(rgb.astype(np.int16) - self._last_visual_rgb.astype(np.int16))
             delta = delta.mean(axis=2) / 255.0
@@ -859,6 +869,9 @@ class MaleCNSBrain:
                 "change": round(visual_change, 8),
                 "left_change": round(visual_left_change, 8),
                 "right_change": round(visual_right_change, 8),
+                "retinal_left_luminance_mean": round(retinal_left_luminance, 8),
+                "retinal_right_luminance_mean": round(retinal_right_luminance, 8),
+                "retinal_luminance_asymmetry": round(retinal_luminance_asymmetry, 8),
             }
         )
         return rgb, vision
@@ -1051,6 +1064,9 @@ class MaleCNSBrain:
             "visual_change": vision.get("change", 0.0),
             "visual_left_change": vision.get("left_change", 0.0),
             "visual_right_change": vision.get("right_change", 0.0),
+            "retinal_left_luminance_mean": vision.get("retinal_left_luminance_mean"),
+            "retinal_right_luminance_mean": vision.get("retinal_right_luminance_mean"),
+            "retinal_luminance_asymmetry": vision.get("retinal_luminance_asymmetry"),
             "vision_report": self.vision_report,
             "olfaction_model": OLFACTION_MODEL,
             "olfaction": odor_levels,
