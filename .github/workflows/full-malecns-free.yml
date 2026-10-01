@@ -106,6 +106,19 @@ jobs:
           path: runs/free-malecns
           key: neurofly-v06-state-${{ github.run_id }}-${{ github.run_attempt }}
 
+      - name: Summarize Stage 2 behavior
+        id: behavior-summary
+        if: ${{ always() && steps.train.outcome == 'success' }}
+        continue-on-error: true
+        run: |
+          python -m neurofly.behavior_diagnostics \
+            --receipt "$RECEIPT" \
+            --output "$NEUROFLY_STATE/behavior-summary.json"
+
+      - name: Warn if behavior summary could not be built
+        if: ${{ always() && steps.train.outcome == 'success' && steps.behavior-summary.outcome != 'success' }}
+        run: echo "::warning::Training checkpoint is safe, but behavioral summary generation failed."
+
       - name: Build verified curriculum state
         id: build-state
         if: ${{ always() && steps.train.outcome == 'success' }}
@@ -146,7 +159,8 @@ jobs:
               and 'steering_right_baseline_hz' in s['brain']['telemetry']
               and s['brain']['telemetry'].get('sensory_loop_policy') == 'egocentric-sensory-familiarity-aversive-v1'
               and int(s['brain']['telemetry'].get('sensory_loop_window', -1)) == 64
-              and int(s['brain']['telemetry'].get('sensory_loop_repeat_threshold', -1)) == 4
+              and int(s['brain']['telemetry'].get('sensory_loop_repeat_threshold', -1)) == 3
+              and int(s['brain']['telemetry'].get('sensory_loop_cooldown_remaining', -1)) >= 0
               and s['brain']['telemetry'].get('sensory_loop_direction_command') is False
               and s['brain']['telemetry'].get('dnpe017_gate_used') is False
               and int(s['brain']['telemetry'].get('walking_drive_spikes', -1)) >= 0
@@ -379,6 +393,7 @@ jobs:
           path: |
             runs/free-malecns/preflight.json
             runs/free-malecns/self-training-receipt.json
+            runs/free-malecns/behavior-summary.json
             site/malecns-state.json
             site/clear-history.json
           if-no-files-found: warn
