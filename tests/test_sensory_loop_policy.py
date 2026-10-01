@@ -48,7 +48,7 @@ def test_sensory_loop_gate_requires_repeated_stage2_state_and_no_event_train() -
         reinforcement="none",
     )
     assert _sensory_loop_should_trigger(
-        repeat_count=1,
+        repeat_count=2,
         cooldown=0,
         curriculum_stage=2,
         reinforcement="none",
@@ -66,7 +66,7 @@ def test_sensory_loop_gate_requires_repeated_stage2_state_and_no_event_train() -
         reinforcement="reward",
     )
     assert not _sensory_loop_should_trigger(
-        repeat_count=2,
+        repeat_count=1,
         cooldown=0,
         curriculum_stage=2,
         reinforcement="none",
