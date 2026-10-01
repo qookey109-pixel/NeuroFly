@@ -121,6 +121,7 @@ MOTOR_TELEMETRY_FIELDS = (
     "frontal_wall_distance_threshold",
     "frontal_wall_pulses_per_decision",
     "frontal_wall_direction_command",
+    "wall_rendering_policy",
 )
 
 

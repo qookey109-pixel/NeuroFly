@@ -1046,6 +1046,7 @@ class MaleCNSBrain:
             "kc_spikes": int(counts[b.circuit["kc"]].sum()),
             "total_spikes": int(counts.sum()),
             "vision_model": VISION_MODEL,
+            "wall_rendering_policy": vision.get("wall_rendering_policy"),
             "vision": vision,
             "visual_change": vision.get("change", 0.0),
             "visual_left_change": vision.get("left_change", 0.0),
