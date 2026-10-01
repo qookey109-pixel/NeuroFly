@@ -122,6 +122,9 @@ MOTOR_TELEMETRY_FIELDS = (
     "frontal_wall_pulses_per_decision",
     "frontal_wall_direction_command",
     "wall_rendering_policy",
+    "retinal_left_luminance_mean",
+    "retinal_right_luminance_mean",
+    "retinal_luminance_asymmetry",
 )
 
 
