@@ -3,7 +3,13 @@ from __future__ import annotations
 import math
 from typing import Any
 
-from .vision import VISION_FIELD_DEGREES, VISION_MAX_RANGE_CELLS, VISION_MODEL
+from .vision import (
+    VISION_FIELD_DEGREES,
+    VISION_MAX_RANGE_CELLS,
+    VISION_MODEL,
+    WALL_RENDERING_POLICY,
+    _wall_depth_salience,
+)
 
 
 _DIR_ANGLES = {
@@ -81,6 +87,7 @@ def visual_contract(
         "field_degrees": VISION_FIELD_DEGREES,
         "max_range_cells": VISION_MAX_RANGE_CELLS,
         "coordinate_frame": "egocentric-wide-panorama",
+        "wall_rendering_policy": WALL_RENDERING_POLICY,
         "visible_enemies": visible_enemies,
         "nearest_enemy": nearest,
         "channels": {
@@ -171,11 +178,11 @@ def retinalize_topdown_rgb(
     for px in range(width):
         relative = -half_field + (px / max(1, width - 1)) * VISION_FIELD_DEGREES
         distance = wall_distance(relative)
-        closeness = max(0.0, min(1.0, 1.0 - distance / VISION_MAX_RANGE_CELLS))
-        wall_half_height = int(6 + closeness * height * 0.42)
+        salience = _wall_depth_salience(distance)
+        wall_half_height = int(6 + salience * height * 0.44)
         top = max(0, horizon - wall_half_height)
         bottom = min(height - 1, horizon + wall_half_height)
-        shade = int(112 - closeness * 72)
+        shade = int(124 - salience * 92)
         draw.line((px, top, px, bottom), fill=(shade, shade + 14, shade + 8))
 
     # Recover food markers only at canonical cell centers, then project them into
