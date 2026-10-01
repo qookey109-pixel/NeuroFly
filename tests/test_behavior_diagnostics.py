@@ -49,6 +49,7 @@ def test_behavior_summary_v4_tracks_loop_wall_and_turn_metrics() -> None:
                     "decoder_difference_hz": 1.0,
                     "visual_left_change": 0.1,
                     "visual_right_change": 0.2,
+                    "retinal_luminance_asymmetry": 0.1,
                     "vision": {"wall_distance_cells": {"left": 1.0, "front": 0.6, "right": 2.0}},
                 }},
             },
@@ -62,6 +63,7 @@ def test_behavior_summary_v4_tracks_loop_wall_and_turn_metrics() -> None:
                     "decoder_difference_hz": 2.0,
                     "visual_left_change": 0.1,
                     "visual_right_change": 0.3,
+                    "retinal_luminance_asymmetry": 0.2,
                     "vision": {"wall_distance_cells": {"left": 1.0, "front": 0.6, "right": 3.0}},
                 }},
             },
@@ -75,6 +77,7 @@ def test_behavior_summary_v4_tracks_loop_wall_and_turn_metrics() -> None:
                     "decoder_difference_hz": 3.0,
                     "visual_left_change": 0.1,
                     "visual_right_change": 0.4,
+                    "retinal_luminance_asymmetry": 0.3,
                     "vision": {"wall_distance_cells": {"left": 1.0, "front": 0.6, "right": 4.0}},
                 }},
             },
@@ -109,6 +112,7 @@ def test_behavior_summary_v4_tracks_loop_wall_and_turn_metrics() -> None:
     assert summary["playback_near_wall_lateral_ambiguity_fraction"] == 0.0
     assert abs(summary["playback_near_wall_opening_to_decoder_correlation"] - 1.0) < 1e-12
     assert abs(summary["playback_near_wall_visual_change_to_decoder_correlation"] - 1.0) < 1e-12
+    assert abs(summary["playback_near_wall_retinal_luminance_to_decoder_correlation"] - 1.0) < 1e-12
 
 
 def test_behavior_summary_v4_handles_empty_receipt() -> None:
@@ -123,3 +127,4 @@ def test_behavior_summary_v4_handles_empty_receipt() -> None:
     assert summary["playback_near_wall_forward_fraction"] is None
     assert summary["playback_near_wall_opening_to_decoder_correlation"] is None
     assert summary["playback_near_wall_visual_change_to_decoder_correlation"] is None
+    assert summary["playback_near_wall_retinal_luminance_to_decoder_correlation"] is None
