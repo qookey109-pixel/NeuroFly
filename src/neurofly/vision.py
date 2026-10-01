@@ -7,6 +7,30 @@ from typing import Any
 VISION_MODEL = "neurofly-compound-eye-proxy-v1"
 VISION_FIELD_DEGREES = 300.0
 VISION_MAX_RANGE_CELLS = 8.0
+WALL_RENDERING_POLICY = "nonlinear-depth-contrast-v2"
+WALL_DEPTH_CONTRAST_POWER = 2.0
+WALL_DEPTH_CONTRAST_GAIN = 1.15
+
+
+def _wall_depth_salience(
+    distance: float,
+    *,
+    max_range: float = VISION_MAX_RANGE_CELLS,
+) -> float:
+    """Nonlinearly expand retinal contrast between near walls and open space.
+
+    This transforms egocentric ray distance into visual salience only. It does
+    not encode a route, target direction, or action.
+    """
+    limit = max(1e-9, float(max_range))
+    closeness = max(0.0, min(1.0, 1.0 - float(distance) / limit))
+    return max(
+        0.0,
+        min(
+            1.0,
+            WALL_DEPTH_CONTRAST_GAIN * (closeness ** WALL_DEPTH_CONTRAST_POWER),
+        ),
+    )
 
 _DIR_ANGLES = {
     "RIGHT": 0.0,
@@ -210,11 +234,11 @@ def render_compound_eye_rgb(
         relative = -half_field + (px / max(1, width - 1)) * VISION_FIELD_DEGREES
         distance = _ray_distance(grid=grid, fly=fly, relative_degrees=relative)
         wall_distances.append(distance)
-        closeness = max(0.0, min(1.0, 1.0 - distance / VISION_MAX_RANGE_CELLS))
-        wall_half_height = int(6 + closeness * height * 0.42)
+        salience = _wall_depth_salience(distance)
+        wall_half_height = int(6 + salience * height * 0.44)
         top = max(0, horizon - wall_half_height)
         bottom = min(height - 1, horizon + wall_half_height)
-        shade = int(112 - closeness * 72)
+        shade = int(124 - salience * 92)
         draw.line((px, top, px, bottom), fill=(shade, shade + 14, shade + 8))
 
     # Draw food as small blue/green-biased high-contrast targets. Odor remains the
