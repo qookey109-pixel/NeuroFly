@@ -1,4 +1,9 @@
-from neurofly.vision import VISION_FIELD_DEGREES, VISION_MODEL
+from neurofly.vision import (
+    VISION_FIELD_DEGREES,
+    VISION_MODEL,
+    WALL_RENDERING_POLICY,
+    _wall_depth_salience,
+)
 from neurofly.vision_adapter import visual_contract
 
 
@@ -12,6 +17,7 @@ def test_visual_contract_is_egocentric_and_action_free() -> None:
     assert state["available"] is True
     assert state["field_degrees"] == VISION_FIELD_DEGREES
     assert state["coordinate_frame"] == "egocentric-wide-panorama"
+    assert state["wall_rendering_policy"] == WALL_RENDERING_POLICY
     assert state["visible_enemies"] == 1
     assert abs(state["nearest_enemy"]["bearing_degrees"]) < 1e-6
     assert "action" not in state
@@ -37,3 +43,13 @@ def test_visual_contract_can_be_unavailable_without_pose() -> None:
     state = visual_contract(fly=None, enemies=[])
     assert state["model"] == VISION_MODEL
     assert state["available"] is False
+
+
+def test_wall_depth_salience_expands_near_vs_open_contrast() -> None:
+    near = _wall_depth_salience(0.6)
+    medium = _wall_depth_salience(1.5)
+    open_space = _wall_depth_salience(3.0)
+
+    assert WALL_RENDERING_POLICY == "nonlinear-depth-contrast-v2"
+    assert 0.0 <= open_space < medium < near <= 1.0
+    assert (near - medium) > ((1.0 - 0.6 / 8.0) - (1.0 - 1.5 / 8.0))
