@@ -166,6 +166,7 @@ jobs:
               and float(s['brain']['telemetry'].get('frontal_wall_distance_threshold', -1.0)) == 0.75
               and int(s['brain']['telemetry'].get('frontal_wall_pulses_per_decision', -1)) == 10
               and s['brain']['telemetry'].get('frontal_wall_direction_command') is False
+              and s['brain']['telemetry'].get('wall_rendering_policy') == 'nonlinear-depth-contrast-v2'
               and s['brain']['telemetry'].get('dnpe017_gate_used') is False
               and int(s['brain']['telemetry'].get('walking_drive_spikes', -1)) >= 0
               and int(s['brain']['telemetry'].get('walking_spikes', -1)) >= 0
