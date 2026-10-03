@@ -1,6 +1,11 @@
 name: NeuroFly Visual DNa02 Projection Probe
 
 on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/visual-dna02-projection-probe.yml"
+      - "scripts/visual_dna02_projection_probe.py"
   workflow_dispatch:
 
 permissions:
