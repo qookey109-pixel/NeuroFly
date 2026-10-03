@@ -26,10 +26,12 @@ def test_probe_script_parses_without_optional_runtime_dependencies() -> None:
 
 def test_probe_contract_is_read_only_and_learning_disabled() -> None:
     text = SCRIPT.read_text()
-    assert 'SCHEMA = "neurofly-visual-dna02-projection-probe-v1"' in text
+    assert 'SCHEMA = "neurofly-visual-steering-projection-probe-v2"' in text
     assert "learning=False" in text
     assert "source_checkpoint_unchanged" in text
     assert '"production_checkpoint_mutated": False' in text
+    assert '"dNa01_decoder_authorized": False' in text
+    assert '"multi_dn_decoder_authorized": False' in text
     assert '"behavioral_promotion_authorized": False' in text
 
 
