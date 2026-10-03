@@ -126,6 +126,9 @@ MOTOR_TELEMETRY_FIELDS = (
     "retinal_left_luminance_mean",
     "retinal_right_luminance_mean",
     "retinal_luminance_asymmetry",
+    "retinal_eye_left_luminance_mean",
+    "retinal_eye_right_luminance_mean",
+    "retinal_eye_luminance_asymmetry",
 )
 
 
