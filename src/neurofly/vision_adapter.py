@@ -9,6 +9,7 @@ from .vision import (
     VISION_MODEL,
     WALL_RENDERING_POLICY,
     _wall_depth_salience,
+    _wall_texture_offset,
 )
 
 
@@ -156,34 +157,43 @@ def retinalize_topdown_rgb(
         value = source[py, px]
         return int(value[0]), int(value[1]), int(value[2])
 
-    def wall_distance(relative_degrees: float) -> float:
+    def wall_hit(relative_degrees: float) -> tuple[float, float, float]:
         angle = heading + math.radians(relative_degrees)
         distance = 0.12
         while distance <= VISION_MAX_RANGE_CELLS:
             gx = origin_x + math.cos(angle) * distance
             gy = origin_y + math.sin(angle) * distance
             if gx < 0 or gy < 0 or gx >= cols or gy >= rows:
-                return distance
+                return distance, gx, gy
             r, g, b = sample_grid(gx, gy)
             # Canonical maze walls are dark green. A conservative luminance and
             # green-channel test avoids interpreting bright food as a wall.
             luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
             if luminance < 95.0 and g >= r * 0.9:
-                return distance
+                return distance, gx, gy
             distance += 0.12
-        return VISION_MAX_RANGE_CELLS
+        gx = origin_x + math.cos(angle) * VISION_MAX_RANGE_CELLS
+        gy = origin_y + math.sin(angle) * VISION_MAX_RANGE_CELLS
+        return VISION_MAX_RANGE_CELLS, gx, gy
+
+    def wall_distance(relative_degrees: float) -> float:
+        return wall_hit(relative_degrees)[0]
 
     # Ray-cast the wide visual field. Near walls cover more retinal height,
     # naturally producing expansion as the fly approaches an obstacle.
     for px in range(width):
         relative = -half_field + (px / max(1, width - 1)) * VISION_FIELD_DEGREES
-        distance = wall_distance(relative)
+        distance, hit_x, hit_y = wall_hit(relative)
         salience = _wall_depth_salience(distance)
         wall_half_height = int(6 + salience * height * 0.44)
         top = max(0, horizon - wall_half_height)
         bottom = min(height - 1, horizon + wall_half_height)
-        shade = int(124 - salience * 92)
-        draw.line((px, top, px, bottom), fill=(shade, shade + 14, shade + 8))
+        base_shade = int(124 - salience * 92)
+        shade = max(8, min(164, base_shade + _wall_texture_offset(hit_x, hit_y)))
+        draw.line(
+            (px, top, px, bottom),
+            fill=(shade, min(178, shade + 14), min(172, shade + 8)),
+        )
 
     # Recover food markers only at canonical cell centers, then project them into
     # the local panorama. This preserves visual availability without exposing the
