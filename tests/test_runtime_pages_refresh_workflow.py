@@ -91,7 +91,7 @@ def test_runtime_v4_gate_accepts_predator_free_stage_one_and_sensory_only_action
     assert "frontal_wall_distance_threshold" in build_block
     assert "frontal_wall_pulses_per_decision" in build_block
     assert "frontal_wall_direction_command" in build_block
-    assert "nonlinear-depth-contrast-v2" in build_block
+    assert "world-anchored-wall-texture-v3" in build_block
     assert "wall_rendering_policy" in build_block
     assert "walking_drive_spikes" in build_block
     assert "danger_temporal_delta" in build_block
@@ -145,7 +145,7 @@ def test_runtime_cancels_stale_code_runs_but_preserves_continuous_handoffs():
     assert '"pyproject.toml"' in text
 
 
-def test_runtime_publishes_nonblocking_behavior_summary_v2() -> None:
+def test_runtime_publishes_nonblocking_behavior_summary() -> None:
     workflow = RUNTIME.read_text()
 
     assert "name: Summarize Stage 2 behavior" in workflow
