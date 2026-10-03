@@ -148,6 +148,11 @@ jobs:
           assert all(
               s['brain']['telemetry'].get('motor_decoder') == 'neurofly-walking-decoder-v4'
               and s['brain']['telemetry'].get('steering_type') == 'DNa02'
+              and s['brain']['telemetry'].get('steering_observer_type') == 'DNa03'
+              and s['brain']['telemetry'].get('steering_observer_used_for_action') is False
+              and isinstance(s['brain']['telemetry'].get('steering_observer_left_hz'), (int, float))
+              and isinstance(s['brain']['telemetry'].get('steering_observer_right_hz'), (int, float))
+              and isinstance(s['brain']['telemetry'].get('steering_observer_difference_hz'), (int, float))
               and s['brain']['telemetry'].get('walking_drive_type') == 'DNb05'
               and s['brain']['telemetry'].get('forward_type') == 'DNb05'
               and float(s['brain']['telemetry'].get('steering_threshold_hz', -1.0)) == 30.0
