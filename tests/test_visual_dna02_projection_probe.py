@@ -1,20 +1,40 @@
 from __future__ import annotations
 
+import ast
 import importlib.util
 from pathlib import Path
 
-import numpy as np
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "visual_dna02_projection_probe.py"
-SPEC = importlib.util.spec_from_file_location("visual_dna02_projection_probe", SCRIPT)
-assert SPEC is not None and SPEC.loader is not None
-probe = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(probe)
+
+
+def _load_probe():
+    pytest.importorskip("numpy")
+    spec = importlib.util.spec_from_file_location("visual_dna02_projection_probe", SCRIPT)
+    assert spec is not None and spec.loader is not None
+    probe = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(probe)
+    return probe
+
+
+def test_probe_script_parses_without_optional_runtime_dependencies() -> None:
+    ast.parse(SCRIPT.read_text())
+
+
+def test_probe_contract_is_read_only_and_learning_disabled() -> None:
+    text = SCRIPT.read_text()
+    assert 'SCHEMA = "neurofly-visual-dna02-projection-probe-v1"' in text
+    assert "learning=False" in text
+    assert "source_checkpoint_unchanged" in text
+    assert '"production_checkpoint_mutated": False' in text
+    assert '"behavioral_promotion_authorized": False' in text
 
 
 def test_probe_conditions_are_fixed_and_sensory_only() -> None:
+    probe = _load_probe()
     assert probe.CONDITIONS == (
         "uniform_control",
         "static_full_grating",
@@ -25,6 +45,8 @@ def test_probe_conditions_are_fixed_and_sensory_only() -> None:
 
 
 def test_motion_probe_changes_only_requested_outer_screen_region() -> None:
+    np = pytest.importorskip("numpy")
+    probe = _load_probe()
     uniform = probe.make_probe_frame("uniform_control", 0, width=100, height=20)
     left = probe.make_probe_frame("motion_left_outer", 1, width=100, height=20)
     right = probe.make_probe_frame("motion_right_outer", 1, width=100, height=20)
@@ -41,6 +63,8 @@ def test_motion_probe_changes_only_requested_outer_screen_region() -> None:
 
 
 def test_motion_probe_has_temporal_change_but_static_control_does_not() -> None:
+    np = pytest.importorskip("numpy")
+    probe = _load_probe()
     moving_a = probe.make_probe_frame("motion_full", 0)
     moving_b = probe.make_probe_frame("motion_full", 1)
     static_a = probe.make_probe_frame("static_full_grating", 0)
