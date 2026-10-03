@@ -25,7 +25,7 @@ def _row(*, step: int, episode: int, action: str, event: str | None, food_left: 
     }
 
 
-def test_behavior_summary_v4_tracks_loop_wall_and_turn_metrics() -> None:
+def test_behavior_summary_v5_tracks_loop_wall_and_turn_metrics() -> None:
     receipt = {
         "receipt_sha256": "abc",
         "curriculum_version": "neurofly-curriculum-v4",
@@ -50,6 +50,7 @@ def test_behavior_summary_v4_tracks_loop_wall_and_turn_metrics() -> None:
                     "visual_left_change": 0.1,
                     "visual_right_change": 0.2,
                     "retinal_luminance_asymmetry": 0.1,
+                    "retinal_eye_luminance_asymmetry": 0.1,
                     "vision": {"wall_distance_cells": {"left": 1.0, "front": 0.6, "right": 2.0}},
                 }},
             },
@@ -64,6 +65,7 @@ def test_behavior_summary_v4_tracks_loop_wall_and_turn_metrics() -> None:
                     "visual_left_change": 0.1,
                     "visual_right_change": 0.3,
                     "retinal_luminance_asymmetry": 0.2,
+                    "retinal_eye_luminance_asymmetry": 0.2,
                     "vision": {"wall_distance_cells": {"left": 1.0, "front": 0.6, "right": 3.0}},
                 }},
             },
@@ -78,6 +80,7 @@ def test_behavior_summary_v4_tracks_loop_wall_and_turn_metrics() -> None:
                     "visual_left_change": 0.1,
                     "visual_right_change": 0.4,
                     "retinal_luminance_asymmetry": 0.3,
+                    "retinal_eye_luminance_asymmetry": 0.3,
                     "vision": {"wall_distance_cells": {"left": 1.0, "front": 0.6, "right": 4.0}},
                 }},
             },
@@ -113,9 +116,10 @@ def test_behavior_summary_v4_tracks_loop_wall_and_turn_metrics() -> None:
     assert abs(summary["playback_near_wall_opening_to_decoder_correlation"] - 1.0) < 1e-12
     assert abs(summary["playback_near_wall_visual_change_to_decoder_correlation"] - 1.0) < 1e-12
     assert abs(summary["playback_near_wall_retinal_luminance_to_decoder_correlation"] - 1.0) < 1e-12
+    assert abs(summary["playback_near_wall_eye_luminance_to_decoder_correlation"] - 1.0) < 1e-12
 
 
-def test_behavior_summary_v4_handles_empty_receipt() -> None:
+def test_behavior_summary_v5_handles_empty_receipt() -> None:
     summary = summarize_receipt({"observations": [], "trajectory": []})
     assert summary["steps_observed"] == 0
     assert summary["deaths_per_1000_decisions"] is None
@@ -128,3 +132,4 @@ def test_behavior_summary_v4_handles_empty_receipt() -> None:
     assert summary["playback_near_wall_opening_to_decoder_correlation"] is None
     assert summary["playback_near_wall_visual_change_to_decoder_correlation"] is None
     assert summary["playback_near_wall_retinal_luminance_to_decoder_correlation"] is None
+    assert summary["playback_near_wall_eye_luminance_to_decoder_correlation"] is None
