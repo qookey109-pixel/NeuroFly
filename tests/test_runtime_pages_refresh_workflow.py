@@ -78,6 +78,11 @@ def test_runtime_v4_gate_accepts_predator_free_stage_one_and_sensory_only_action
     assert "walking_drive_type') == 'DNb05'" in build_block
     assert "forward_type') == 'DNb05'" in build_block
     assert "steering_threshold_hz', -1.0)) == 30.0" in build_block
+    assert "steering_observer_type') == 'DNa03'" in build_block
+    assert "steering_observer_used_for_action') is False" in build_block
+    assert "steering_observer_left_hz" in build_block
+    assert "steering_observer_right_hz" in build_block
+    assert "steering_observer_difference_hz" in build_block
     assert "bilateral-ewma-baseline-centered-v1" in build_block
     assert "steering_baseline_alpha', -1.0)) == 0.02" in build_block
     assert "raw_difference_hz" in build_block
