@@ -15,7 +15,7 @@ from neurofly.smoke import _digest_json
 from neurofly.upstream import STONKFLY_COMMIT
 
 
-SCHEMA = "neurofly-visual-steering-projection-probe-v2"
+SCHEMA = "neurofly-visual-steering-dn-screen-v3"
 WIDTH = 320
 HEIGHT = 180
 WARMUP_FRAMES = 4
@@ -25,6 +25,22 @@ OUTER_RIGHT_START = 0.62
 GRATING_CYCLES = 8.0
 GRATING_AMPLITUDE = 90.0
 BASE_LUMINANCE = 128.0
+
+# Steering-related descending neuron types reported across recent walking studies.
+# The screen does not assume any of them are valid decoder channels in MaleCNS;
+# unresolved or silent populations are evidence, not failures.
+STEERING_TYPES = (
+    "DNa01",
+    "DNa02",
+    "DNa03",
+    "DNa11",
+    "DNae003",
+    "DNae014",
+    "DNb02",
+    "DNb05",
+    "DNb06",
+    "DNg13",
+)
 
 CONDITIONS = (
     "uniform_control",
@@ -82,9 +98,27 @@ def make_probe_frame(
     return frame
 
 
-def _mean(rows: list[dict[str, Any]], key: str) -> float:
-    values = [float(row[key]) for row in rows if row.get(key) is not None]
+def _mean(values: list[float]) -> float:
     return float(sum(values) / len(values)) if values else 0.0
+
+
+def _resolve_steering_populations(
+    brain: MaleCNSBrain,
+) -> tuple[dict[str, tuple[Any, Any]], dict[str, dict[str, Any]]]:
+    from stonkfly.neural.common import annotations
+
+    table = annotations(brain.brain.ids)
+    resolved: dict[str, tuple[Any, Any]] = {}
+    reports: dict[str, dict[str, Any]] = {}
+    for cell_type in STEERING_TYPES:
+        left, right, report = _bilateral_type_indices(brain.np, table, cell_type)
+        reports[cell_type] = {
+            **report,
+            "bilaterally_resolved": bool(len(left) and len(right)),
+        }
+        if len(left) and len(right):
+            resolved[cell_type] = (left, right)
+    return resolved, reports
 
 
 def run_condition(source_checkpoint: Path, condition: str) -> dict[str, Any]:
@@ -93,17 +127,7 @@ def run_condition(source_checkpoint: Path, condition: str) -> dict[str, Any]:
         learning=False,
     )
     brain.brain.weights_frozen = True
-
-    from stonkfly.neural.common import annotations
-
-    annotations_table = annotations(brain.brain.ids)
-    dna01_left, dna01_right, dna01_report = _bilateral_type_indices(
-        brain.np,
-        annotations_table,
-        "DNa01",
-    )
-    if not len(dna01_left) or not len(dna01_right):
-        raise RuntimeError(f"DNa01 is not bilaterally resolvable: {dna01_report}")
+    populations, population_reports = _resolve_steering_populations(brain)
 
     uniform = make_probe_frame("uniform_control", 0)
     for _ in range(WARMUP_FRAMES):
@@ -111,6 +135,11 @@ def run_condition(source_checkpoint: Path, condition: str) -> dict[str, Any]:
 
     rows: list[dict[str, Any]] = []
     actions: Counter[str] = Counter()
+    population_samples: dict[str, dict[str, list[float]]] = {
+        cell_type: {"left": [], "right": [], "difference": []}
+        for cell_type in populations
+    }
+
     for frame_index in range(PROBE_FRAMES):
         frame = make_probe_frame(condition, frame_index)
         decision = brain.decide(frame, reinforcement="none", context=None)
@@ -118,19 +147,26 @@ def run_condition(source_checkpoint: Path, condition: str) -> dict[str, Any]:
         actions[str(decision.action)] += 1
         seconds = brain.neural_ms / 1000.0
         counts = brain.brain.counts
-        dna01_left_hz = float(brain.np.mean(counts[dna01_left]) / seconds)
-        dna01_right_hz = float(brain.np.mean(counts[dna01_right]) / seconds)
+
+        population_row: dict[str, dict[str, float]] = {}
+        for cell_type, (left_indices, right_indices) in populations.items():
+            left_hz = float(brain.np.mean(counts[left_indices]) / seconds)
+            right_hz = float(brain.np.mean(counts[right_indices]) / seconds)
+            difference = right_hz - left_hz
+            population_row[cell_type] = {
+                "left_hz": left_hz,
+                "right_hz": right_hz,
+                "raw_difference_hz": difference,
+            }
+            population_samples[cell_type]["left"].append(left_hz)
+            population_samples[cell_type]["right"].append(right_hz)
+            population_samples[cell_type]["difference"].append(difference)
+
         rows.append(
             {
                 "frame": frame_index,
                 "action": decision.action,
-                "dNa02_left_hz": telemetry.get("left_hz"),
-                "dNa02_right_hz": telemetry.get("right_hz"),
-                "dNa01_left_hz": dna01_left_hz,
-                "dNa01_right_hz": dna01_right_hz,
-                "dNa01_raw_difference_hz": dna01_right_hz - dna01_left_hz,
-                "raw_difference_hz": telemetry.get("raw_difference_hz"),
-                "decoder_difference_hz": telemetry.get("decoder_difference_hz"),
+                "dNa02_decoder_difference_hz": telemetry.get("decoder_difference_hz"),
                 "visual_change": telemetry.get("visual_change"),
                 "retinal_eye_left_luminance_mean": telemetry.get(
                     "retinal_eye_left_luminance_mean"
@@ -142,31 +178,43 @@ def run_condition(source_checkpoint: Path, condition: str) -> dict[str, Any]:
                     "retinal_eye_luminance_asymmetry"
                 ),
                 "total_spikes": telemetry.get("total_spikes"),
+                "steering_populations": population_row,
             }
         )
+
+    population_summary = {
+        cell_type: {
+            "left_hz_mean": _mean(values["left"]),
+            "right_hz_mean": _mean(values["right"]),
+            "raw_difference_hz_mean": _mean(values["difference"]),
+            "report": population_reports[cell_type],
+        }
+        for cell_type, values in population_samples.items()
+    }
 
     return {
         "condition": condition,
         "frames": PROBE_FRAMES,
         "action_counts": dict(sorted(actions.items())),
-        "dNa02_left_hz_mean": _mean(rows, "dNa02_left_hz"),
-        "dNa02_right_hz_mean": _mean(rows, "dNa02_right_hz"),
-        "dNa02_raw_difference_hz_mean": _mean(rows, "raw_difference_hz"),
-        "dNa02_decoder_difference_hz_mean": _mean(rows, "decoder_difference_hz"),
-        "dNa01_left_hz_mean": _mean(rows, "dNa01_left_hz"),
-        "dNa01_right_hz_mean": _mean(rows, "dNa01_right_hz"),
-        "dNa01_raw_difference_hz_mean": _mean(rows, "dNa01_raw_difference_hz"),
-        "dNa01_bilateral_report": dna01_report,
-        "visual_change_mean": _mean(rows, "visual_change"),
-        "retinal_eye_left_luminance_mean": _mean(
-            rows, "retinal_eye_left_luminance_mean"
+        "dNa02_decoder_difference_hz_mean": _mean(
+            [
+                float(row["dNa02_decoder_difference_hz"])
+                for row in rows
+                if row.get("dNa02_decoder_difference_hz") is not None
+            ]
         ),
-        "retinal_eye_right_luminance_mean": _mean(
-            rows, "retinal_eye_right_luminance_mean"
+        "visual_change_mean": _mean(
+            [float(row["visual_change"]) for row in rows if row.get("visual_change") is not None]
         ),
         "retinal_eye_luminance_asymmetry_mean": _mean(
-            rows, "retinal_eye_luminance_asymmetry"
+            [
+                float(row["retinal_eye_luminance_asymmetry"])
+                for row in rows
+                if row.get("retinal_eye_luminance_asymmetry") is not None
+            ]
         ),
+        "steering_populations": population_summary,
+        "population_reports": population_reports,
         "rows": rows,
     }
 
@@ -184,14 +232,41 @@ def run_probe(source_checkpoint: Path) -> dict[str, Any]:
     if source_sha_after != source_sha_before:
         raise RuntimeError("Visual probe mutated the production source checkpoint")
 
-    dNa02_left = results["motion_left_outer"]["dNa02_raw_difference_hz_mean"]
-    dNa02_right = results["motion_right_outer"]["dNa02_raw_difference_hz_mean"]
-    dNa02_full = results["motion_full"]["dNa02_raw_difference_hz_mean"]
-    dNa02_static = results["static_full_grating"]["dNa02_raw_difference_hz_mean"]
-    dNa01_left = results["motion_left_outer"]["dNa01_raw_difference_hz_mean"]
-    dNa01_right = results["motion_right_outer"]["dNa01_raw_difference_hz_mean"]
-    dNa01_full = results["motion_full"]["dNa01_raw_difference_hz_mean"]
-    dNa01_static = results["static_full_grating"]["dNa01_raw_difference_hz_mean"]
+    resolved_types = sorted(
+        set.intersection(
+            *[
+                set(result["steering_populations"])
+                for result in results.values()
+            ]
+        )
+    )
+    contrasts: dict[str, dict[str, float]] = {}
+    for cell_type in resolved_types:
+        left_motion = results["motion_left_outer"]["steering_populations"][cell_type][
+            "raw_difference_hz_mean"
+        ]
+        right_motion = results["motion_right_outer"]["steering_populations"][cell_type][
+            "raw_difference_hz_mean"
+        ]
+        full_motion = results["motion_full"]["steering_populations"][cell_type][
+            "raw_difference_hz_mean"
+        ]
+        static = results["static_full_grating"]["steering_populations"][cell_type][
+            "raw_difference_hz_mean"
+        ]
+        contrasts[cell_type] = {
+            "right_minus_left_motion_raw_difference_hz": right_motion - left_motion,
+            "left_motion_minus_static_raw_difference_hz": left_motion - static,
+            "right_motion_minus_static_raw_difference_hz": right_motion - static,
+            "full_motion_minus_static_raw_difference_hz": full_motion - static,
+        }
+
+    first_reports = results["uniform_control"]["population_reports"]
+    unresolved_types = sorted(
+        cell_type
+        for cell_type, report in first_reports.items()
+        if not report["bilaterally_resolved"]
+    )
 
     body: dict[str, Any] = {
         "schema": SCHEMA,
@@ -201,21 +276,15 @@ def run_probe(source_checkpoint: Path) -> dict[str, Any]:
         "learning_enabled": False,
         "production_checkpoint_mutated": False,
         "stonkfly_commit": STONKFLY_COMMIT,
+        "screened_types": list(STEERING_TYPES),
+        "resolved_types": resolved_types,
+        "unresolved_types": unresolved_types,
         "conditions": results,
-        "contrasts": {
-            "dNa02_right_minus_left_motion_raw_difference_hz": dNa02_right - dNa02_left,
-            "dNa02_full_motion_minus_static_raw_difference_hz": dNa02_full - dNa02_static,
-            "dNa02_left_motion_minus_static_raw_difference_hz": dNa02_left - dNa02_static,
-            "dNa02_right_motion_minus_static_raw_difference_hz": dNa02_right - dNa02_static,
-            "dNa01_right_minus_left_motion_raw_difference_hz": dNa01_right - dNa01_left,
-            "dNa01_full_motion_minus_static_raw_difference_hz": dNa01_full - dNa01_static,
-            "dNa01_left_motion_minus_static_raw_difference_hz": dNa01_left - dNa01_static,
-            "dNa01_right_motion_minus_static_raw_difference_hz": dNa01_right - dNa01_static,
-        },
+        "population_contrasts": contrasts,
         "claim_limits": {
             "retinal_projection_calibrated": False,
             "visual_steering_validated": False,
-            "dNa01_decoder_authorized": False,
+            "steering_dn_decoder_authorized": False,
             "multi_dn_decoder_authorized": False,
             "behavioral_promotion_authorized": False,
         },
@@ -226,7 +295,7 @@ def run_probe(source_checkpoint: Path) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Probe retinal motion projection to DNa01 and DNa02 without learning"
+        description="Screen known steering DNs under isolated retinal motion without learning"
     )
     parser.add_argument("--source-checkpoint", required=True)
     parser.add_argument("--output", required=True)
@@ -237,9 +306,11 @@ def main(argv: list[str] | None = None) -> int:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     print(
-        "VISUAL_STEERING_PROJECTION_PROBE_V2_PASS",
+        "VISUAL_STEERING_DN_SCREEN_V3_PASS",
         report["receipt_sha256"],
-        json.dumps(report["contrasts"], sort_keys=True),
+        "resolved=", report["resolved_types"],
+        "unresolved=", report["unresolved_types"],
+        json.dumps(report["population_contrasts"], sort_keys=True),
     )
     return 0
 
