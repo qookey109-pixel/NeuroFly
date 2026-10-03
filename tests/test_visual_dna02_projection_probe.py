@@ -30,7 +30,7 @@ def test_probe_contract_is_read_only_and_learning_disabled() -> None:
     assert "learning=False" in text
     assert "source_checkpoint_unchanged" in text
     assert '"production_checkpoint_mutated": False' in text
-    assert '"dNa01_decoder_authorized": False' in text
+    assert '"steering_dn_decoder_authorized": False' in text
     assert '"multi_dn_decoder_authorized": False' in text
     assert '"behavioral_promotion_authorized": False' in text
 
