@@ -93,9 +93,9 @@ jobs:
           assert report["claim_limits"]["multi_dn_decoder_authorized"] is False
           assert "DNa02" in report["resolved_types"]
           print(
-              "VISUAL_DNA02_PROJECTION_RECEIPT_PASS",
+              "VISUAL_STEERING_DN_SCREEN_RECEIPT_PASS",
               report["receipt_sha256"],
-              report["contrasts"],
+              report["population_contrasts"],
           )
           PY
 
