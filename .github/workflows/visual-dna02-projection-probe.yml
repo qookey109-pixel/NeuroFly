@@ -1,0 +1,105 @@
+name: NeuroFly Visual DNa02 Projection Probe
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/visual-dna02-projection-probe.yml"
+      - "scripts/visual_dna02_projection_probe.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: neurofly-visual-dna02-projection-probe
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      SOURCE_CHECKPOINT: runs/free-malecns/brain.npz
+      OUTPUT: runs/visual-dna02-probe/visual-dna02-projection-probe.json
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+
+      - name: Restore latest production brain as read-only source
+        uses: actions/cache/restore@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-v06-state-visual-probe-${{ github.run_id }}
+          restore-keys: |
+            neurofly-v06-state-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare and verify MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$(dirname "$OUTPUT")"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+          test -f "$SOURCE_CHECKPOINT"
+          sha256sum "$SOURCE_CHECKPOINT"
+
+      - name: Execute isolated retinal motion probe
+        run: |
+          python scripts/visual_dna02_projection_probe.py \
+            --source-checkpoint "$SOURCE_CHECKPOINT" \
+            --output "$OUTPUT"
+
+      - name: Validate projection receipt
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(
+              Path("runs/visual-dna02-probe/visual-dna02-projection-probe.json").read_text()
+          )
+          assert report["schema"] == "neurofly-visual-dna02-projection-probe-v1"
+          assert report["status"] == "PASS"
+          assert report["source_checkpoint_unchanged"] is True
+          assert report["learning_enabled"] is False
+          assert report["production_checkpoint_mutated"] is False
+          assert set(report["conditions"]) == {
+              "uniform_control",
+              "static_full_grating",
+              "motion_left_outer",
+              "motion_right_outer",
+              "motion_full",
+          }
+          assert report["claim_limits"]["retinal_projection_calibrated"] is False
+          assert report["claim_limits"]["visual_steering_validated"] is False
+          print(
+              "VISUAL_DNA02_PROJECTION_RECEIPT_PASS",
+              report["receipt_sha256"],
+              report["contrasts"],
+          )
+          PY
+
+      - name: Publish compact projection evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-visual-dna02-probe-${{ github.run_id }}
+          path: runs/visual-dna02-probe/visual-dna02-projection-probe.json
+          if-no-files-found: error
+          retention-days: 1
