@@ -457,6 +457,20 @@ class MaleCNSBrain:
 
         a = annotations(self.brain.ids)
         types = a.type.fillna("").astype(str)
+        retina_sides = (
+            a.rootSide.iloc[self.brain.retina]
+            .fillna("")
+            .astype(str)
+            .str.upper()
+            .to_numpy()
+        )
+        self.retina_left_sample_indices = np.flatnonzero(retina_sides == "L")
+        self.retina_right_sample_indices = np.flatnonzero(retina_sides == "R")
+        if (
+            not len(self.retina_left_sample_indices)
+            or not len(self.retina_right_sample_indices)
+        ):
+            raise RuntimeError("Retinal eye-side projection is not bilaterally resolvable")
         (
             self.steering_left,
             self.steering_right,
@@ -860,6 +874,39 @@ class MaleCNSBrain:
         retinal_left_luminance = float(display_luminance[:, :retinal_half].mean())
         retinal_right_luminance = float(display_luminance[:, retinal_half:].mean())
         retinal_luminance_asymmetry = retinal_right_luminance - retinal_left_luminance
+
+        # Match Stonkfly's own R1-R6 retinal sampling path exactly: sample the
+        # rendered RGB at brain.uv and convert sRGB to linear luminance. These
+        # are diagnostics only; the sampled values are not fed back as commands.
+        uv = self.brain.uv
+        sample_x = np.clip(
+            (uv[:, 0] * (rgb.shape[1] - 1)).astype(int),
+            0,
+            rgb.shape[1] - 1,
+        )
+        sample_y = np.clip(
+            (uv[:, 1] * (rgb.shape[0] - 1)).astype(int),
+            0,
+            rgb.shape[0] - 1,
+        )
+        sampled_rgb = rgb[sample_y, sample_x].astype(np.float32) / 255.0
+        sampled_linear = np.where(
+            sampled_rgb <= 0.04045,
+            sampled_rgb / 12.92,
+            ((sampled_rgb + 0.055) / 1.055) ** 2.4,
+        )
+        sampled_luminance = sampled_linear @ np.asarray(
+            [0.2126, 0.7152, 0.0722],
+            dtype=np.float32,
+        )
+        eye_left_luminance = float(
+            sampled_luminance[self.retina_left_sample_indices].mean()
+        )
+        eye_right_luminance = float(
+            sampled_luminance[self.retina_right_sample_indices].mean()
+        )
+        eye_luminance_asymmetry = eye_right_luminance - eye_left_luminance
+
         if self._last_visual_rgb is not None and self._last_visual_rgb.shape == rgb.shape:
             delta = np.abs(rgb.astype(np.int16) - self._last_visual_rgb.astype(np.int16))
             delta = delta.mean(axis=2) / 255.0
@@ -878,6 +925,9 @@ class MaleCNSBrain:
                 "retinal_left_luminance_mean": round(retinal_left_luminance, 8),
                 "retinal_right_luminance_mean": round(retinal_right_luminance, 8),
                 "retinal_luminance_asymmetry": round(retinal_luminance_asymmetry, 8),
+                "retinal_eye_left_luminance_mean": round(eye_left_luminance, 8),
+                "retinal_eye_right_luminance_mean": round(eye_right_luminance, 8),
+                "retinal_eye_luminance_asymmetry": round(eye_luminance_asymmetry, 8),
             }
         )
         return rgb, vision
@@ -1077,6 +1127,9 @@ class MaleCNSBrain:
             "retinal_left_luminance_mean": vision.get("retinal_left_luminance_mean"),
             "retinal_right_luminance_mean": vision.get("retinal_right_luminance_mean"),
             "retinal_luminance_asymmetry": vision.get("retinal_luminance_asymmetry"),
+            "retinal_eye_left_luminance_mean": vision.get("retinal_eye_left_luminance_mean"),
+            "retinal_eye_right_luminance_mean": vision.get("retinal_eye_right_luminance_mean"),
+            "retinal_eye_luminance_asymmetry": vision.get("retinal_eye_luminance_asymmetry"),
             "vision_report": self.vision_report,
             "olfaction_model": OLFACTION_MODEL,
             "olfaction": odor_levels,
