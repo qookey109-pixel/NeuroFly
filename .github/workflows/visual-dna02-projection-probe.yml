@@ -75,7 +75,7 @@ jobs:
           report = json.loads(
               Path("runs/visual-dna02-probe/visual-dna02-projection-probe.json").read_text()
           )
-          assert report["schema"] == "neurofly-visual-dna02-projection-probe-v1"
+          assert report["schema"] == "neurofly-visual-steering-projection-probe-v2"
           assert report["status"] == "PASS"
           assert report["source_checkpoint_unchanged"] is True
           assert report["learning_enabled"] is False
@@ -89,6 +89,8 @@ jobs:
           }
           assert report["claim_limits"]["retinal_projection_calibrated"] is False
           assert report["claim_limits"]["visual_steering_validated"] is False
+          assert report["claim_limits"]["dNa01_decoder_authorized"] is False
+          assert report["claim_limits"]["multi_dn_decoder_authorized"] is False
           print(
               "VISUAL_DNA02_PROJECTION_RECEIPT_PASS",
               report["receipt_sha256"],
