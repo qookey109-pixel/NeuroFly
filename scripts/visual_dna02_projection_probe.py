@@ -10,12 +10,12 @@ from typing import Any
 
 import numpy as np
 
-from neurofly.brain_runtime import MaleCNSBrain
+from neurofly.brain_runtime import MaleCNSBrain, _bilateral_type_indices
 from neurofly.smoke import _digest_json
 from neurofly.upstream import STONKFLY_COMMIT
 
 
-SCHEMA = "neurofly-visual-dna02-projection-probe-v1"
+SCHEMA = "neurofly-visual-steering-projection-probe-v2"
 WIDTH = 320
 HEIGHT = 180
 WARMUP_FRAMES = 4
@@ -94,6 +94,17 @@ def run_condition(source_checkpoint: Path, condition: str) -> dict[str, Any]:
     )
     brain.brain.weights_frozen = True
 
+    from stonkfly.neural.common import annotations
+
+    annotations_table = annotations(brain.brain.ids)
+    dna01_left, dna01_right, dna01_report = _bilateral_type_indices(
+        brain.np,
+        annotations_table,
+        "DNa01",
+    )
+    if not len(dna01_left) or not len(dna01_right):
+        raise RuntimeError(f"DNa01 is not bilaterally resolvable: {dna01_report}")
+
     uniform = make_probe_frame("uniform_control", 0)
     for _ in range(WARMUP_FRAMES):
         brain.decide(uniform, reinforcement="none", context=None)
@@ -105,12 +116,19 @@ def run_condition(source_checkpoint: Path, condition: str) -> dict[str, Any]:
         decision = brain.decide(frame, reinforcement="none", context=None)
         telemetry = decision.telemetry
         actions[str(decision.action)] += 1
+        seconds = brain.neural_ms / 1000.0
+        counts = brain.brain.counts
+        dna01_left_hz = float(brain.np.mean(counts[dna01_left]) / seconds)
+        dna01_right_hz = float(brain.np.mean(counts[dna01_right]) / seconds)
         rows.append(
             {
                 "frame": frame_index,
                 "action": decision.action,
-                "left_hz": telemetry.get("left_hz"),
-                "right_hz": telemetry.get("right_hz"),
+                "dNa02_left_hz": telemetry.get("left_hz"),
+                "dNa02_right_hz": telemetry.get("right_hz"),
+                "dNa01_left_hz": dna01_left_hz,
+                "dNa01_right_hz": dna01_right_hz,
+                "dNa01_raw_difference_hz": dna01_right_hz - dna01_left_hz,
                 "raw_difference_hz": telemetry.get("raw_difference_hz"),
                 "decoder_difference_hz": telemetry.get("decoder_difference_hz"),
                 "visual_change": telemetry.get("visual_change"),
@@ -131,10 +149,14 @@ def run_condition(source_checkpoint: Path, condition: str) -> dict[str, Any]:
         "condition": condition,
         "frames": PROBE_FRAMES,
         "action_counts": dict(sorted(actions.items())),
-        "left_hz_mean": _mean(rows, "left_hz"),
-        "right_hz_mean": _mean(rows, "right_hz"),
-        "raw_difference_hz_mean": _mean(rows, "raw_difference_hz"),
-        "decoder_difference_hz_mean": _mean(rows, "decoder_difference_hz"),
+        "dNa02_left_hz_mean": _mean(rows, "dNa02_left_hz"),
+        "dNa02_right_hz_mean": _mean(rows, "dNa02_right_hz"),
+        "dNa02_raw_difference_hz_mean": _mean(rows, "raw_difference_hz"),
+        "dNa02_decoder_difference_hz_mean": _mean(rows, "decoder_difference_hz"),
+        "dNa01_left_hz_mean": _mean(rows, "dNa01_left_hz"),
+        "dNa01_right_hz_mean": _mean(rows, "dNa01_right_hz"),
+        "dNa01_raw_difference_hz_mean": _mean(rows, "dNa01_raw_difference_hz"),
+        "dNa01_bilateral_report": dna01_report,
         "visual_change_mean": _mean(rows, "visual_change"),
         "retinal_eye_left_luminance_mean": _mean(
             rows, "retinal_eye_left_luminance_mean"
@@ -162,10 +184,14 @@ def run_probe(source_checkpoint: Path) -> dict[str, Any]:
     if source_sha_after != source_sha_before:
         raise RuntimeError("Visual probe mutated the production source checkpoint")
 
-    left = results["motion_left_outer"]["raw_difference_hz_mean"]
-    right = results["motion_right_outer"]["raw_difference_hz_mean"]
-    full = results["motion_full"]["raw_difference_hz_mean"]
-    static = results["static_full_grating"]["raw_difference_hz_mean"]
+    dNa02_left = results["motion_left_outer"]["dNa02_raw_difference_hz_mean"]
+    dNa02_right = results["motion_right_outer"]["dNa02_raw_difference_hz_mean"]
+    dNa02_full = results["motion_full"]["dNa02_raw_difference_hz_mean"]
+    dNa02_static = results["static_full_grating"]["dNa02_raw_difference_hz_mean"]
+    dNa01_left = results["motion_left_outer"]["dNa01_raw_difference_hz_mean"]
+    dNa01_right = results["motion_right_outer"]["dNa01_raw_difference_hz_mean"]
+    dNa01_full = results["motion_full"]["dNa01_raw_difference_hz_mean"]
+    dNa01_static = results["static_full_grating"]["dNa01_raw_difference_hz_mean"]
 
     body: dict[str, Any] = {
         "schema": SCHEMA,
@@ -177,14 +203,20 @@ def run_probe(source_checkpoint: Path) -> dict[str, Any]:
         "stonkfly_commit": STONKFLY_COMMIT,
         "conditions": results,
         "contrasts": {
-            "right_minus_left_motion_raw_difference_hz": right - left,
-            "full_motion_minus_static_raw_difference_hz": full - static,
-            "left_motion_minus_static_raw_difference_hz": left - static,
-            "right_motion_minus_static_raw_difference_hz": right - static,
+            "dNa02_right_minus_left_motion_raw_difference_hz": dNa02_right - dNa02_left,
+            "dNa02_full_motion_minus_static_raw_difference_hz": dNa02_full - dNa02_static,
+            "dNa02_left_motion_minus_static_raw_difference_hz": dNa02_left - dNa02_static,
+            "dNa02_right_motion_minus_static_raw_difference_hz": dNa02_right - dNa02_static,
+            "dNa01_right_minus_left_motion_raw_difference_hz": dNa01_right - dNa01_left,
+            "dNa01_full_motion_minus_static_raw_difference_hz": dNa01_full - dNa01_static,
+            "dNa01_left_motion_minus_static_raw_difference_hz": dNa01_left - dNa01_static,
+            "dNa01_right_motion_minus_static_raw_difference_hz": dNa01_right - dNa01_static,
         },
         "claim_limits": {
             "retinal_projection_calibrated": False,
             "visual_steering_validated": False,
+            "dNa01_decoder_authorized": False,
+            "multi_dn_decoder_authorized": False,
             "behavioral_promotion_authorized": False,
         },
     }
@@ -194,7 +226,7 @@ def run_probe(source_checkpoint: Path) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Probe retinal motion projection to DNa02 without learning"
+        description="Probe retinal motion projection to DNa01 and DNa02 without learning"
     )
     parser.add_argument("--source-checkpoint", required=True)
     parser.add_argument("--output", required=True)
@@ -205,7 +237,7 @@ def main(argv: list[str] | None = None) -> int:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     print(
-        "VISUAL_DNA02_PROJECTION_PROBE_PASS",
+        "VISUAL_STEERING_PROJECTION_PROBE_V2_PASS",
         report["receipt_sha256"],
         json.dumps(report["contrasts"], sort_keys=True),
     )
