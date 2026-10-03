@@ -26,7 +26,7 @@ def test_probe_script_parses_without_optional_runtime_dependencies() -> None:
 
 def test_probe_contract_is_read_only_and_learning_disabled() -> None:
     text = SCRIPT.read_text()
-    assert 'SCHEMA = "neurofly-visual-steering-projection-probe-v2"' in text
+    assert 'SCHEMA = "neurofly-visual-steering-dn-screen-v3"' in text
     assert "learning=False" in text
     assert "source_checkpoint_unchanged" in text
     assert '"production_checkpoint_mutated": False' in text
@@ -74,3 +74,19 @@ def test_motion_probe_has_temporal_change_but_static_control_does_not() -> None:
 
     assert np.any(moving_a != moving_b)
     assert np.array_equal(static_a, static_b)
+
+
+def test_screen_declares_known_steering_dn_types() -> None:
+    probe = _load_probe()
+    assert probe.STEERING_TYPES == (
+        "DNa01",
+        "DNa02",
+        "DNa03",
+        "DNa11",
+        "DNae003",
+        "DNae014",
+        "DNb02",
+        "DNb05",
+        "DNb06",
+        "DNg13",
+    )
