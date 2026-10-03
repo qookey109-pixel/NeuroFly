@@ -7,10 +7,10 @@ from typing import Any
 VISION_MODEL = "neurofly-compound-eye-proxy-v1"
 VISION_FIELD_DEGREES = 300.0
 VISION_MAX_RANGE_CELLS = 8.0
-WALL_RENDERING_POLICY = "world-anchored-wall-texture-v3"
+WALL_RENDERING_POLICY = "world-anchored-wall-texture-v4"
 WALL_DEPTH_CONTRAST_POWER = 2.0
 WALL_DEPTH_CONTRAST_GAIN = 1.15
-WALL_TEXTURE_PERIOD_CELLS = 0.5
+WALL_TEXTURE_PERIOD_CELLS = 1.5
 WALL_TEXTURE_LUMINANCE_AMPLITUDE = 28
 
 
@@ -35,21 +35,16 @@ def _wall_depth_salience(
     )
 
 def _wall_texture_offset(hit_x: float, hit_y: float) -> int:
-    """Return a repeating world-anchored wall texture luminance offset.
+    """Return a periodic world-anchored wall luminance texture.
 
-    The texture is periodic rather than position-unique, so it supplies local
-    visual features / optic-flow structure without encoding a route or landmark
-    identity. It is purely part of the rendered sensory scene.
+    A continuous sinusoidal phase avoids aliasing with the maze's exact
+    one-cell locomotor step. The pattern repeats and therefore does not encode
+    a unique location, route, target, or action.
     """
 
     period = max(1e-6, float(WALL_TEXTURE_PERIOD_CELLS))
-    phase_x = int(math.floor(float(hit_x) / period))
-    phase_y = int(math.floor(float(hit_y) / period))
-    return (
-        WALL_TEXTURE_LUMINANCE_AMPLITUDE
-        if (phase_x + phase_y) % 2 == 0
-        else -WALL_TEXTURE_LUMINANCE_AMPLITUDE
-    )
+    phase = 2.0 * math.pi * (float(hit_x) + float(hit_y)) / period
+    return int(round(WALL_TEXTURE_LUMINANCE_AMPLITUDE * math.sin(phase)))
 
 
 _DIR_ANGLES = {

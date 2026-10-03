@@ -51,16 +51,17 @@ def test_wall_depth_salience_expands_near_vs_open_contrast() -> None:
     medium = _wall_depth_salience(1.5)
     open_space = _wall_depth_salience(3.0)
 
-    assert WALL_RENDERING_POLICY == "world-anchored-wall-texture-v3"
+    assert WALL_RENDERING_POLICY == "world-anchored-wall-texture-v4"
     assert 0.0 <= open_space < medium < near <= 1.0
     assert (near - medium) > ((1.0 - 0.6 / 8.0) - (1.0 - 1.5 / 8.0))
 
 
-def test_wall_texture_is_periodic_nonunique_and_high_contrast() -> None:
-    a = _wall_texture_offset(0.10, 0.10)
-    b = _wall_texture_offset(0.60, 0.10)
-    repeat = _wall_texture_offset(1.10, 0.10)
+def test_wall_texture_is_periodic_nonunique_and_avoids_one_cell_aliasing() -> None:
+    origin = _wall_texture_offset(0.20, 0.20)
+    one_cell_forward = _wall_texture_offset(1.20, 0.20)
+    exact_period_repeat = _wall_texture_offset(1.70, 0.20)
 
-    assert a == repeat
-    assert a == -b
-    assert abs(a) == 28
+    assert origin == exact_period_repeat
+    assert origin != one_cell_forward
+    assert abs(origin) <= 28
+    assert abs(one_cell_forward) <= 28
