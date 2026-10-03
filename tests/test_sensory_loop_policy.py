@@ -178,6 +178,11 @@ def test_public_receipt_preserves_v4_baseline_and_sensory_loop_evidence() -> Non
                 "steering_right_baseline_hz": 12.0,
                 "steering_baseline_policy": "bilateral-ewma-baseline-centered-v1",
                 "steering_baseline_alpha": 0.02,
+                "steering_observer_type": "DNa03",
+                "steering_observer_left_hz": 6.0,
+                "steering_observer_right_hz": 14.0,
+                "steering_observer_difference_hz": 8.0,
+                "steering_observer_used_for_action": False,
                 "walking_drive_hz": 8.0,
                 "walking_drive_left_hz": 7.0,
                 "walking_drive_right_hz": 9.0,
@@ -215,6 +220,11 @@ def test_public_receipt_preserves_v4_baseline_and_sensory_loop_evidence() -> Non
     assert telemetry["decoder_difference_hz"] == 4.0
     assert telemetry["steering_left_baseline_hz"] == 18.0
     assert telemetry["steering_right_baseline_hz"] == 12.0
+    assert telemetry["steering_observer_type"] == "DNa03"
+    assert telemetry["steering_observer_left_hz"] == 6.0
+    assert telemetry["steering_observer_right_hz"] == 14.0
+    assert telemetry["steering_observer_difference_hz"] == 8.0
+    assert telemetry["steering_observer_used_for_action"] is False
     assert telemetry["sensory_loop_policy"] == SENSORY_LOOP_POLICY
     assert telemetry["sensory_loop_triggered"] is True
     assert telemetry["sensory_loop_direction_command"] is False
