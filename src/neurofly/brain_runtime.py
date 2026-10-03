@@ -105,11 +105,11 @@ SENSORY_LOOP_COOLDOWN = 6
 SENSORY_LOOP_PULSES_PER_DECISION = 10
 SENSORY_LOOP_FREQUENCY_HZ = 200.0
 SENSORY_LOOP_PATTERN = "neurofly-sensory-familiarity-hf-v1"
-FRONTAL_WALL_SALIENCE_POLICY = "egocentric-frontal-wall-proximity-aversive-v1"
+FRONTAL_WALL_SALIENCE_POLICY = "egocentric-frontal-wall-approach-onset-aversive-v2"
 FRONTAL_WALL_DISTANCE_THRESHOLD = 0.75
 FRONTAL_WALL_PULSES_PER_DECISION = 10
 FRONTAL_WALL_FREQUENCY_HZ = 200.0
-FRONTAL_WALL_PATTERN = "neurofly-frontal-wall-proximity-hf-v1"
+FRONTAL_WALL_PATTERN = "neurofly-frontal-wall-approach-onset-hf-v2"
 
 
 def _distributed_pulse_windows(
@@ -305,11 +305,14 @@ def _frontal_wall_should_trigger(
     vision: dict[str, Any],
     curriculum_stage: int,
     reinforcement: str,
-) -> tuple[bool, float | None]:
-    """Detect an immediately near frontal wall from egocentric visual geometry only.
+    was_near: bool = False,
+) -> tuple[bool, float | None, bool]:
+    """Detect entry into an immediately near frontal-wall sensory state.
 
-    This is a sensory salience gate, not an action command. It never inspects maze
-    coordinates, route state, target direction, or a decoded locomotor action.
+    The cue is edge-triggered: approaching into the near-wall zone produces one
+    non-directional sensory event, while remaining beside the same wall does not
+    create repeated punishment every decision. No maze coordinate, route, target
+    direction, decoded action, or escape direction is inspected.
     """
 
     wall = vision.get("wall_distance_cells") or {}
@@ -317,15 +320,17 @@ def _frontal_wall_should_trigger(
     try:
         front = float(raw_front)
     except (TypeError, ValueError, OverflowError):
-        return False, None
+        return False, None, False
     if not math.isfinite(front):
-        return False, None
+        return False, None, False
+    near_now = front <= FRONTAL_WALL_DISTANCE_THRESHOLD
     triggered = (
         int(curriculum_stage) >= 2
         and reinforcement == "none"
-        and front <= FRONTAL_WALL_DISTANCE_THRESHOLD
+        and near_now
+        and not bool(was_near)
     )
-    return triggered, front
+    return triggered, front, near_now
 
 
 def _walking_action(
@@ -448,6 +453,7 @@ class MaleCNSBrain:
         self._sensory_loop_episode: int | None = None
         self._sensory_loop_history: deque[tuple[int, ...]] = deque(maxlen=SENSORY_LOOP_WINDOW)
         self._sensory_loop_cooldown = 0
+        self._frontal_wall_near = False
 
         a = annotations(self.brain.ids)
         types = a.type.fillna("").astype(str)
@@ -844,6 +850,16 @@ class MaleCNSBrain:
         visual_change = 0.0
         visual_left_change = 0.0
         visual_right_change = 0.0
+
+        display_luminance = (
+            0.2126 * rgb[:, :, 0].astype(np.float32)
+            + 0.7152 * rgb[:, :, 1].astype(np.float32)
+            + 0.0722 * rgb[:, :, 2].astype(np.float32)
+        ) / 255.0
+        retinal_half = max(1, display_luminance.shape[1] // 2)
+        retinal_left_luminance = float(display_luminance[:, :retinal_half].mean())
+        retinal_right_luminance = float(display_luminance[:, retinal_half:].mean())
+        retinal_luminance_asymmetry = retinal_right_luminance - retinal_left_luminance
         if self._last_visual_rgb is not None and self._last_visual_rgb.shape == rgb.shape:
             delta = np.abs(rgb.astype(np.int16) - self._last_visual_rgb.astype(np.int16))
             delta = delta.mean(axis=2) / 255.0
@@ -859,6 +875,9 @@ class MaleCNSBrain:
                 "change": round(visual_change, 8),
                 "left_change": round(visual_left_change, 8),
                 "right_change": round(visual_right_change, 8),
+                "retinal_left_luminance_mean": round(retinal_left_luminance, 8),
+                "retinal_right_luminance_mean": round(retinal_right_luminance, 8),
+                "retinal_luminance_asymmetry": round(retinal_luminance_asymmetry, 8),
             }
         )
         return rgb, vision
@@ -889,6 +908,7 @@ class MaleCNSBrain:
             self._sensory_loop_episode = episode
             self._sensory_loop_history.clear()
             self._sensory_loop_cooldown = 0
+            self._frontal_wall_near = False
 
         loop_signature = _sensory_familiarity_signature(vision, odor_levels)
         loop_repeat_count = sum(
@@ -897,11 +917,13 @@ class MaleCNSBrain:
         if self._sensory_loop_cooldown > 0:
             self._sensory_loop_cooldown -= 1
         curriculum_stage = int(context_data.get("curriculum_stage", 1) or 1)
-        frontal_wall_triggered, frontal_wall_distance = _frontal_wall_should_trigger(
+        frontal_wall_triggered, frontal_wall_distance, frontal_wall_near = _frontal_wall_should_trigger(
             vision=vision,
             curriculum_stage=curriculum_stage,
             reinforcement=reinforcement,
+            was_near=self._frontal_wall_near,
         )
+        self._frontal_wall_near = frontal_wall_near
         sensory_loop_triggered = (
             not frontal_wall_triggered
             and _sensory_loop_should_trigger(
@@ -996,7 +1018,7 @@ class MaleCNSBrain:
             "reinforcement": effective_reinforcement,
             "external_reinforcement": reinforcement,
             "reinforcement_source": (
-                "frontal_wall_proximity"
+                "frontal_wall_approach_onset"
                 if frontal_wall_triggered
                 else (
                     "sensory_familiarity"
@@ -1030,6 +1052,7 @@ class MaleCNSBrain:
             ),
             "frontal_wall_salience_policy": FRONTAL_WALL_SALIENCE_POLICY,
             "frontal_wall_triggered": frontal_wall_triggered,
+            "frontal_wall_near": frontal_wall_near,
             "frontal_wall_distance_cells": frontal_wall_distance,
             "frontal_wall_distance_threshold": FRONTAL_WALL_DISTANCE_THRESHOLD,
             "frontal_wall_pulses_per_decision": FRONTAL_WALL_PULSES_PER_DECISION,
@@ -1051,6 +1074,9 @@ class MaleCNSBrain:
             "visual_change": vision.get("change", 0.0),
             "visual_left_change": vision.get("left_change", 0.0),
             "visual_right_change": vision.get("right_change", 0.0),
+            "retinal_left_luminance_mean": vision.get("retinal_left_luminance_mean"),
+            "retinal_right_luminance_mean": vision.get("retinal_right_luminance_mean"),
+            "retinal_luminance_asymmetry": vision.get("retinal_luminance_asymmetry"),
             "vision_report": self.vision_report,
             "olfaction_model": OLFACTION_MODEL,
             "olfaction": odor_levels,

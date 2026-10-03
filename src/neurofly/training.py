@@ -117,11 +117,15 @@ MOTOR_TELEMETRY_FIELDS = (
     "sensory_loop_direction_command",
     "frontal_wall_salience_policy",
     "frontal_wall_triggered",
+    "frontal_wall_near",
     "frontal_wall_distance_cells",
     "frontal_wall_distance_threshold",
     "frontal_wall_pulses_per_decision",
     "frontal_wall_direction_command",
     "wall_rendering_policy",
+    "retinal_left_luminance_mean",
+    "retinal_right_luminance_mean",
+    "retinal_luminance_asymmetry",
 )
 
 
@@ -326,6 +330,7 @@ def run_self_training(
                     "stimulus_pulse_count": telemetry.get("stimulus_pulse_count"),
                     "stimulus_frequency_hz": telemetry.get("stimulus_frequency_hz"),
                     "frontal_wall_triggered": telemetry.get("frontal_wall_triggered", False),
+                    "frontal_wall_near": telemetry.get("frontal_wall_near", False),
                     "frontal_wall_distance_cells": telemetry.get("frontal_wall_distance_cells"),
                     "frontal_wall_distance_threshold": telemetry.get("frontal_wall_distance_threshold"),
                     "frontal_wall_pulses_per_decision": telemetry.get("frontal_wall_pulses_per_decision"),

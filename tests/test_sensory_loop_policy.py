@@ -91,36 +91,52 @@ def test_true_200hz_frontal_wall_train_uses_5ms_spacing() -> None:
 
 
 def test_frontal_wall_gate_uses_only_egocentric_front_distance() -> None:
-    assert FRONTAL_WALL_SALIENCE_POLICY == "egocentric-frontal-wall-proximity-aversive-v1"
+    assert FRONTAL_WALL_SALIENCE_POLICY == "egocentric-frontal-wall-approach-onset-aversive-v2"
     assert FRONTAL_WALL_DISTANCE_THRESHOLD == 0.75
     assert FRONTAL_WALL_PULSES_PER_DECISION == 10
 
-    triggered, distance = _frontal_wall_should_trigger(
+    triggered, distance, near = _frontal_wall_should_trigger(
         vision={"wall_distance_cells": {"front": 0.6}},
         curriculum_stage=2,
         reinforcement="none",
+        was_near=False,
     )
     assert triggered is True
     assert distance == 0.6
+    assert near is True
 
-    triggered, _ = _frontal_wall_should_trigger(
+    triggered, distance, near = _frontal_wall_should_trigger(
+        vision={"wall_distance_cells": {"front": 0.6}},
+        curriculum_stage=2,
+        reinforcement="none",
+        was_near=True,
+    )
+    assert triggered is False
+    assert distance == 0.6
+    assert near is True
+
+    triggered, _, near = _frontal_wall_should_trigger(
         vision={"wall_distance_cells": {"front": 1.08}},
         curriculum_stage=2,
         reinforcement="none",
+        was_near=True,
     )
     assert triggered is False
+    assert near is False
 
-    triggered, _ = _frontal_wall_should_trigger(
+    triggered, _, _ = _frontal_wall_should_trigger(
         vision={"wall_distance_cells": {"front": 0.6}},
         curriculum_stage=1,
         reinforcement="none",
+        was_near=False,
     )
     assert triggered is False
 
-    triggered, _ = _frontal_wall_should_trigger(
+    triggered, _, _ = _frontal_wall_should_trigger(
         vision={"wall_distance_cells": {"front": 0.6}},
         curriculum_stage=2,
         reinforcement="reward",
+        was_near=False,
     )
     assert triggered is False
 
@@ -183,6 +199,7 @@ def test_public_receipt_preserves_v4_baseline_and_sensory_loop_evidence() -> Non
                 "sensory_loop_direction_command": False,
                 "frontal_wall_salience_policy": FRONTAL_WALL_SALIENCE_POLICY,
                 "frontal_wall_triggered": True,
+                "frontal_wall_near": True,
                 "frontal_wall_distance_cells": 0.6,
                 "frontal_wall_distance_threshold": FRONTAL_WALL_DISTANCE_THRESHOLD,
                 "frontal_wall_pulses_per_decision": FRONTAL_WALL_PULSES_PER_DECISION,
@@ -203,5 +220,6 @@ def test_public_receipt_preserves_v4_baseline_and_sensory_loop_evidence() -> Non
     assert telemetry["sensory_loop_direction_command"] is False
     assert telemetry["frontal_wall_salience_policy"] == FRONTAL_WALL_SALIENCE_POLICY
     assert telemetry["frontal_wall_triggered"] is True
+    assert telemetry["frontal_wall_near"] is True
     assert telemetry["frontal_wall_distance_cells"] == 0.6
     assert telemetry["frontal_wall_direction_command"] is False
