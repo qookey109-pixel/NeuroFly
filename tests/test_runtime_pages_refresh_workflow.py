@@ -87,7 +87,7 @@ def test_runtime_v4_gate_accepts_predator_free_stage_one_and_sensory_only_action
     assert "sensory_loop_repeat_threshold" in build_block
     assert "== 3" in build_block
     assert "sensory_loop_direction_command" in build_block
-    assert "egocentric-frontal-wall-proximity-aversive-v1" in build_block
+    assert "egocentric-frontal-wall-approach-onset-aversive-v2" in build_block
     assert "frontal_wall_distance_threshold" in build_block
     assert "frontal_wall_pulses_per_decision" in build_block
     assert "frontal_wall_direction_command" in build_block
