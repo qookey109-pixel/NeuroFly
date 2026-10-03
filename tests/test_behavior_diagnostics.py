@@ -25,7 +25,7 @@ def _row(*, step: int, episode: int, action: str, event: str | None, food_left: 
     }
 
 
-def test_behavior_summary_v3_tracks_loop_wall_and_turn_metrics() -> None:
+def test_behavior_summary_v4_tracks_loop_wall_and_turn_metrics() -> None:
     receipt = {
         "receipt_sha256": "abc",
         "curriculum_version": "neurofly-curriculum-v4",
@@ -39,9 +39,48 @@ def test_behavior_summary_v3_tracks_loop_wall_and_turn_metrics() -> None:
                  deaths=6, clears=2, loop=False, wall=False, food_lr=(0.4, 0.7), danger_lr=(0.7, 0.2)),
         ],
         "trajectory": [
-            {"episode": 10, "fly": {"x": 1, "y": 1}, "applied_action": "HOLD", "anti_stall_stationary_steps": 0},
-            {"episode": 10, "fly": {"x": 1, "y": 1}, "applied_action": "FORWARD", "anti_stall_stationary_steps": 2},
-            {"episode": 10, "fly": {"x": 2, "y": 1}, "applied_action": "FORWARD", "anti_stall_stationary_steps": 0},
+            {
+                "episode": 10,
+                "fly": {"x": 1, "y": 1},
+                "applied_action": "TURN_RIGHT",
+                "anti_stall_stationary_steps": 0,
+                "brain": {"telemetry": {
+                    "frontal_wall_distance_threshold": 0.75,
+                    "decoder_difference_hz": 1.0,
+                    "visual_left_change": 0.1,
+                    "visual_right_change": 0.2,
+                    "retinal_luminance_asymmetry": 0.1,
+                    "vision": {"wall_distance_cells": {"left": 1.0, "front": 0.6, "right": 2.0}},
+                }},
+            },
+            {
+                "episode": 10,
+                "fly": {"x": 1, "y": 1},
+                "applied_action": "FORWARD",
+                "anti_stall_stationary_steps": 2,
+                "brain": {"telemetry": {
+                    "frontal_wall_distance_threshold": 0.75,
+                    "decoder_difference_hz": 2.0,
+                    "visual_left_change": 0.1,
+                    "visual_right_change": 0.3,
+                    "retinal_luminance_asymmetry": 0.2,
+                    "vision": {"wall_distance_cells": {"left": 1.0, "front": 0.6, "right": 3.0}},
+                }},
+            },
+            {
+                "episode": 10,
+                "fly": {"x": 2, "y": 1},
+                "applied_action": "FORWARD",
+                "anti_stall_stationary_steps": 0,
+                "brain": {"telemetry": {
+                    "frontal_wall_distance_threshold": 0.75,
+                    "decoder_difference_hz": 3.0,
+                    "visual_left_change": 0.1,
+                    "visual_right_change": 0.4,
+                    "retinal_luminance_asymmetry": 0.3,
+                    "vision": {"wall_distance_cells": {"left": 1.0, "front": 0.6, "right": 4.0}},
+                }},
+            },
         ],
     }
 
@@ -66,9 +105,17 @@ def test_behavior_summary_v3_tracks_loop_wall_and_turn_metrics() -> None:
     assert summary["playback_forward_decisions"] == 2
     assert summary["playback_blocked_forward_count"] == 1
     assert summary["playback_blocked_forward_fraction"] == 0.5
+    assert summary["playback_near_wall_samples"] == 3
+    assert summary["playback_near_wall_action_counts"] == {"FORWARD": 2, "TURN_RIGHT": 1}
+    assert summary["playback_near_wall_forward_fraction"] == 2 / 3
+    assert summary["playback_near_wall_turn_fraction"] == 1 / 3
+    assert summary["playback_near_wall_lateral_ambiguity_fraction"] == 0.0
+    assert abs(summary["playback_near_wall_opening_to_decoder_correlation"] - 1.0) < 1e-12
+    assert abs(summary["playback_near_wall_visual_change_to_decoder_correlation"] - 1.0) < 1e-12
+    assert abs(summary["playback_near_wall_retinal_luminance_to_decoder_correlation"] - 1.0) < 1e-12
 
 
-def test_behavior_summary_v3_handles_empty_receipt() -> None:
+def test_behavior_summary_v4_handles_empty_receipt() -> None:
     summary = summarize_receipt({"observations": [], "trajectory": []})
     assert summary["steps_observed"] == 0
     assert summary["deaths_per_1000_decisions"] is None
@@ -77,3 +124,7 @@ def test_behavior_summary_v3_handles_empty_receipt() -> None:
     assert summary["frontal_wall_trigger_fraction"] is None
     assert summary["playback_blocked_forward_fraction"] is None
     assert summary["playback_revisit_fraction_mean"] is None
+    assert summary["playback_near_wall_forward_fraction"] is None
+    assert summary["playback_near_wall_opening_to_decoder_correlation"] is None
+    assert summary["playback_near_wall_visual_change_to_decoder_correlation"] is None
+    assert summary["playback_near_wall_retinal_luminance_to_decoder_correlation"] is None
