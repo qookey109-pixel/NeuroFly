@@ -90,6 +90,7 @@ DANGER_FRONT_GAIN = 0.45
 DANGER_BACK_ATTENUATION = 0.05
 WALKING_DECODER = "neurofly-walking-decoder-v4"
 WALKING_STEERING_TYPE = "DNa02"
+STEERING_OBSERVER_TYPE = "DNa03"
 WALKING_DRIVE_TYPE = "DNb05"
 # Compatibility alias for downstream telemetry consumers. V4 treats this as
 # a locomotor-drive population proxy, not as a claim that DNb05 is a sole
@@ -477,6 +478,11 @@ class MaleCNSBrain:
             steering_side_report,
         ) = _bilateral_type_indices(np, a, WALKING_STEERING_TYPE)
         (
+            self.steering_observer_left,
+            self.steering_observer_right,
+            steering_observer_side_report,
+        ) = _bilateral_type_indices(np, a, STEERING_OBSERVER_TYPE)
+        (
             self.walking_drive_left,
             self.walking_drive_right,
             walking_drive_side_report,
@@ -487,11 +493,14 @@ class MaleCNSBrain:
         if (
             not len(self.steering_left)
             or not len(self.steering_right)
+            or not len(self.steering_observer_left)
+            or not len(self.steering_observer_right)
             or not len(self.walking_drive)
         ):
             raise RuntimeError(
                 "Required walking decoder annotations are missing: "
                 f"{WALKING_STEERING_TYPE}={steering_side_report}; "
+                f"{STEERING_OBSERVER_TYPE}={steering_observer_side_report}; "
                 f"{WALKING_DRIVE_TYPE}={walking_drive_side_report}"
             )
 
@@ -521,6 +530,12 @@ class MaleCNSBrain:
         self.identities = {
             "steering_left": [str(self.brain.ids[i]) for i in self.steering_left],
             "steering_right": [str(self.brain.ids[i]) for i in self.steering_right],
+            "steering_observer_left": [
+                str(self.brain.ids[i]) for i in self.steering_observer_left
+            ],
+            "steering_observer_right": [
+                str(self.brain.ids[i]) for i in self.steering_observer_right
+            ],
             "walking_drive": walking_drive_ids,
             # Backward-compatible telemetry alias.
             "forward": walking_drive_ids,
@@ -528,6 +543,9 @@ class MaleCNSBrain:
         self.motor_report = {
             "decoder": WALKING_DECODER,
             "steering_type": WALKING_STEERING_TYPE,
+            "steering_observer_type": STEERING_OBSERVER_TYPE,
+            "steering_observer": steering_observer_side_report,
+            "steering_observer_used_for_action": False,
             "walking_drive_type": WALKING_DRIVE_TYPE,
             "forward_type": WALKING_FORWARD_TYPE,
             "steering": steering_side_report,
@@ -631,6 +649,16 @@ class MaleCNSBrain:
         self._steering_left_baseline_hz = next_left_baseline_hz
         self._steering_right_baseline_hz = next_right_baseline_hz
 
+        steering_observer_left_hz = float(
+            np.mean(counts[self.steering_observer_left]) / seconds
+        )
+        steering_observer_right_hz = float(
+            np.mean(counts[self.steering_observer_right]) / seconds
+        )
+        steering_observer_difference_hz = (
+            steering_observer_right_hz - steering_observer_left_hz
+        )
+
         walking_drive_left_hz = (
             float(np.mean(counts[self.walking_drive_left]) / seconds)
             if len(self.walking_drive_left)
@@ -672,6 +700,11 @@ class MaleCNSBrain:
             "steering_right_baseline_hz": used_right_baseline_hz,
             "steering_baseline_policy": WALKING_STEERING_BASELINE_POLICY,
             "steering_baseline_alpha": WALKING_STEERING_BASELINE_ALPHA,
+            "steering_observer_type": STEERING_OBSERVER_TYPE,
+            "steering_observer_left_hz": steering_observer_left_hz,
+            "steering_observer_right_hz": steering_observer_right_hz,
+            "steering_observer_difference_hz": steering_observer_difference_hz,
+            "steering_observer_used_for_action": False,
             "walking_drive_hz": walking_drive_hz,
             "walking_drive_left_hz": walking_drive_left_hz,
             "walking_drive_right_hz": walking_drive_right_hz,
