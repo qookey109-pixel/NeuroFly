@@ -9,7 +9,7 @@ from typing import Any, Protocol
 
 from .olfaction import DANGER_ORN_TYPE, FOOD_ORN_TYPE, OLFACTION_MODEL
 from .vision import VISION_MODEL
-from .vision_adapter import retinalize_topdown_rgb
+from .vision_adapter import interpolate_fly_pose, retinalize_topdown_rgb
 
 
 @dataclass(slots=True)
@@ -111,6 +111,8 @@ FRONTAL_WALL_DISTANCE_THRESHOLD = 0.75
 FRONTAL_WALL_PULSES_PER_DECISION = 10
 FRONTAL_WALL_FREQUENCY_HZ = 200.0
 FRONTAL_WALL_PATTERN = "neurofly-frontal-wall-approach-onset-hf-v2"
+VISUAL_TEMPORAL_POLICY = "egocentric-pose-interpolation-100hz-v1"
+VISUAL_TEMPORAL_SUBFRAMES = 5
 
 
 def _distributed_pulse_windows(
@@ -447,6 +449,7 @@ class MaleCNSBrain:
         self.brain = VisualMemoryBrain()
         self.brain.weights_frozen = not self.learning
         self._last_visual_rgb: Any | None = None
+        self._last_visual_fly: dict[str, Any] | None = None
         self._last_food_intensity: float | None = None
         self._last_danger_intensity: float | None = None
         self._steering_left_baseline_hz: float | None = None
