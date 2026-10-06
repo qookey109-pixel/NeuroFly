@@ -29,11 +29,39 @@ def _normalize_angle(angle: float) -> float:
     return angle
 
 
+def _heading_radians(fly: dict[str, Any]) -> float:
+    override = fly.get("_heading_radians")
+    if override is not None:
+        value = float(override)
+        if not math.isfinite(value):
+            raise ValueError("visual heading override must be finite")
+        return _normalize_angle(value)
+    return _DIR_ANGLES[str(fly["dir"])]
+
+
+def interpolate_fly_pose(
+    previous: dict[str, Any],
+    current: dict[str, Any],
+    fraction: float,
+) -> dict[str, Any]:
+    """Interpolate an egocentric visual pose without creating an action command."""
+    t = max(0.0, min(1.0, float(fraction)))
+    start_heading = _heading_radians(previous)
+    end_heading = _heading_radians(current)
+    heading_delta = _normalize_angle(end_heading - start_heading)
+    return {
+        "x": float(previous["x"]) + (float(current["x"]) - float(previous["x"])) * t,
+        "y": float(previous["y"]) + (float(current["y"]) - float(previous["y"])) * t,
+        "dir": str(current["dir"]),
+        "_heading_radians": _normalize_angle(start_heading + heading_delta * t),
+    }
+
+
 def _bearing_degrees(fly: dict[str, Any], x: float, y: float) -> float:
     dx = x - (float(fly["x"]) + 0.5)
     dy = y - (float(fly["y"]) + 0.5)
     world = math.atan2(dy, dx)
-    heading = _DIR_ANGLES[str(fly["dir"])]
+    heading = _heading_radians(fly)
     return math.degrees(_normalize_angle(world - heading))
 
 
@@ -55,7 +83,10 @@ def visual_contract(
     actual RGB retinal proxy is built by ``retinalize_topdown_rgb``.
     """
 
-    if not fly or str(fly.get("dir")) not in _DIR_ANGLES:
+    if not fly or (
+        str(fly.get("dir")) not in _DIR_ANGLES
+        and fly.get("_heading_radians") is None
+    ):
         return {
             "model": VISION_MODEL,
             "engineered_proxy": True,
@@ -146,7 +177,7 @@ def retinalize_topdown_rgb(
     draw.rectangle((0, horizon, width, height), fill=(116, 128, 110))
     draw.line((0, horizon, width, horizon), fill=(205, 214, 199), width=1)
 
-    heading = _DIR_ANGLES[str(fly["dir"])]
+    heading = _heading_radians(fly)
     origin_x = float(fly["x"]) + 0.5
     origin_y = float(fly["y"]) + 0.5
     half_field = VISION_FIELD_DEGREES / 2.0
