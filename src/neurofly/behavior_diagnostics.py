@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 
-SCHEMA = "neurofly-behavior-summary-v5"
+SCHEMA = "neurofly-behavior-summary-v6"
 
 
 def _fraction(numerator: int | float, denominator: int) -> float | None:
@@ -92,6 +92,7 @@ def summarize_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
     near_wall_action_counts: Counter[str] = Counter()
     near_wall_lateral_differences: list[float] = []
     near_wall_decoder_differences: list[float] = []
+    near_wall_steering_observer_differences: list[float] = []
     near_wall_visual_change_differences: list[float] = []
     near_wall_retinal_luminance_asymmetries: list[float] = []
     near_wall_eye_luminance_asymmetries: list[float] = []
@@ -127,6 +128,9 @@ def summarize_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
                     walls.get("left", 0.0) or 0.0
                 )
                 decoder_difference = float(telemetry.get("decoder_difference_hz", 0.0) or 0.0)
+                steering_observer_difference = float(
+                    telemetry.get("steering_observer_difference_hz", 0.0) or 0.0
+                )
                 visual_change_difference = float(telemetry.get("visual_right_change", 0.0) or 0.0) - float(
                     telemetry.get("visual_left_change", 0.0) or 0.0
                 )
@@ -141,6 +145,7 @@ def summarize_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
             else:
                 near_wall_lateral_differences.append(lateral_difference)
                 near_wall_decoder_differences.append(decoder_difference)
+                near_wall_steering_observer_differences.append(steering_observer_difference)
                 near_wall_visual_change_differences.append(visual_change_difference)
                 near_wall_retinal_luminance_asymmetries.append(retinal_luminance_asymmetry)
                 near_wall_eye_luminance_asymmetries.append(eye_luminance_asymmetry)
@@ -238,6 +243,16 @@ def summarize_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
         "playback_near_wall_eye_luminance_to_decoder_correlation": _pearson(
             near_wall_eye_luminance_asymmetries, near_wall_decoder_differences
         ),
+        "playback_near_wall_opening_to_dNa03_correlation": _pearson(
+            near_wall_lateral_differences, near_wall_steering_observer_differences
+        ),
+        "playback_near_wall_eye_luminance_to_dNa03_correlation": _pearson(
+            near_wall_eye_luminance_asymmetries,
+            near_wall_steering_observer_differences,
+        ),
+        "playback_near_wall_dNa02_to_dNa03_correlation": _pearson(
+            near_wall_decoder_differences, near_wall_steering_observer_differences
+        ),
     }
 
 
@@ -256,7 +271,7 @@ def main() -> int:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
     print(
-        "BEHAVIOR_SUMMARY_V5",
+        "BEHAVIOR_SUMMARY_V6",
         "stage=", summary["curriculum_stage"],
         "deaths_per_1000=", summary["deaths_per_1000_decisions"],
         "food_events=", summary["food_events"],
@@ -268,6 +283,8 @@ def main() -> int:
         "near_wall_opening_corr=", summary["playback_near_wall_opening_to_decoder_correlation"],
         "retinal_luminance_corr=", summary["playback_near_wall_retinal_luminance_to_decoder_correlation"],
         "eye_luminance_corr=", summary["playback_near_wall_eye_luminance_to_decoder_correlation"],
+        "opening_to_dNa03_corr=", summary["playback_near_wall_opening_to_dNa03_correlation"],
+        "eye_to_dNa03_corr=", summary["playback_near_wall_eye_luminance_to_dNa03_correlation"],
         "revisit_mean=", summary["playback_revisit_fraction_mean"],
         "turn_lr_ratio=", summary["turn_left_to_right_ratio"],
     )
