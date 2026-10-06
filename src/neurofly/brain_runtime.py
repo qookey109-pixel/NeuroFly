@@ -883,7 +883,7 @@ class MaleCNSBrain:
         self,
         frame: Any,
         context: dict[str, Any] | None,
-    ) -> tuple[Any, dict[str, Any]]:
+    ) -> tuple[Any, dict[str, Any], list[Any]]:
         np = self.np
         raw_rgb = np.asarray(frame, dtype=np.uint8)
         if raw_rgb.ndim != 3 or raw_rgb.shape[2] != 3:
@@ -891,11 +891,40 @@ class MaleCNSBrain:
 
         fly = None if context is None else context.get("fly")
         enemies = [] if context is None else (context.get("enemies") or [])
+        current_fly = dict(fly) if isinstance(fly, dict) else None
+        previous_fly = self._last_visual_fly
+        enemy_list = [dict(item) for item in enemies if isinstance(item, dict)]
         rgb, vision = retinalize_topdown_rgb(
             raw_rgb,
-            fly=fly if isinstance(fly, dict) else None,
-            enemies=[dict(item) for item in enemies if isinstance(item, dict)],
+            fly=current_fly,
+            enemies=enemy_list,
         )
+
+        pose_transition = bool(
+            previous_fly is not None
+            and current_fly is not None
+            and (
+                float(previous_fly["x"]) != float(current_fly["x"])
+                or float(previous_fly["y"]) != float(current_fly["y"])
+                or str(previous_fly["dir"]) != str(current_fly["dir"])
+            )
+        )
+        temporal_frames: list[Any] = [rgb]
+        if pose_transition:
+            temporal_frames = []
+            denominator = max(1, VISUAL_TEMPORAL_SUBFRAMES - 1)
+            for index in range(VISUAL_TEMPORAL_SUBFRAMES):
+                pose = interpolate_fly_pose(
+                    previous_fly,
+                    current_fly,
+                    index / denominator,
+                )
+                subframe, _ = retinalize_topdown_rgb(
+                    raw_rgb,
+                    fly=pose,
+                    enemies=enemy_list,
+                )
+                temporal_frames.append(subframe)
 
         visual_change = 0.0
         visual_left_change = 0.0
@@ -951,6 +980,15 @@ class MaleCNSBrain:
             visual_left_change = float(delta[:, :half].mean())
             visual_right_change = float(delta[:, half:].mean())
         self._last_visual_rgb = rgb.copy()
+        self._last_visual_fly = (
+            {
+                "x": float(current_fly["x"]),
+                "y": float(current_fly["y"]),
+                "dir": str(current_fly["dir"]),
+            }
+            if current_fly is not None
+            else None
+        )
 
         vision = dict(vision)
         vision.update(
@@ -964,9 +1002,12 @@ class MaleCNSBrain:
                 "retinal_eye_left_luminance_mean": round(eye_left_luminance, 8),
                 "retinal_eye_right_luminance_mean": round(eye_right_luminance, 8),
                 "retinal_eye_luminance_asymmetry": round(eye_luminance_asymmetry, 8),
+                "temporal_sampling_policy": VISUAL_TEMPORAL_POLICY,
+                "temporal_subframes": len(temporal_frames),
+                "pose_transition": pose_transition,
             }
         )
-        return rgb, vision
+        return rgb, vision, temporal_frames
 
     def decide(
         self,
@@ -979,12 +1020,7 @@ class MaleCNSBrain:
             raise ValueError(f"Unknown reinforcement: {reinforcement}")
 
         np = self.np
-        rgb, vision = self._visual_input(frame, context)
-
-        b = self.brain
-        odor_pulses, odor_levels = self._olfactory_stimulation(context)
         context_data = context or {}
-
         episode_value = context_data.get("episode")
         try:
             episode = int(episode_value) if episode_value is not None else None
@@ -995,6 +1031,13 @@ class MaleCNSBrain:
             self._sensory_loop_history.clear()
             self._sensory_loop_cooldown = 0
             self._frontal_wall_near = False
+            self._last_visual_rgb = None
+            self._last_visual_fly = None
+
+        rgb, vision, visual_frames = self._visual_input(frame, context)
+
+        b = self.brain
+        odor_pulses, odor_levels = self._olfactory_stimulation(context)
 
         loop_signature = _sensory_familiarity_signature(vision, odor_levels)
         loop_repeat_count = sum(
@@ -1081,8 +1124,13 @@ class MaleCNSBrain:
             stimulation = list(odor_pulses)
             if active:
                 stimulation.append((b.circuit[effective_reinforcement], self.pulse_current))
+            visual_index = min(
+                len(visual_frames) - 1,
+                (cursor * len(visual_frames)) // max(1, total_steps),
+            )
+            visual_rgb = visual_frames[visual_index]
             current, elapsed = b.rgb_step(
-                rgb,
+                visual_rgb,
                 n * b.dt,
                 learning=self.learning,
                 stimulation=stimulation or None,
@@ -1156,6 +1204,9 @@ class MaleCNSBrain:
             "total_spikes": int(counts.sum()),
             "vision_model": VISION_MODEL,
             "wall_rendering_policy": vision.get("wall_rendering_policy"),
+            "visual_temporal_policy": vision.get("temporal_sampling_policy"),
+            "visual_temporal_subframes": vision.get("temporal_subframes"),
+            "visual_pose_transition": vision.get("pose_transition"),
             "vision": vision,
             "visual_change": vision.get("change", 0.0),
             "visual_left_change": vision.get("left_change", 0.0),
