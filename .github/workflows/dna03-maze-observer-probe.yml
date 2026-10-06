@@ -1,0 +1,130 @@
+name: NeuroFly DNa03 Maze Observer Probe
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/dna03-maze-observer-probe.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: neurofly-dna03-maze-observer-probe
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      SOURCE_DIR: runs/free-malecns
+      PROBE_DIR: runs/dna03-maze-probe
+      PROBE_RECEIPT: runs/dna03-maze-probe/self-training-receipt.json
+      PROBE_SUMMARY: runs/dna03-maze-probe/behavior-summary.json
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+
+      - name: Restore latest production checkpoint as read-only source
+        uses: actions/cache/restore@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-v06-state-dna03-probe-${{ github.run_id }}
+          restore-keys: |
+            neurofly-v06-state-
+            neurofly-state-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare MaleCNS and clone isolated probe state
+        run: |
+          mkdir -p "$STONKFLY_DATA"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+          test -f "$SOURCE_DIR/brain.npz"
+          SOURCE_SHA="$(sha256sum "$SOURCE_DIR/brain.npz" | awk '{print $1}')"
+          echo "$SOURCE_SHA" > /tmp/source-brain-sha.txt
+          rm -rf "$PROBE_DIR"
+          cp -a "$SOURCE_DIR" "$PROBE_DIR"
+
+      - name: Run isolated 600-decision DNa03 maze probe
+        run: |
+          python -m neurofly.training \
+            --curriculum \
+            --steps 600 \
+            --playback-steps 240 \
+            --checkpoint "$PROBE_DIR/brain.npz" \
+            --receipt "$PROBE_RECEIPT"
+
+      - name: Summarize observer behavior
+        run: |
+          python -m neurofly.behavior_diagnostics \
+            --receipt "$PROBE_RECEIPT" \
+            --output "$PROBE_SUMMARY"
+
+      - name: Validate DNa03 observer evidence and source immutability
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          source = Path("runs/free-malecns/brain.npz")
+          before = Path("/tmp/source-brain-sha.txt").read_text().strip()
+          after = hashlib.sha256(source.read_bytes()).hexdigest()
+          assert before == after, "production source checkpoint mutated"
+
+          receipt = json.loads(Path("runs/dna03-maze-probe/self-training-receipt.json").read_text())
+          summary = json.loads(Path("runs/dna03-maze-probe/behavior-summary.json").read_text())
+
+          assert summary["schema"] == "neurofly-behavior-summary-v6"
+          final = receipt["final_state"]
+          telemetry = final["brain"]["telemetry"]
+          assert telemetry["steering_type"] == "DNa02"
+          assert telemetry["steering_observer_type"] == "DNa03"
+          assert telemetry["steering_observer_used_for_action"] is False
+
+          required = (
+              "playback_near_wall_opening_to_dNa03_correlation",
+              "playback_near_wall_eye_luminance_to_dNa03_correlation",
+              "playback_near_wall_dNa02_to_dNa03_correlation",
+              "playback_near_wall_forward_fraction",
+              "playback_blocked_forward_fraction",
+              "playback_revisit_fraction_mean",
+          )
+          for key in required:
+              assert key in summary
+
+          print(
+              "DNA03_MAZE_OBSERVER_PROBE_PASS",
+              json.dumps({key: summary.get(key) for key in required}, sort_keys=True),
+          )
+          PY
+
+      - name: Publish compact DNa03 maze evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-dna03-maze-probe-${{ github.run_id }}
+          path: |
+            runs/dna03-maze-probe/self-training-receipt.json
+            runs/dna03-maze-probe/behavior-summary.json
+          if-no-files-found: error
+          retention-days: 2
