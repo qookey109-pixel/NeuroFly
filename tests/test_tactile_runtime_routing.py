@@ -87,6 +87,8 @@ def test_contact_payload_routes_exact_calibrated_current() -> None:
     assert current == 8.0
     assert levels["contact"] is True
     assert levels["front"] == 1.0
+    assert levels["model"] == "neurofly-contact-mechanosensation-v2"
+    assert levels["encoding"] == "blocked-forward-contact-onset-adaptation"
 
 
 def test_privileged_geometry_is_rejected_before_tactile_routing() -> None:
