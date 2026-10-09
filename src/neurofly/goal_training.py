@@ -256,6 +256,10 @@ class GoalMazeSession:
         self.pending_reinforcement = "none"
         self.pending_reinforcement_steps = 0
         self.pending_tactile_contact = False
+        # Temporal adaptation state: a continuous run of blocked FORWARD
+        # decisions is one physical contact episode. Only the transition into
+        # contact produces a tactile pulse; leaving contact re-arms the sensor.
+        self.tactile_contact_active = False
         self._lock = threading.RLock()
 
         if self.checkpoint:
@@ -275,6 +279,10 @@ class GoalMazeSession:
                 if not isinstance(pending_touch, bool):
                     raise ValueError("Persisted tactile contact latch must be boolean")
                 self.pending_tactile_contact = pending_touch
+                active_touch = payload.get("_tactile_contact_active", False)
+                if not isinstance(active_touch, bool):
+                    raise ValueError("Persisted tactile active state must be boolean")
+                self.tactile_contact_active = active_touch
 
         # Keep one absolute world-clock deadline across neural decisions. The old
         # per-decision timer restarted from a full interval every time tick() was
@@ -379,6 +387,8 @@ class GoalMazeSession:
                 if terminal:
                     self._queue_reinforcement(result.reward, result.event)
                     self.environment.reset(result.event or "terminal")
+                    self.pending_tactile_contact = False
+                    self.tactile_contact_active = False
                     self._reset_world_clock_deadline()
                     emitted.append(
                         self._snapshot_locked(
@@ -469,8 +479,10 @@ class GoalMazeSession:
                 after_position=after_position,
                 terminal=result.terminal,
             )
-            if tactile_result["contact"]:
+            contact_now = bool(tactile_result["contact"])
+            if contact_now and not self.tactile_contact_active:
                 self.pending_tactile_contact = True
+            self.tactile_contact_active = contact_now
             self._queue_reinforcement(result.reward, result.event)
             terminal_snapshot = self._snapshot_locked(
                 decision=decision,
@@ -480,6 +492,8 @@ class GoalMazeSession:
             )
             if result.terminal:
                 self.environment.reset(result.event or "terminal")
+                self.pending_tactile_contact = False
+                self.tactile_contact_active = False
                 self._reset_world_clock_deadline()
             self._checkpoint_if_due()
             return terminal_snapshot
@@ -505,6 +519,7 @@ class GoalMazeSession:
             payload["_pending_reinforcement"] = self.pending_reinforcement
             payload["_pending_reinforcement_steps"] = self.pending_reinforcement_steps
             payload["_pending_tactile_contact"] = self.pending_tactile_contact
+            payload["_tactile_contact_active"] = self.tactile_contact_active
             payload["_reinforcement_train_policy"] = REINFORCEMENT_TRAIN_POLICY
             temporary.write_text(json.dumps(payload, indent=2) + "\n")
             temporary.replace(state_path)
