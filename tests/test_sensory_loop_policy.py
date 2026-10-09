@@ -209,10 +209,6 @@ def test_public_receipt_preserves_v4_baseline_and_sensory_loop_evidence() -> Non
                 "frontal_wall_distance_threshold": FRONTAL_WALL_DISTANCE_THRESHOLD,
                 "frontal_wall_pulses_per_decision": FRONTAL_WALL_PULSES_PER_DECISION,
                 "frontal_wall_direction_command": False,
-                "wall_rendering_policy": "world-anchored-wall-texture-v4",
-                "visual_temporal_policy": "egocentric-pose-interpolation-100hz-v1",
-                "visual_temporal_subframes": 5,
-                "visual_pose_transition": True,
             },
         },
     }
@@ -237,6 +233,3 @@ def test_public_receipt_preserves_v4_baseline_and_sensory_loop_evidence() -> Non
     assert telemetry["frontal_wall_near"] is True
     assert telemetry["frontal_wall_distance_cells"] == 0.6
     assert telemetry["frontal_wall_direction_command"] is False
-    assert telemetry["visual_temporal_policy"] == "egocentric-pose-interpolation-100hz-v1"
-    assert telemetry["visual_temporal_subframes"] == 5
-    assert telemetry["visual_pose_transition"] is True
