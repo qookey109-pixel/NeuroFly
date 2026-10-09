@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import Any, Sequence
 
 
-TACTILE_MODEL = "neurofly-contact-mechanosensation-v1"
-TACTILE_ENCODING = "blocked-forward-external-touch-proxy"
+TACTILE_MODEL = "neurofly-contact-mechanosensation-v2"
+TACTILE_ENCODING = "blocked-forward-contact-onset-adaptation"
 TACTILE_PAYLOAD_KEYS = frozenset(
     {"model", "available", "encoding", "contact", "channels", "stimulation_enabled"}
 )
@@ -41,7 +41,7 @@ def blocked_forward_contact(
     after_position: Sequence[int],
     terminal: bool = False,
 ) -> dict[str, Any]:
-    """Map one non-terminal blocked FORWARD into a front-contact fact only."""
+    """Map one non-terminal blocked FORWARD into a raw front-contact fact only."""
 
     before = tuple(int(value) for value in before_position)
     after = tuple(int(value) for value in after_position)
