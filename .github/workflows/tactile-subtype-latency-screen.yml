@@ -1,0 +1,114 @@
+name: NeuroFly Tactile Subtype Latency Screen
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/tactile-subtype-latency-screen.yml"
+      - "scripts/tactile_subtype_latency_screen.py"
+      - "data/tactile_current_calibration_v1.json"
+      - "data/tactile_leg_functional_crosswalk_v02.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: neurofly-tactile-subtype-latency-screen
+  cancel-in-progress: true
+
+jobs:
+  screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      SOURCE_CHECKPOINT: runs/free-malecns/brain.npz
+      OUTPUT: runs/tactile-subtype-latency/report.json
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+
+      - name: Restore latest production brain as read-only source
+        uses: actions/cache/restore@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-v06-state-tactile-latency-${{ github.run_id }}
+          restore-keys: |
+            neurofly-v06-state-
+            neurofly-state-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare and verify MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$(dirname "$OUTPUT")"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+          test -f "$SOURCE_CHECKPOINT"
+
+      - name: Execute isolated tactile latency screen
+        run: |
+          python scripts/tactile_subtype_latency_screen.py \
+            --source-checkpoint "$SOURCE_CHECKPOINT" \
+            --output "$OUTPUT"
+
+      - name: Validate latency evidence boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(
+              Path("runs/tactile-subtype-latency/report.json").read_text()
+          )
+          assert report["schema"] == "neurofly-tactile-subtype-latency-screen-v1"
+          assert report["status"] == "PASS"
+          assert report["source_checkpoint_unchanged"] is True
+          assert report["learning_enabled"] is False
+          assert report["window_ms"] == 50.0
+          assert report["windows"] == 5
+          assert report["tactile_current"] == 8.0
+          assert report["pulse_policy"] == (
+              "one-50ms-contact-pulse-then-four-50ms-no-current-windows"
+          )
+          assert set(report["window_deltas"]) == {
+              "SNta20", "SNta26", "SNta27",
+              "SNta28", "SNta34", "SNta37", "full_590",
+          }
+          for rows in report["window_deltas"].values():
+              assert len(rows) == 5
+              assert [row["window_index"] for row in rows] == [0, 1, 2, 3, 4]
+          limits = report["claim_limits"]
+          assert limits["production_runtime_authorized"] is False
+          assert limits["tactile_subtype_selected"] is False
+          assert limits["temporal_kernel_selected"] is False
+          assert limits["decoder_change_authorized"] is False
+          print(
+              "TACTILE_SUBTYPE_LATENCY_RECEIPT_PASS",
+              report["receipt_sha256"],
+          )
+          PY
+
+      - name: Publish compact latency evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-tactile-subtype-latency-${{ github.run_id }}
+          path: runs/tactile-subtype-latency/report.json
+          if-no-files-found: error
+          retention-days: 3
