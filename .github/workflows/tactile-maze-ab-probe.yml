@@ -83,7 +83,7 @@ jobs:
           report = json.loads(
               Path("runs/tactile-maze-ab-probe/report.json").read_text()
           )
-          assert report["schema"] == "neurofly-tactile-maze-ab-probe-v1"
+          assert report["schema"] == "neurofly-tactile-maze-ab-probe-v2"
           assert report["status"] == "PASS"
           assert report["source_checkpoint_unchanged"] is True
           assert report["mechanics"]["off_has_zero_tactile_spikes"] is True
@@ -91,6 +91,9 @@ jobs:
           assert report["mechanics"]["on_has_tactile_spikes"] is True
           assert report["mechanics"]["on_population_is_590"] is True
           assert report["mechanics"]["on_current_is_calibrated"] is True
+          assert report["arms"]["on"]["tactile_model"] == "neurofly-contact-mechanosensation-v2"
+          assert report["arms"]["on"]["tactile_encoding"] == "blocked-forward-contact-onset-adaptation"
+          assert report["arms"]["off"]["tactile_encoding"] == "blocked-forward-contact-onset-adaptation"
           assert report["claim_limits"]["production_merge_authorized"] is False
           assert report["claim_limits"]["decoder_change_authorized"] is False
           print(
