@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 
-SCHEMA = "neurofly-behavior-summary-v6"
+SCHEMA = "neurofly-behavior-summary-v7"
 
 
 def _fraction(numerator: int | float, denominator: int) -> float | None:
@@ -43,6 +43,9 @@ def summarize_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
     food_saturation = 0
     loop_triggers = 0
     frontal_wall_triggers = 0
+    tactile_contacts = 0
+    tactile_spikes_total = 0
+    tactile_spikes_on_contact: list[int] = []
     food_contrasts: list[float] = []
     danger_contrasts: list[float] = []
     episodes: dict[int, dict[str, int | None]] = defaultdict(
@@ -59,6 +62,12 @@ def summarize_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
             loop_triggers += 1
         if bool(row.get("frontal_wall_triggered", False)):
             frontal_wall_triggers += 1
+        tactile_contact = bool(row.get("tactile_contact", False))
+        tactile_spikes = int(row.get("tactile_spikes", 0) or 0)
+        tactile_spikes_total += tactile_spikes
+        if tactile_contact:
+            tactile_contacts += 1
+            tactile_spikes_on_contact.append(tactile_spikes)
 
         food_left_odor = float(row.get("food_odor_left", 0.0) or 0.0)
         food_right_odor = float(row.get("food_odor_right", 0.0) or 0.0)
@@ -206,6 +215,14 @@ def summarize_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
         "sensory_loop_trigger_fraction": _fraction(loop_triggers, steps),
         "frontal_wall_trigger_count": frontal_wall_triggers,
         "frontal_wall_trigger_fraction": _fraction(frontal_wall_triggers, steps),
+        "tactile_contact_count": tactile_contacts,
+        "tactile_contact_fraction": _fraction(tactile_contacts, steps),
+        "tactile_spikes_total": tactile_spikes_total,
+        "tactile_spikes_per_contact_mean": (
+            None
+            if not tactile_spikes_on_contact
+            else float(sum(tactile_spikes_on_contact)) / len(tactile_spikes_on_contact)
+        ),
         "food_bilateral_saturation_fraction": _fraction(food_saturation, steps),
         "food_abs_contrast_mean": None if not food_contrasts else sum(food_contrasts) / len(food_contrasts),
         "danger_abs_contrast_mean": None if not danger_contrasts else sum(danger_contrasts) / len(danger_contrasts),
@@ -271,13 +288,15 @@ def main() -> int:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
     print(
-        "BEHAVIOR_SUMMARY_V6",
+        "BEHAVIOR_SUMMARY_V7",
         "stage=", summary["curriculum_stage"],
         "deaths_per_1000=", summary["deaths_per_1000_decisions"],
         "food_events=", summary["food_events"],
         "clear_delta=", summary["clear_delta"],
         "loop_triggers=", summary["sensory_loop_trigger_count"],
         "wall_triggers=", summary["frontal_wall_trigger_count"],
+        "tactile_contacts=", summary["tactile_contact_count"],
+        "tactile_spikes=", summary["tactile_spikes_total"],
         "blocked_forward=", summary["playback_blocked_forward_fraction"],
         "near_wall_forward=", summary["playback_near_wall_forward_fraction"],
         "near_wall_opening_corr=", summary["playback_near_wall_opening_to_decoder_correlation"],
