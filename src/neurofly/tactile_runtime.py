@@ -256,6 +256,8 @@ def tactile_runtime_stimulation(
     levels = tactile_channel_levels(payload)
     levels = {
         **levels,
+        "model": payload.get("model"),
+        "encoding": payload.get("encoding"),
         "runtime_enabled": tactile_current > 0.0,
         "external_current": tactile_current,
         "calibrated_current": TACTILE_CALIBRATED_CURRENT,
