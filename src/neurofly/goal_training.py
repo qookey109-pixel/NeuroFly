@@ -8,6 +8,7 @@ from typing import Any, Callable
 
 from .brain_runtime import BrainBackend, BrainDecision
 from .maze_runtime import MazeEnvironment, StepResult
+from .tactile import blocked_forward_contact, contact_mechanosensation
 
 
 REINFORCEMENT_TRAIN_POLICY = "neurofly-event-reinforcement-train-v1"
@@ -254,6 +255,7 @@ class GoalMazeSession:
         self.last_decision: BrainDecision | None = None
         self.pending_reinforcement = "none"
         self.pending_reinforcement_steps = 0
+        self.pending_tactile_contact = False
         self._lock = threading.RLock()
 
         if self.checkpoint:
@@ -269,6 +271,10 @@ class GoalMazeSession:
                 restored_steps = int(payload.get("_pending_reinforcement_steps", 0))
                 if self.pending_reinforcement != "none":
                     self.pending_reinforcement_steps = max(1, restored_steps)
+                pending_touch = payload.get("_pending_tactile_contact", False)
+                if not isinstance(pending_touch, bool):
+                    raise ValueError("Persisted tactile contact latch must be boolean")
+                self.pending_tactile_contact = pending_touch
 
         # Keep one absolute world-clock deadline across neural decisions. The old
         # per-decision timer restarted from a full interval every time tick() was
@@ -403,6 +409,11 @@ class GoalMazeSession:
                 if reinforcement != "none":
                     reinforcement_source = "environment"
             context = dict(context)
+            tactile = contact_mechanosensation(
+                front=1.0 if self.pending_tactile_contact else 0.0
+            )
+            self.pending_tactile_contact = False
+            context["contact_mechanosensation"] = tactile
             context["_reinforcement_source"] = reinforcement_source
 
         stop_event = threading.Event()
@@ -440,10 +451,26 @@ class GoalMazeSession:
                 self._checkpoint_if_due()
                 return state
 
+            before_position = (
+                int(self.environment.fly["x"]),
+                int(self.environment.fly["y"]),
+            )
             result = self.environment.agent_step(
                 decision.action,
                 move_enemies=self.decision_synchronous_world,
             )
+            after_position = (
+                int(self.environment.fly["x"]),
+                int(self.environment.fly["y"]),
+            )
+            tactile_result = blocked_forward_contact(
+                applied_action=decision.action,
+                before_position=before_position,
+                after_position=after_position,
+                terminal=result.terminal,
+            )
+            if tactile_result["contact"]:
+                self.pending_tactile_contact = True
             self._queue_reinforcement(result.reward, result.event)
             terminal_snapshot = self._snapshot_locked(
                 decision=decision,
@@ -477,6 +504,7 @@ class GoalMazeSession:
             payload = self.environment.persistence_snapshot()
             payload["_pending_reinforcement"] = self.pending_reinforcement
             payload["_pending_reinforcement_steps"] = self.pending_reinforcement_steps
+            payload["_pending_tactile_contact"] = self.pending_tactile_contact
             payload["_reinforcement_train_policy"] = REINFORCEMENT_TRAIN_POLICY
             temporary.write_text(json.dumps(payload, indent=2) + "\n")
             temporary.replace(state_path)
