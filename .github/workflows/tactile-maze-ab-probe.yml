@@ -1,0 +1,111 @@
+name: NeuroFly Tactile Maze A-B Probe
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "src/neurofly/tactile.py"
+      - "src/neurofly/tactile_runtime.py"
+      - "src/neurofly/goal_training.py"
+      - "src/neurofly/brain_runtime.py"
+      - "src/neurofly/training.py"
+      - "src/neurofly/behavior_diagnostics.py"
+      - "data/tactile_leg_functional_crosswalk_v02.json"
+      - "data/tactile_current_calibration_v1.json"
+      - "scripts/tactile_maze_ab_probe.py"
+      - ".github/workflows/tactile-maze-ab-probe.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: neurofly-tactile-maze-ab-probe-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      SOURCE_DIR: runs/free-malecns
+      WORK_ROOT: runs/tactile-maze-ab-probe
+      OUTPUT: runs/tactile-maze-ab-probe/report.json
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+
+      - name: Restore latest production checkpoint as read-only source
+        uses: actions/cache/restore@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-v06-state-tactile-ab-${{ github.run_id }}
+          restore-keys: |
+            neurofly-v06-state-
+            neurofly-state-
+
+      - name: Install tactile branch with pinned Stonkfly
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare MaleCNS and verify source
+        run: |
+          mkdir -p "$STONKFLY_DATA"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+          test -f "$SOURCE_DIR/brain.npz"
+
+      - name: Run same-checkpoint tactile OFF vs ON
+        run: |
+          python scripts/tactile_maze_ab_probe.py \
+            --source-dir "$SOURCE_DIR" \
+            --work-root "$WORK_ROOT" \
+            --output "$OUTPUT"
+
+      - name: Validate tactile mechanics and evidence boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(
+              Path("runs/tactile-maze-ab-probe/report.json").read_text()
+          )
+          assert report["schema"] == "neurofly-tactile-maze-ab-probe-v1"
+          assert report["status"] == "PASS"
+          assert report["source_checkpoint_unchanged"] is True
+          assert report["mechanics"]["off_has_zero_tactile_spikes"] is True
+          assert report["mechanics"]["on_has_contact_events"] is True
+          assert report["mechanics"]["on_has_tactile_spikes"] is True
+          assert report["mechanics"]["on_population_is_590"] is True
+          assert report["mechanics"]["on_current_is_calibrated"] is True
+          assert report["claim_limits"]["production_merge_authorized"] is False
+          assert report["claim_limits"]["decoder_change_authorized"] is False
+          print(
+              "TACTILE_MAZE_AB_MECHANICS_PASS",
+              json.dumps(report["on_minus_off"], sort_keys=True),
+          )
+          PY
+
+      - name: Publish tactile A-B evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-tactile-maze-ab-${{ github.run_id }}
+          path: |
+            runs/tactile-maze-ab-probe/report.json
+            runs/tactile-maze-ab-probe/off/behavior-summary.json
+            runs/tactile-maze-ab-probe/on/behavior-summary.json
+          if-no-files-found: error
+          retention-days: 3
