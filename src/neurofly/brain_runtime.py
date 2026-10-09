@@ -8,6 +8,16 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from .olfaction import DANGER_ORN_TYPE, FOOD_ORN_TYPE, OLFACTION_MODEL
+from .tactile import TACTILE_MODEL
+from .tactile_runtime import (
+    TACTILE_CALIBRATED_CURRENT,
+    TACTILE_CALIBRATION_RECEIPT_SHA256,
+    TACTILE_CROSSWALK_SCHEMA,
+    load_and_validate_tactile_runtime_evidence,
+    resolve_tactile_runtime_population,
+    tactile_runtime_stimulation,
+    validated_tactile_current,
+)
 from .vision import VISION_MODEL
 from .vision_adapter import retinalize_topdown_rgb
 
@@ -419,6 +429,7 @@ class MaleCNSBrain:
         pulse_ms: float = 20.0,
         pulse_current: float = 20.0,
         odor_current: float = 12.0,
+        tactile_current: float = TACTILE_CALIBRATED_CURRENT,
         decoder_threshold_hz: float = WALKING_STEERING_THRESHOLD_HZ,
         learning: bool = True,
         checkpoint: str | Path | None = None,
@@ -435,6 +446,7 @@ class MaleCNSBrain:
 
         if not math.isfinite(float(odor_current)) or float(odor_current) < 0:
             raise ValueError("odor_current must be finite and nonnegative")
+        tactile_current = validated_tactile_current(tactile_current)
 
         self.np = np
         self.neural_ms = float(neural_ms)
@@ -442,6 +454,7 @@ class MaleCNSBrain:
         self.pulse_ms = float(pulse_ms)
         self.pulse_current = float(pulse_current)
         self.odor_current = float(odor_current)
+        self.tactile_current = tactile_current
         self.decoder_threshold_hz = float(decoder_threshold_hz)
         self.learning = bool(learning)
         self.brain = VisualMemoryBrain()
@@ -526,6 +539,15 @@ class MaleCNSBrain:
                 f"{FOOD_ORN_TYPE}={food_side_report}; {DANGER_ORN_TYPE}={danger_side_report}"
             )
 
+        self.tactile_population = np.asarray([], dtype=np.int64)
+        tactile_population_report: dict[str, Any] | None = None
+        tactile_evidence: dict[str, Any] | None = None
+        if self.tactile_current > 0.0:
+            tactile_evidence = load_and_validate_tactile_runtime_evidence()
+            self.tactile_population, tactile_population_report = (
+                resolve_tactile_runtime_population(np, a, self.brain.ids)
+            )
+
         walking_drive_ids = [str(self.brain.ids[i]) for i in self.walking_drive]
         self.identities = {
             "steering_left": [str(self.brain.ids[i]) for i in self.steering_left],
@@ -596,6 +618,19 @@ class MaleCNSBrain:
                 "direction_command": False,
             },
             "validated": False,
+        }
+        self.tactile_report = {
+            "model": TACTILE_MODEL,
+            "engineered_proxy": True,
+            "enabled": self.tactile_current > 0.0,
+            "runtime_schema": "neurofly-tactile-runtime-routing-v1-modern",
+            "crosswalk_schema": TACTILE_CROSSWALK_SCHEMA,
+            "calibration_receipt_sha256": TACTILE_CALIBRATION_RECEIPT_SHA256,
+            "external_current": self.tactile_current,
+            "calibrated_current": TACTILE_CALIBRATED_CURRENT,
+            "population": tactile_population_report,
+            "evidence": tactile_evidence,
+            "direction_command": False,
         }
         self.vision_report = {
             "model": VISION_MODEL,
@@ -876,6 +911,21 @@ class MaleCNSBrain:
         levels["danger_current_gain"] = DANGER_ODOR_CURRENT_GAIN
         return pulses, levels
 
+    def _tactile_stimulation(
+        self,
+        context: dict[str, Any] | None,
+    ) -> tuple[list[tuple[Any, float]], dict[str, Any]]:
+        payload = (
+            {}
+            if context is None
+            else (context.get("contact_mechanosensation") or {})
+        )
+        return tactile_runtime_stimulation(
+            payload,
+            population=self.tactile_population,
+            tactile_current=self.tactile_current,
+        )
+
     def _visual_input(
         self,
         frame: Any,
@@ -980,6 +1030,7 @@ class MaleCNSBrain:
 
         b = self.brain
         odor_pulses, odor_levels = self._olfactory_stimulation(context)
+        tactile_pulses, tactile_levels = self._tactile_stimulation(context)
         context_data = context or {}
 
         episode_value = context_data.get("episode")
@@ -1076,6 +1127,7 @@ class MaleCNSBrain:
             n = max(1, min(boundaries))
 
             stimulation = list(odor_pulses)
+            stimulation.extend(tactile_pulses)
             if active:
                 stimulation.append((b.circuit[effective_reinforcement], self.pulse_current))
             current, elapsed = b.rgb_step(
@@ -1093,6 +1145,11 @@ class MaleCNSBrain:
 
         b.counts[:] = counts
         action, decoder = self._decode(counts)
+        tactile_spikes = (
+            int(counts[self.tactile_population].sum())
+            if len(self.tactile_population)
+            else 0
+        )
         telemetry = {
             **decoder,
             "backend": self.name,
@@ -1173,6 +1230,10 @@ class MaleCNSBrain:
                 counts[self.danger_orn_left].sum() + counts[self.danger_orn_right].sum()
             ),
             "olfaction_report": self.olfaction_report,
+            "tactile_model": TACTILE_MODEL,
+            "contact_mechanosensation": tactile_levels,
+            "tactile_spikes": tactile_spikes,
+            "tactile_report": self.tactile_report,
             "memory": b.memory(),
         }
         return BrainDecision(action=action, backend=self.name, telemetry=telemetry)
