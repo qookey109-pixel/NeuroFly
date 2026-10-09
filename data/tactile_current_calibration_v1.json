@@ -1,0 +1,97 @@
+{
+  "schema": "neurofly-tactile-current-calibration-selection-v1",
+  "source_run": 34798246806,
+  "source_job": 103835475196,
+  "head_sha": "43d139682bdfa97e49f44113b37fa84aa627c885",
+  "stonkfly_commit": "78ef3e05ab0fa086032098558d893667068944a0",
+  "male_cns_release": "MaleCNS v1.0",
+  "population_count": 590,
+  "type_counts": {
+    "SNta20": 156,
+    "SNta26": 31,
+    "SNta27": 47,
+    "SNta28": 74,
+    "SNta34": 54,
+    "SNta37": 228
+  },
+  "crosswalk_schema": "neurofly-tactile-leg-functional-crosswalk-v0.2",
+  "crosswalk_sha256": "4cd8a25f2647be6399642a230ee947ce19cf72f5fc22b3e5ad4591eec78ab8cc",
+  "selected_body_ids_sha256": "007556a35ccfcbf41fac8b00db1f56cfddbe136a0056ed69a1724224289a6395",
+  "baseline_checkpoint_sha256": "7a35fd223407fdd7e9e319f60864d4524a0668544c1fb006dbcac543cd22a2cd",
+  "predeclared_currents": [2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 16.0],
+  "selection_policy": "lowest_predeclared_current_with_positive_response_in_all_six_exact_types",
+  "candidate_results": [
+    {
+      "current": 2.0,
+      "passed": false,
+      "receipt_sha256": "dff0e4145ee4788efb9e8be505b48e19e7c5f4d43217424d0e8a6547095d75c2",
+      "selected_population_spikes": 0,
+      "selected_population_active_neurons": 0
+    },
+    {
+      "current": 4.0,
+      "passed": false,
+      "receipt_sha256": "86c1b98112a4497c127c8281af49ef6002dd3ccb43645515dc62dd4b798df3f9",
+      "selected_population_spikes": 0,
+      "selected_population_active_neurons": 0
+    },
+    {
+      "current": 6.0,
+      "passed": false,
+      "receipt_sha256": "7677d8c3d1bce6e07fe64cdce958827215fb62535d07b9d242bf7798ab527104",
+      "selected_population_spikes": 0,
+      "selected_population_active_neurons": 0
+    },
+    {
+      "current": 8.0,
+      "passed": true,
+      "receipt_sha256": "41592fd805bbfa19f73959af24479d12770e10866ed05e8fc85a86eac198f462",
+      "selected_population_spikes": 1710,
+      "selected_population_active_neurons": 590,
+      "selected_population_spikes_per_neuron": 2.8983050847457625
+    },
+    {
+      "current": 10.0,
+      "passed": true,
+      "receipt_sha256": "8acfdc3f57f51d0c8c93bfa5aaa6f33528bac9572a8b31c67c6978eab42e78b2"
+    },
+    {
+      "current": 12.0,
+      "passed": true,
+      "receipt_sha256": "938bcd8f873df0bd5830fc611993f4d7d0f69509a4e664ec04bb171b95506c28"
+    },
+    {
+      "current": 16.0,
+      "passed": true,
+      "receipt_sha256": "8549f2e28fa1ea1838c4351d160626b3c0da950fe648abd74b73ce4677d50e64"
+    }
+  ],
+  "selected": {
+    "current": 8.0,
+    "receipt_sha256": "41592fd805bbfa19f73959af24479d12770e10866ed05e8fc85a86eac198f462",
+    "selected_population": {
+      "neurons": 590,
+      "baseline_spikes": 0,
+      "stimulated_spikes": 1710,
+      "stimulated_active_neurons": 590,
+      "delta_spikes_per_neuron": 2.8983050847457625,
+      "passed": true
+    },
+    "type_gates": {
+      "SNta20": {"neurons": 156, "stimulated_spikes": 486, "active_neurons": 156, "delta_spikes_per_neuron": 3.1153846153846154, "passed": true},
+      "SNta26": {"neurons": 31, "stimulated_spikes": 79, "active_neurons": 31, "delta_spikes_per_neuron": 2.5483870967741935, "passed": true},
+      "SNta27": {"neurons": 47, "stimulated_spikes": 157, "active_neurons": 47, "delta_spikes_per_neuron": 3.3404255319148937, "passed": true},
+      "SNta28": {"neurons": 74, "stimulated_spikes": 198, "active_neurons": 74, "delta_spikes_per_neuron": 2.675675675675676, "passed": true},
+      "SNta34": {"neurons": 54, "stimulated_spikes": 191, "active_neurons": 54, "delta_spikes_per_neuron": 3.537037037037037, "passed": true},
+      "SNta37": {"neurons": 228, "stimulated_spikes": 599, "active_neurons": 228, "delta_spikes_per_neuron": 2.6271929824561404, "passed": true}
+    }
+  },
+  "runtime_stimulation_enabled": false,
+  "artifact": {
+    "id": 10330805586,
+    "name": "neurofly-tactile-calibration-34798246806-1",
+    "size_bytes": 19854,
+    "sha256": "ae11e0d018154fe8e65682acd8a1b67536a4514b04f2766da721215da65e2203"
+  },
+  "interpretation": "8.0 is the lowest tested engineering current that produced positive activity in the full 590-neuron candidate population and independently in all six exact SNta type groups under matched frozen-weight MaleCNS conditions. This does not validate natural tactile physiology or enable runtime stimulation."
+}
