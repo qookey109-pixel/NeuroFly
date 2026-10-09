@@ -65,7 +65,7 @@ def test_tactile_contract_is_contact_only_and_payload_does_not_self_authorize() 
     assert idle == {
         "model": TACTILE_MODEL,
         "available": True,
-        "encoding": "blocked-forward-external-touch-proxy",
+        "encoding": "blocked-forward-contact-onset-adaptation",
         "contact": False,
         "channels": {"front": 0.0},
         "stimulation_enabled": False,
@@ -141,6 +141,63 @@ def test_blocked_forward_becomes_exactly_one_next_decision_touch_pulse() -> None
     assert second["contact_mechanosensation"]["channels"] == {"front": 1.0}
     assert third["contact_mechanosensation"]["contact"] is False
 
+
+
+
+def test_repeated_blocked_forward_emits_one_onset_until_contact_releases() -> None:
+    env = _wall_ahead_environment()
+    brain = RecordingBrain(["FORWARD", "FORWARD", "HOLD", "FORWARD", "HOLD"])
+    session = GoalMazeSession(
+        brain,
+        environment=env,
+        world_tick_seconds=3600.0,
+    )
+
+    for _ in range(5):
+        session.tick()
+
+    contacts = [
+        context["contact_mechanosensation"]["contact"]
+        for context in brain.contexts
+    ]
+    assert contacts == [False, True, False, False, True]
+
+
+def test_contact_active_state_survives_checkpoint(tmp_path: Path) -> None:
+    checkpoint = tmp_path / "brain.npz"
+    env = _wall_ahead_environment()
+    brain = RecordingBrain(["FORWARD"])
+    session = GoalMazeSession(
+        brain,
+        environment=env,
+        checkpoint=checkpoint,
+        checkpoint_every=999999.0,
+        world_tick_seconds=3600.0,
+    )
+    session.tick()
+    assert session.pending_tactile_contact is True
+    assert session.tactile_contact_active is True
+    session.save()
+
+    restored_brain = RecordingBrain(["FORWARD", "HOLD", "FORWARD", "HOLD"])
+    restored = GoalMazeSession(
+        restored_brain,
+        environment=RecordingEnvironment(seed=999),
+        checkpoint=checkpoint,
+        checkpoint_every=999999.0,
+        world_tick_seconds=3600.0,
+    )
+    assert restored.pending_tactile_contact is True
+    assert restored.tactile_contact_active is True
+
+    for _ in range(4):
+        restored.tick()
+
+    contacts = [
+        context["contact_mechanosensation"]["contact"]
+        for context in restored_brain.contexts
+    ]
+    assert contacts == [True, False, False, True]
 
 def test_hold_and_successful_forward_do_not_create_false_touch() -> None:
     hold_env = _wall_ahead_environment()
