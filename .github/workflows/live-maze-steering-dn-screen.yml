@@ -1,0 +1,101 @@
+name: NeuroFly Live Maze Steering DN Screen
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/live-maze-steering-dn-screen.yml"
+      - "scripts/live_maze_steering_dn_screen.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: neurofly-live-maze-steering-dn-screen
+  cancel-in-progress: true
+
+jobs:
+  screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      SOURCE_DIR: runs/free-malecns
+      WORK_ROOT: runs/live-maze-steering-dn-screen
+      OUTPUT: runs/live-maze-steering-dn-screen/screen.json
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore prepared MaleCNS cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+
+      - name: Restore latest production checkpoint as read-only source
+        uses: actions/cache/restore@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-v06-state-live-dn-screen-${{ github.run_id }}
+          restore-keys: |
+            neurofly-v06-state-
+            neurofly-state-
+
+      - name: Install pinned Stonkfly integration
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Prepare MaleCNS
+        run: |
+          mkdir -p "$STONKFLY_DATA"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+          test -f "$SOURCE_DIR/brain.npz"
+
+      - name: Run isolated live-maze steering DN screen
+        run: |
+          python scripts/live_maze_steering_dn_screen.py \
+            --source-dir "$SOURCE_DIR" \
+            --work-root "$WORK_ROOT" \
+            --output "$OUTPUT"
+
+      - name: Validate compact screen
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(
+              Path("runs/live-maze-steering-dn-screen/screen.json").read_text()
+          )
+          assert report["schema"] == "neurofly-live-maze-steering-dn-screen-v1"
+          assert report["status"] == "PASS"
+          assert report["source_checkpoint_unchanged"] is True
+          assert report["claim_limits"]["observer_only"] is True
+          assert report["claim_limits"]["decoder_change_authorized"] is False
+          assert report["candidates"] == ["DNa03", "DNb06", "DNg13", "DNa11"]
+          for candidate, result in report["results"].items():
+              assert result["observer_type"] == candidate
+              assert result["observer_used_for_action"] is False
+              assert result["action_decoder_type"] == "DNa02"
+          print("LIVE_MAZE_STEERING_DN_SCREEN_RECEIPT_PASS")
+          PY
+
+      - name: Publish compact live-maze DN evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-live-maze-steering-dn-screen-${{ github.run_id }}
+          path: |
+            runs/live-maze-steering-dn-screen/screen.json
+            runs/live-maze-steering-dn-screen/*/behavior-summary.json
+          if-no-files-found: error
+          retention-days: 2
