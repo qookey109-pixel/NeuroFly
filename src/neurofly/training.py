@@ -134,6 +134,10 @@ MOTOR_TELEMETRY_FIELDS = (
     "retinal_eye_left_luminance_mean",
     "retinal_eye_right_luminance_mean",
     "retinal_eye_luminance_asymmetry",
+    "tactile_model",
+    "contact_mechanosensation",
+    "tactile_spikes",
+    "tactile_report",
 )
 
 
@@ -284,6 +288,8 @@ def run_self_training(
             odor = state.get("olfaction") or {}
             food_odor = odor.get("food") or {}
             danger_odor = odor.get("danger") or {}
+            tactile = telemetry.get("contact_mechanosensation") or {}
+            tactile_report = telemetry.get("tactile_report") or {}
             observations.append(
                 {
                     "step": index,
@@ -311,6 +317,10 @@ def run_self_training(
                     "danger_odor_right": danger_odor.get("right"),
                     "food_odor_spikes": telemetry.get("food_odor_spikes"),
                     "danger_odor_spikes": telemetry.get("danger_odor_spikes"),
+                    "tactile_contact": bool(tactile.get("contact", False)),
+                    "tactile_front": tactile.get("front", 0.0),
+                    "tactile_spikes": telemetry.get("tactile_spikes", 0),
+                    "tactile_current": tactile_report.get("external_current"),
                     "brain_ms": telemetry.get("brain_ms"),
                     "compute_seconds": telemetry.get("compute_seconds"),
                     "total_spikes": telemetry.get("total_spikes"),
