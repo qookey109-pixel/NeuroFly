@@ -1,0 +1,98 @@
+name: NeuroFly Olfaction Steering Causal Probe
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/olfaction-steering-causal-probe.yml"
+      - "scripts/olfaction_steering_causal_probe.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: neurofly-olfaction-steering-causal-probe
+  cancel-in-progress: false
+
+jobs:
+  isolated-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      SOURCE_CHECKPOINT: runs/free-malecns/brain.npz
+      OUTPUT: runs/olfaction-steering-probe/olfaction-steering-causal-probe.json
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Restore MaleCNS data
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+
+      - name: Restore source production checkpoint without saving
+        uses: actions/cache/restore@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-v06-state-olfaction-probe-${{ github.run_id }}
+          restore-keys: |
+            neurofly-v06-state-
+
+      - name: Install pinned Stonkfly
+        run: python -m pip install -e '.[test,stonkfly]'
+
+      - name: Verify prepared MaleCNS and source
+        run: |
+          mkdir -p "$STONKFLY_DATA" "$(dirname "$OUTPUT")"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+          test -f "$SOURCE_CHECKPOINT"
+
+      - name: Execute isolated olfactory steering probe
+        run: |
+          python scripts/olfaction_steering_causal_probe.py \
+            --source-checkpoint "$SOURCE_CHECKPOINT" \
+            --output "$OUTPUT"
+
+      - name: Validate immutable-source and observer-only evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(
+              Path("runs/olfaction-steering-probe/olfaction-steering-causal-probe.json").read_text()
+          )
+          assert report["schema"] == "neurofly-olfaction-steering-causal-screen-v1"
+          assert report["status"] == "PASS"
+          assert report["source_checkpoint_unchanged"] is True
+          assert report["production_checkpoint_mutated"] is False
+          assert report["learning_enabled"] is False
+          assert report["maze_actions_executed"] is False
+          assert set(report["conditions"]) == {
+              "neutral", "food_left", "food_right", "danger_left", "danger_right",
+              "food_bilateral", "danger_bilateral",
+          }
+          assert report["claim_limits"]["decoder_change_authorized"] is False
+          assert report["claim_limits"]["behavioral_promotion_authorized"] is False
+          print("OLFACTION_STEERING_PROBE_RECEIPT_PASS", report["receipt_sha256"])
+          print(json.dumps(report["contrasts"], sort_keys=True))
+          PY
+
+      - name: Upload diagnostic artifact only
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-olfaction-steering-probe-${{ github.run_id }}
+          path: runs/olfaction-steering-probe/olfaction-steering-causal-probe.json
+          if-no-files-found: error
+          retention-days: 2
