@@ -14,7 +14,7 @@ from neurofly.smoke import _digest_json
 from neurofly.tactile_runtime import TACTILE_CALIBRATED_CURRENT
 
 
-SCHEMA = "neurofly-tactile-maze-ab-probe-v1"
+SCHEMA = "neurofly-tactile-maze-ab-probe-v2"
 STEPS = 600
 PLAYBACK_STEPS = 240
 
@@ -87,11 +87,14 @@ def _run_arm(
         "telemetry"
     ) or {}
     tactile_report = final_telemetry.get("tactile_report") or {}
+    tactile_levels = final_telemetry.get("contact_mechanosensation") or {}
 
     return {
         "arm": name,
         "steps": STEPS,
         "tactile_current": tactile_report.get("external_current"),
+        "tactile_model": final_telemetry.get("tactile_model"),
+        "tactile_encoding": tactile_levels.get("encoding"),
         "tactile_runtime_enabled": bool(
             (final_telemetry.get("contact_mechanosensation") or {}).get(
                 "runtime_enabled", False
