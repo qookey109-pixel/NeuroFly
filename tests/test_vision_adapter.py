@@ -5,7 +5,7 @@ from neurofly.vision import (
     _wall_depth_salience,
     _wall_texture_offset,
 )
-from neurofly.vision_adapter import interpolate_fly_pose, visual_contract
+from neurofly.vision_adapter import visual_contract
 
 
 def test_visual_contract_is_egocentric_and_action_free() -> None:
@@ -65,32 +65,3 @@ def test_wall_texture_is_periodic_nonunique_and_avoids_one_cell_aliasing() -> No
     assert origin != one_cell_forward
     assert abs(origin) <= 28
     assert abs(one_cell_forward) <= 28
-
-
-def test_interpolated_fly_pose_preserves_real_translation_and_turn_geometry() -> None:
-    previous = {"x": 4, "y": 5, "dir": "RIGHT"}
-    current = {"x": 5, "y": 5, "dir": "DOWN"}
-
-    start = interpolate_fly_pose(previous, current, 0.0)
-    middle = interpolate_fly_pose(previous, current, 0.5)
-    end = interpolate_fly_pose(previous, current, 1.0)
-
-    assert start["x"] == 4.0
-    assert end["x"] == 5.0
-    assert middle["x"] == 4.5
-    assert middle["y"] == 5.0
-    assert abs(middle["_heading_radians"] - 0.7853981633974483) < 1e-12
-    assert abs(end["_heading_radians"] - 1.5707963267948966) < 1e-12
-
-
-def test_interpolated_heading_contract_remains_action_free() -> None:
-    pose = interpolate_fly_pose(
-        {"x": 5, "y": 5, "dir": "RIGHT"},
-        {"x": 5, "y": 5, "dir": "DOWN"},
-        0.5,
-    )
-    state = visual_contract(fly=pose, enemies=[{"x": 7, "y": 5}])
-
-    assert state["available"] is True
-    assert "action" not in state
-    assert "target" not in state

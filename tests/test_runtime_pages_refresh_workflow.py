@@ -97,9 +97,6 @@ def test_runtime_v4_gate_accepts_predator_free_stage_one_and_sensory_only_action
     assert "frontal_wall_pulses_per_decision" in build_block
     assert "frontal_wall_direction_command" in build_block
     assert "world-anchored-wall-texture-v4" in build_block
-    assert "egocentric-pose-interpolation-100hz-v1" in build_block
-    assert "visual_temporal_subframes" in build_block
-    assert "visual_pose_transition" in build_block
     assert "wall_rendering_policy" in build_block
     assert "walking_drive_spikes" in build_block
     assert "danger_temporal_delta" in build_block

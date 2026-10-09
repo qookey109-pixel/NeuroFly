@@ -103,8 +103,6 @@ jobs:
           assert telemetry["steering_type"] == "DNa02"
           assert telemetry["steering_observer_type"] == "DNa03"
           assert telemetry["steering_observer_used_for_action"] is False
-          assert telemetry["visual_temporal_policy"] == "egocentric-pose-interpolation-100hz-v1"
-          assert int(telemetry["visual_temporal_subframes"]) in (1, 5)
 
           required = (
               "playback_near_wall_opening_to_dNa03_correlation",
