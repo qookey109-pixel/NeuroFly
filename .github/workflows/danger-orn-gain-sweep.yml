@@ -79,6 +79,25 @@ jobs:
           assert report["learning_enabled"] is False
           assert report["maze_actions_executed"] is False
           assert report["sweep_gains"] == [1.6, 2.4, 3.2]
+          # Check measured decoded actions, not just changes in DN firing.
+          for gain in ("1.6", "2.4", "3.2"):
+            side_margins = []
+            for condition, expected_away in (
+              ("danger_left", "TURN_RIGHT"),
+              ("danger_right", "TURN_LEFT"),
+            ):
+              metric = report["danger_conditions"][gain][condition]["decoded_turns"]
+              assert metric["decision_count"] == 24
+              assert metric["expected_away_turn"] == expected_away
+              assert sum(metric["action_counts"].values()) == 24
+              assert 0 <= metric["turn_fraction"] <= 1
+              assert -1 <= metric["net_away_minus_toward_fraction"] <= 1
+              side_margins.append(metric["net_away_minus_toward_fraction"])
+            observed = report["action_avoidance_proxy"][gain][
+              "mean_net_away_minus_toward_fraction"
+            ]
+            assert abs(observed - sum(side_margins) / 2) < 1e-12
+          assert report["claim_limits"]["live_maze_avoidance_verified"] is False
           assert report["claim_limits"]["production_gain_change_authorized"] is False
           assert report["claim_limits"]["behavioral_improvement_verified"] is False
           print("DANGER_ORN_GAIN_RECEIPT_PASS", report["receipt_sha256"])
