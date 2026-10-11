@@ -31,7 +31,11 @@ The same full experiment remains unchanged:
 - Full reports remain short-lived GitHub Actions artifacts.
 
 The PR event uses only `contents: read`; no repository write token, secrets
-or external deployment privileges are required. Experiment artifacts are
+or external deployment privileges are required. Because the job restores a
+production neural checkpoint from GitHub Actions cache, **fork PRs are
+explicitly ineligible** for this job: only trusted PR branches inside the
+same repository may run it. Untrusted fork PRs can use ordinary code CI, but
+must never receive production checkpoint caches. Experiment artifacts are
 not substitutes for independent repeats or Stage 2 clears.
 
 ## Reviewer acceptance
