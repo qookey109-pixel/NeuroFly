@@ -56,6 +56,7 @@ def _run_arm(
     gain: float,
     source_sha256: str,
     initial_stage2_clears: int,
+    initial_world_ticks: int,
     steps: int,
 ) -> dict[str, Any]:
     name = f"gain-{gain:.1f}"
@@ -100,6 +101,13 @@ def _run_arm(
     )
     final_maze = json.loads((arm_dir / "brain.maze.json").read_text())
     final_stage2_clears = int((final_maze.get("stage_clear_counts") or {}).get("2", 0))
+    world_tick_delta = int(final_maze.get("total_world_ticks", 0)) - initial_world_ticks
+    if world_tick_delta < 0:
+        raise RuntimeError("World tick counter went backwards in an isolated arm")
+    applied_decisions = sum(
+        row.get("decision_applied") is True for row in receipt["observations"]
+    )
+    discarded_decisions = steps - applied_decisions
 
     return {
         "name": name,
@@ -109,6 +117,9 @@ def _run_arm(
         "final_stage": int(final_maze.get("curriculum_stage", 0)),
         "steps": steps,
         "stage2_clear_delta": final_stage2_clears - initial_stage2_clears,
+        "world_tick_delta": world_tick_delta,
+        "applied_decision_count": applied_decisions,
+        "discarded_decision_count": discarded_decisions,
         "blocked_forward_fraction": summary["playback_blocked_forward_fraction"],
         "near_wall_forward_fraction": summary["playback_near_wall_forward_fraction"],
         "revisit_fraction_mean": summary["playback_revisit_fraction_mean"],
@@ -130,6 +141,7 @@ def run_probe(source_dir: Path, work_root: Path, *, steps: int = STEPS) -> dict[
     if abs(float(brain_runtime.DANGER_ODOR_CURRENT_GAIN) - GAINS[0]) > 1e-9:
         raise RuntimeError("Baseline production danger odor gain is not frozen at 1.6")
     initial_stage2_clears = int((world.get("stage_clear_counts") or {}).get("2", 0))
+    initial_world_ticks = int(world.get("total_world_ticks", 0))
     source_sha256 = _digest_json(before)
 
     results: dict[str, dict[str, Any]] = {}
@@ -140,6 +152,7 @@ def run_probe(source_dir: Path, work_root: Path, *, steps: int = STEPS) -> dict[
             gain=gain,
             source_sha256=source_sha256,
             initial_stage2_clears=initial_stage2_clears,
+            initial_world_ticks=initial_world_ticks,
             steps=steps,
         )
         results[str(gain)] = arm
@@ -163,11 +176,13 @@ def run_probe(source_dir: Path, work_root: Path, *, steps: int = STEPS) -> dict[
         "steps_per_arm": steps,
         "starting_curriculum_stage": 2,
         "initial_stage2_clears": initial_stage2_clears,
+        "initial_total_world_ticks": initial_world_ticks,
         "arms": results,
         "comparisons": comparisons,
         "limitations": {
             "neural_learning_active_in_isolated_arms": True,
             "world_clock_time_depends_on_runtime": True,
+            "matched_predator_exposure_required_for_exploratory_signal": True,
             "single_run_not_causal_proof": True,
         },
         "claim_limits": {

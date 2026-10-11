@@ -15,6 +15,8 @@ PRIMARY_METRICS = (
     "food_events",
     "best_episode_food_progress",
     "stage2_clear_delta",
+    "world_tick_delta",
+    "discarded_decision_count",
 )
 
 
@@ -43,9 +45,35 @@ def compare_candidate(
         "food_events",
         "stage2_clear_delta",
     )
+    clock_baseline = baseline.get("world_tick_delta")
+    clock_candidate = candidate.get("world_tick_delta")
+    discarded_baseline = baseline.get("discarded_decision_count")
+    discarded_candidate = candidate.get("discarded_decision_count")
+    valid_exposure = all(
+        isinstance(v, int) and not isinstance(v, bool) and v >= 0
+        for v in (
+            clock_baseline, clock_candidate,
+            discarded_baseline, discarded_candidate,
+        )
+    )
+    if valid_exposure:
+        allowable_tick_drift = max(1, int(clock_baseline * 0.05))
+        exposure_comparable = bool(
+            clock_baseline > 0
+            and clock_candidate > 0
+            and abs(clock_candidate - clock_baseline) <= allowable_tick_drift
+            and discarded_baseline <= baseline["steps"] * 0.1
+            and discarded_candidate <= candidate["steps"] * 0.1
+            and abs(discarded_candidate - discarded_baseline)
+            <= max(1, int(baseline["steps"] * 0.01))
+        )
+    else:
+        allowable_tick_drift = None
+        exposure_comparable = False
     sufficient_data = all(deltas[name] is not None for name in required)
     exploratory_signal = bool(
         sufficient_data
+        and exposure_comparable
         and deltas["blocked_forward_fraction"] <= -0.03
         and deltas["near_wall_forward_fraction"] <= 0.02
         and deltas["revisit_fraction_mean"] <= 0.02
@@ -57,6 +85,9 @@ def compare_candidate(
     return {
         "candidate_minus_baseline": deltas,
         "sufficient_data": sufficient_data,
+        "exposure_comparable": exposure_comparable,
+        "world_tick_drift_allowance": allowable_tick_drift,
+        "wall_clock_comparability_gate": "world_ticks_within_5_percent_and_discarded_decisions_within_1_percent",
         "exploratory_signal_only": exploratory_signal,
         "repeat_study_required": True,
         "production_promotion_authorized": False,
