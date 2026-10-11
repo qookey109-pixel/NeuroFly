@@ -34,6 +34,8 @@ concurrency:
 
 jobs:
   same-checkpoint-maze-ab:
+    # Never expose a production neural checkpoint cache to untrusted fork PRs.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 150
     env:
