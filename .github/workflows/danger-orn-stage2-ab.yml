@@ -91,11 +91,17 @@ jobs:
           for arm in report["arms"].values():
               assert arm["initial_stage"] == 2
               assert arm["steps"] == 600
+              assert isinstance(arm["world_tick_delta"], int)
+              assert arm["world_tick_delta"] >= 0
+              assert arm["applied_decision_count"] + arm["discarded_decision_count"] == 600
               assert arm["action_overridden"] is False
               assert arm["live_published"] == 0
               assert arm["source_sha256"] == report["arms"]["1.6"]["source_sha256"]
           for row in report["comparisons"].values():
               assert row["repeat_study_required"] is True
+              assert isinstance(row["exposure_comparable"], bool)
+              if not row["exposure_comparable"]:
+                  assert row["exploratory_signal_only"] is False
               assert row["production_promotion_authorized"] is False
           limits = report["claim_limits"]
           assert limits["production_checkpoint_mutated"] is False
@@ -104,6 +110,10 @@ jobs:
           assert limits["live_telemetry_published"] is False
           assert limits["stage2_improvement_verified"] is False
           print("STAGE2_DANGER_GAIN_AB_EVIDENCE_PASS", report["receipt_sha256"])
+          for name, arm in report["arms"].items():
+              print("ARM_EXPOSURE", name, "world_ticks", arm["world_tick_delta"],
+                    "applied", arm["applied_decision_count"],
+                    "discarded", arm["discarded_decision_count"])
           print(json.dumps(report["comparisons"], sort_keys=True))
           PY
 
