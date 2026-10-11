@@ -11,6 +11,7 @@ import numpy as np
 
 import neurofly.brain_runtime as runtime
 from neurofly.brain_runtime import MaleCNSBrain
+from neurofly.odor_turn_metrics import summarize_decoded_turns
 from neurofly.smoke import _digest_json
 from neurofly.upstream import STONKFLY_COMMIT
 from olfaction_steering_causal_probe import _sha256_file, make_context
@@ -45,7 +46,7 @@ def run_condition(
     # Patch only this isolated interpreter's engineered sensory current gain;
     # never modify production code, production caches or the checkpoint.
     baseline_gain = runtime.DANGER_ODOR_CURRENT_GAIN
-    rows: list[dict[str, float]] = []
+    rows: list[dict[str, Any]] = []
     try:
         runtime.DANGER_ODOR_CURRENT_GAIN = float(danger_gain)
         context = make_context(condition)
@@ -59,6 +60,7 @@ def run_condition(
             if t.get("frontal_wall_triggered") or t.get("sensory_loop_triggered"):
                 raise RuntimeError("Unexpected wall or loop stimulus")
             rows.append({
+                "action": str(decision.action),
                 "dna02_centered_difference_hz": float(t["decoder_difference_hz"]),
                 "dna02_raw_difference_hz": float(t["raw_difference_hz"]),
                 "dna03_raw_difference_hz": float(t["steering_observer_difference_hz"]),
@@ -73,6 +75,9 @@ def run_condition(
         "condition": condition,
         "gain": float(danger_gain),
         "frames": PROBE_FRAMES,
+        "decoded_turns": summarize_decoded_turns(
+            (row["action"] for row in rows), condition=condition
+        ),
         "mean_dna02_centered_difference_hz": _mean([
             r["dna02_centered_difference_hz"] for r in rows
         ]),
@@ -125,6 +130,20 @@ def run_sweep(checkpoint: Path) -> dict[str, Any]:
             for key in metrics
         }
 
+    # This is an observer-only proxy for neural turn selection, not actual
+    # predator avoidance or a promotion decision. The decoder is unchanged.
+    action_avoidance_proxy = {
+        str(gain): {
+            "mean_net_away_minus_toward_fraction": sum(
+                results[str(gain)][condition]["decoded_turns"][
+                    "net_away_minus_toward_fraction"
+                ]
+                for condition in ("danger_left", "danger_right")
+            ) / 2.0,
+        }
+        for gain in DANGER_GAINS
+    }
+
     if _sha256_file(checkpoint) != checkpoint_sha_before:
         raise RuntimeError("Read-only source checkpoint was mutated")
 
@@ -143,10 +162,12 @@ def run_sweep(checkpoint: Path) -> dict[str, Any]:
         "reference_conditions": references,
         "danger_conditions": results,
         "signed_contrasts": contrasts,
+        "action_avoidance_proxy": action_avoidance_proxy,
         "claim_limits": {
             "danger_gain_validated": False,
             "production_gain_change_authorized": False,
             "behavioral_improvement_verified": False,
+            "live_maze_avoidance_verified": False,
         },
     }
     report["receipt_sha256"] = _digest_json(report)
