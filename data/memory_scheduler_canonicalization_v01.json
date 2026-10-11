@@ -1,0 +1,61 @@
+{
+  "schema": "neurofly-memory-scheduler-canonicalization-v0.1",
+  "status": "PREREGISTERED_EXPLORATORY_EXECUTION",
+  "scope": "real-malecns-reward-memory-scheduler-canonicalization",
+  "question": "Does coherent canonicalization of Stonkfly lazy-integration scheduler bookkeeping at the -20 boundary remove the exact three-tau history advantage while preserving materialized physiological state and paired synaptic memory?",
+  "origin": {
+    "residual_state_run_id": 36113626269,
+    "residual_state_receipt_sha256": "9a0c9595ef53824690ebac0f661e04ff3b0803f78a2052905c4a5641bf4f55d6",
+    "residual_state_artifact_sha256": "60656077fbc0282fabc1535087c4987577474a4aea88b189c8ef85dfc757a292",
+    "residual_state_freeze": "data/memory_residual_state_localization_run1_freeze_v01.json"
+  },
+  "runtime": {
+    "event_selection": "first natural reward at or after decision index 60",
+    "maximum_acquisition_decisions": 300,
+    "post_reward_delay_decisions": 5,
+    "initial_recall_state_clear": "brain.reset(keep_memory=true) plus wrapper visual history clear before every condition",
+    "prefix_sequence": "exact source lags -60 through -21",
+    "boundary": "after source lag -21 and before source lag -20",
+    "terminal_sequence": "exact source lags -20 through -1 followed by exact reward cue at lag 0",
+    "conditions": [
+      {"id": "intact", "intervention": "none"},
+      {
+        "id": "canonical_scheduler",
+        "intervention": "after kernel observation-boundary materialization, set previous_drive equal to current drive, set last to cursor minus one for every neuron, and rebuild active/active_flag/nactive from the pinned kernel can_fire predicate while preserving v, g, refractory, queue, luminance, adaptation, eligibility, modulation, drive, and synaptic memory"
+      }
+    ],
+    "canonical_active_predicate": "v > -45 OR drive > (-45-rest) OR drive+g > (-45-rest)",
+    "primary_comparison_window": "common terminal replay lags -20 through 0 inclusive",
+    "recall_plasticity_frozen": true,
+    "recall_external_reinforcement": "none",
+    "no_model_parameter_change": true
+  },
+  "replicates": [
+    {"id": "SC1", "trajectory_seed": 3503},
+    {"id": "SC2", "trajectory_seed": 3511},
+    {"id": "SC3", "trajectory_seed": 3517},
+    {"id": "SC4", "trajectory_seed": 3527}
+  ],
+  "interpretation_policy": {
+    "no_parameter_tuning": true,
+    "no_posthoc_event_selection": true,
+    "all_conditions_use_same_trajectory": true,
+    "all_conditions_use_identical_exact_prefix": true,
+    "all_conditions_use_identical_terminal_sequence": true,
+    "all_conditions_use_identical_paired_synaptic_memory": true,
+    "canonicalization_may_change_only_previous_drive_last_active_active_flag_nactive": true,
+    "physiological_state_preserved": true,
+    "no_directional_pass_threshold": true,
+    "result_is_scheduler_localization_only": true
+  },
+  "claim_policy": {
+    "learning_validated": false,
+    "temporal_cue_index_confirmed": false,
+    "prefix_sequence_specificity_confirmed": false,
+    "transient_state_carrier_confirmed": false,
+    "scheduler_carrier_confirmed": false,
+    "memory_expression_causal": false,
+    "replacement_confirmatory_authorized": false,
+    "behavioral_promotion_authorized": false
+  }
+}
