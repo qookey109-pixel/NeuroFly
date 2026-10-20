@@ -1,0 +1,60 @@
+name: Publish NeuroFly Training State
+
+on:
+  workflow_run:
+    workflows: ["NeuroFly Curriculum Training"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: neurofly-post-training-publish
+  cancel-in-progress: true
+
+jobs:
+  publish-downstream:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full main history
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Fast-forward Render mirror to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          MIRROR_BRANCH='feature/v0.6-curriculum-learning'
+          git fetch origin main "$MIRROR_BRANCH"
+          MAIN_SHA="$(git rev-parse origin/main)"
+          MIRROR_SHA="$(git rev-parse "origin/$MIRROR_BRANCH")"
+
+          echo "main=$MAIN_SHA"
+          echo "render_mirror=$MIRROR_SHA"
+
+          if [ "$MAIN_SHA" = "$MIRROR_SHA" ]; then
+            echo "Render mirror is already current."
+          else
+            if ! git merge-base --is-ancestor "$MIRROR_SHA" "$MAIN_SHA"; then
+              echo "ERROR: Render mirror contains commits not present in main. Refusing to force-push." >&2
+              exit 1
+            fi
+            git push origin "$MAIN_SHA:refs/heads/$MIRROR_BRANCH"
+            echo "Render mirror fast-forwarded to $MAIN_SHA"
+          fi
+
+      - name: Dispatch GitHub Pages from latest main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api --method POST \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/actions/workflows/pages.yml/dispatches" \
+            -f ref=main
+          echo "GitHub Pages deployment dispatched from main."
