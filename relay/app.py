@@ -107,6 +107,19 @@ class Handler(BaseHTTPRequestHandler):
             )
             return
 
+        if self.path == "/latest":
+            with _state_lock:
+                latest = _latest
+            if latest is None:
+                _json_response(
+                    self,
+                    HTTPStatus.SERVICE_UNAVAILABLE,
+                    {"ok": False, "has_state": False, "error": "no verified MaleCNS state published yet"},
+                )
+                return
+            _json_response(self, HTTPStatus.OK, latest)
+            return
+
         if self.path != "/events":
             _json_response(self, HTTPStatus.NOT_FOUND, {"error": "not found"})
             return
