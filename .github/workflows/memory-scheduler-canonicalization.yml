@@ -1,0 +1,81 @@
+name: NeuroFly Memory Scheduler Canonicalization
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/v1-memory-scheduler-canonicalization
+    paths:
+      - "data/memory_scheduler_canonicalization_v01.json"
+      - "src/neurofly/memory_scheduler_canonicalization.py"
+      - "tests/test_memory_scheduler_canonicalization.py"
+      - "docs/experiments/V1_MEMORY_SCHEDULER_CANONICALIZATION.md"
+      - ".github/workflows/memory-scheduler-canonicalization.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  memory-scheduler-canonicalization:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      STONKFLY_DATA: /home/runner/.cache/neurofly/stonkfly
+      SOURCE_STATE: runs/free-malecns
+      STUDY_DIR: runs/memory-scheduler-canonicalization
+      BASE_CHECKPOINT: runs/memory-scheduler-canonicalization/base-brain.npz
+      RECEIPT: runs/memory-scheduler-canonicalization/receipt.json
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/neurofly/stonkfly
+          key: malecns-v1-${{ hashFiles('pyproject.toml') }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: runs/free-malecns
+          key: neurofly-v06-state-memory-scheduler-${{ github.run_id }}
+          restore-keys: |
+            neurofly-v06-state-
+      - run: python -m pip install -e '.[test,stonkfly]'
+      - run: pytest -q tests/test_memory_scheduler_canonicalization.py
+      - run: |
+          mkdir -p "$STONKFLY_DATA" "$STUDY_DIR"
+          python -m stonkfly prepare
+          python -m neurofly brain-status
+          python -m neurofly host-preflight | tee "$STUDY_DIR/preflight.json"
+      - run: |
+          test -f "$SOURCE_STATE/brain.npz"
+          cp "$SOURCE_STATE/brain.npz" "$BASE_CHECKPOINT"
+          sha256sum "$SOURCE_STATE/brain.npz" "$BASE_CHECKPOINT"
+      - name: Execute scheduler canonicalization
+        run: |
+          python -m neurofly.memory_scheduler_canonicalization             --base-checkpoint "$BASE_CHECKPOINT"             --output-dir "$STUDY_DIR/replicates"             --receipt "$RECEIPT"
+      - name: Validate evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path("runs/memory-scheduler-canonicalization/receipt.json").read_text())
+          assert r["execution_valid"] is True
+          assert r["status"] == "EXPLORATORY_MEMORY_SCHEDULER_CANONICALIZATION_COMPLETE"
+          assert all(r["config_gates"].values())
+          assert all(r["evidence_gates"].values())
+          assert r["scheduler_carrier_confirmed"] is False
+          assert r["production_checkpoint_mutated"] is False
+          print("SCHEDULER_CANONICALIZATION_VALID", r["receipt_sha256"], r["aggregate"])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: neurofly-memory-scheduler-canonicalization-${{ github.run_id }}
+          path: |
+            runs/memory-scheduler-canonicalization/preflight.json
+            runs/memory-scheduler-canonicalization/receipt.json
+          if-no-files-found: error
+          retention-days: 14
